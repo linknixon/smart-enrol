@@ -1,0 +1,753 @@
+/* ==========================================================================
+   ST. PAUL'S MUTOLERE SECONDARY SCHOOL - ADMISSIONS PORTAL CORE STYLESHEET
+   Excellence Through Discipline, Faith & Knowledge
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design System & Custom Properties
+   -------------------------------------------------------------------------- */
+:root {
+  /* Colors */
+  --primary-color: #0c4a24;      /* Rich Forest Green */
+  --primary-light: #166534;      /* Medium Forest Green */
+  --primary-dark: #062f14;       /* Dark Deep Green */
+  --gold-color: #b58d2f;         /* Classic Gold */
+  --gold-light: #d4af37;         /* Vibrant Gold */
+  --gold-dark: #8a661c;          /* Darker Gold */
+  --text-dark: #1e293b;          /* Charcoal for readability */
+  --text-muted: #64748b;         /* Slate gray for secondary text */
+  --bg-light: #f8fafc;           /* Off-white background */
+  --bg-card: #ffffff;            /* Clean white cards */
+  --accent-red: #dc2626;         /* Crimson red for Apply Now CTA */
+  --accent-red-hover: #b91c1c;   /* Darker Crimson */
+  --accent-red-glow: rgba(220, 38, 38, 0.4);
+
+  /* Fonts */
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 25px rgba(12, 74, 36, 0.06);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 35px 80px rgba(0, 0, 0, 0.12);
+  --shadow-red: 0 8px 24px rgba(220, 38, 38, 0.3);
+  --shadow-gold: 0 8px 24px rgba(181, 141, 47, 0.3);
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset & Typography
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  /* Slate-to-green gradient with a subtle, premium dotted grid overlay */
+  background: 
+    radial-gradient(rgba(12, 74, 36, 0.035) 1.5px, transparent 1.5px), 
+    linear-gradient(135deg, #e2eaf0 0%, #e2ebd9 100%);
+  background-size: 24px 24px, 100% 100%;
+  color: var(--text-dark);
+  line-height: 1.6;
+  padding: 40px 15px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+/* --------------------------------------------------------------------------
+   3. Boxed Layout Structure
+   -------------------------------------------------------------------------- */
+.container {
+  max-width: 1200px;
+  margin: 40px auto;
+  background: linear-gradient(135deg, rgba(237, 245, 239, 0.8) 0%, rgba(255, 255, 255, 0.95) 100%), var(--bg-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(12, 74, 36, 0.08);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  padding: 50px 40px;
+  flex: 1;
+}
+
+@media(max-width: 768px) {
+  .container {
+    padding: 30px 15px;
+    margin: 15px auto;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Landing Page Components
+   -------------------------------------------------------------------------- */
+.logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  background: white;
+  border-radius: 50%;
+  border: 3px solid var(--gold-color);
+  padding: 5px;
+  margin-bottom: 25px;
+  box-shadow: var(--shadow-sm);
+  display: inline-block;
+}
+
+.portal-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+@media(max-width: 768px) {
+  .portal-title {
+    font-size: 1.6rem;
+  }
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  margin: 40px 0;
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(12, 74, 36, 0.08);
+  width: 300px;
+  padding: 35px 25px;
+  transition: var(--transition-normal);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(12, 74, 36, 0.15);
+}
+
+.card h3 {
+  margin-bottom: 15px;
+  font-size: 1.35rem;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 25px;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+/* --------------------------------------------------------------------------
+   5. Buttons & Action Links
+   -------------------------------------------------------------------------- */
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  border: none;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+  box-shadow: var(--shadow-sm);
+  gap: 8px;
+}
+
+.card:hover .btn-submit {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, var(--gold-color), var(--gold-light));
+  color: white;
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-admin {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+}
+
+.card:hover .btn-admin {
+  background: linear-gradient(135deg, var(--gold-color), var(--gold-light));
+  box-shadow: var(--shadow-gold);
+}
+
+/* --------------------------------------------------------------------------
+   6. Admission Lists Frame
+   -------------------------------------------------------------------------- */
+.legend-frame {
+  border: 1px solid rgba(12, 74, 36, 0.15);
+  border-radius: var(--radius-md);
+  padding: 30px;
+  margin-top: 40px;
+  background: var(--bg-card);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.legend-frame legend {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  padding: 0 15px;
+  width: auto;
+  float: none;
+}
+
+.admission-list-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white !important;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 12px 28px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
+}
+
+.admission-list-btn:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, var(--gold-color), var(--gold-light));
+  box-shadow: var(--shadow-gold);
+}
+
+/* --------------------------------------------------------------------------
+   7. Form Wizards (Form One & Form Five)
+   -------------------------------------------------------------------------- */
+.form-wizard-card {
+  background: var(--bg-card);
+  max-width: 850px;
+  margin: 30px auto;
+  padding: 45px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(12, 74, 36, 0.08);
+  box-shadow: var(--shadow-lg);
+}
+
+@media(max-width: 768px) {
+  .form-wizard-card {
+    padding: 25px 15px;
+    margin: 15px auto;
+  }
+}
+
+.form-wizard-card h3 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  letter-spacing: -0.5px;
+}
+
+fieldset {
+  display: none;
+  border: none;
+  padding: 10px 0;
+}
+
+fieldset.active {
+  display: block;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.form-wizard-card h5 {
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  border-bottom: 2px solid rgba(12, 74, 36, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* Progress Tracker */
+.progress-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  position: relative;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.progress-step {
+  width: 36px;
+  height: 36px;
+  background: #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text-muted);
+  position: relative;
+  z-index: 2;
+  border: 3px solid white;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
+}
+
+.progress-step.active {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 0 0 3px rgba(12, 74, 36, 0.15);
+}
+
+.progress-line {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  width: calc(100% - 40px);
+  height: 4px;
+  background: #e2e8f0;
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.progress-line-fill {
+  height: 4px;
+  background: var(--primary-color);
+  width: 0%;
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  z-index: 1;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Input Styles */
+.form-control, .form-select {
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid #cbd5e1;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  background-color: white;
+  transition: var(--transition-fast);
+}
+
+.form-control:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(12, 74, 36, 0.12) !important;
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+/* Buttons in Forms */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  border: none;
+  border-radius: var(--radius-full) !important;
+  padding: 10px 24px;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, var(--gold-color), var(--gold-light));
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-secondary {
+  background: #64748b;
+  border: none;
+  border-radius: var(--radius-full) !important;
+  padding: 10px 24px;
+  font-weight: 700;
+  color: white;
+  transition: var(--transition-normal);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  background: #475569;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--gold-color), var(--gold-light));
+  border: none;
+  border-radius: var(--radius-full) !important;
+  padding: 10px 24px;
+  font-weight: 700;
+  box-shadow: var(--shadow-gold);
+  transition: var(--transition-normal);
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  box-shadow: var(--shadow-md);
+}
+
+/* --------------------------------------------------------------------------
+   8. Footer & Utility
+   -------------------------------------------------------------------------- */
+.footer {
+  text-align: center;
+  padding: 25px 10px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(12, 74, 36, 0.08);
+  margin-top: 40px;
+  background: transparent;
+}
+
+.footer a {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+  color: var(--gold-color);
+}
+
+/* --------------------------------------------------------------------------
+   9. Admin Interface & Dashboards
+   -------------------------------------------------------------------------- */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  animation: fadeIn 0.6s ease-in-out;
+  width: 100%;
+  max-width: 400px;
+  padding: 40px 30px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(12, 74, 36, 0.08);
+}
+
+.login-card h4 {
+  font-weight: 800;
+  color: var(--primary-color);
+  margin-bottom: 25px;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 15px;
+}
+
+.table-wrapper {
+  max-height: 75vh;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(12, 74, 36, 0.08);
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.table-admin {
+  font-size: 0.82rem;
+  margin-bottom: 0;
+}
+
+.table-admin th {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+  color: white !important;
+  text-align: center;
+  font-weight: 700;
+  padding: 12px 8px;
+  vertical-align: middle;
+  border-bottom: 3px solid var(--gold-color) !important;
+}
+
+.table-admin td {
+  padding: 10px 8px;
+  vertical-align: middle;
+}
+
+.table-admin img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--gold-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-block;
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.status-pending {
+  background: #fef08a;
+  color: #854d0e;
+  border: 1px solid #fef08a;
+}
+
+.status-admitted {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.admin-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* Admission Admitted List Page */
+.admission-list-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 15px;
+}
+
+.admission-list-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 30px;
+  border: 1px solid rgba(12, 74, 36, 0.08);
+}
+
+.badge-admitted {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.search-box {
+  max-width: 400px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    padding: 0 !important;
+  }
+  .admission-list-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .table-admin th {
+    background: #f1f5f9 !important;
+    color: black !important;
+    border-bottom: 2px solid black !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   10. Landing Page Split Grid Layout
+   -------------------------------------------------------------------------- */
+.portal-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.requirements-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 35px;
+  border: 1px solid rgba(12, 74, 36, 0.08);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+}
+
+.requirements-card h2 {
+  font-size: 1.6rem;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(12, 74, 36, 0.1);
+  padding-bottom: 10px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.requirements-card h4 {
+  font-size: 1.15rem;
+  color: var(--gold-dark);
+  margin-top: 25px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requirements-card ul, .requirements-card ol {
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.requirements-card li {
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  line-height: 1.5;
+}
+
+@media(max-width: 992px) {
+  .portal-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. Animated Background Slideshow
+   -------------------------------------------------------------------------- */
+.bg-slideshow-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  overflow: hidden;
+  background-color: var(--bg-light);
+}
+
+.bg-slideshow-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(rgba(12, 74, 36, 0.45) 2.2px, transparent 2.2px),
+    radial-gradient(rgba(181, 141, 47, 0.30) 2.2px, transparent 2.2px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  z-index: -1;
+}
+
+.bg-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.bg-slide.active {
+  opacity: 0.45; /* Higher opacity so images are more visible */
+}
+
+
+

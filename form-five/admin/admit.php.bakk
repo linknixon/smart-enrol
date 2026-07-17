@@ -1,0 +1,57 @@
+<?php
+require 'auth.php';
+require '../config/db.php';
+require '../includes/mailer.php';
+
+// Validate ID
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Invalid request");
+}
+
+$id = (int)$_GET['id'];
+
+// Fetch applicant
+$stmt = $pdo->prepare("SELECT * FROM s5_applications WHERE id = ?");
+$stmt->execute([$id]);
+$applicant = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$applicant) {
+    die("Applicant not found");
+}
+
+// Update status to admitted
+$update = $pdo->prepare("UPDATE s5_applications SET application_status = 'admitted' WHERE id = ?");
+$update->execute([$id]);
+
+// Prepare admission email
+$subject = "Senior Five (A-Level) Admission Offer 2026";
+
+$message = "
+<p>Dear Parent/Guardian of {$applicant['firstname']} {$applicant['surname']},</p>
+
+<p>We are pleased to inform you that your child has been <strong>ADMITTED</strong> to Senior Five (A-Level) at Nova Cloud Edges Secondary School for the 2026 academic year.</p>
+
+<p>Approved Subject Combination: <strong>{$applicant['combination']}</strong></p>
+
+<p>You can download the official admission letter here:<br>
+<a href='https://projects.ncedges.com/admin/s5_admission_offer.php?id={$id}'>Download Admission Offer Letter (PDF)</a>
+</p>
+
+<p>Students should report with:</p>
+<ul>
+    <li>Printed admission letter</li>
+    <li>Parent / Guardian National ID</li>
+    <li>Original UCE result slip</li>
+</ul>
+
+<p>Regards,<br>
+Admissions Office<br>
+Nova Cloud Edges Secondary School</p>
+";
+
+// Send email
+sendEmail($applicant['parent_email'], $subject, $message);
+
+// Redirect to dashboard
+header("Location: dashboard.php?msg=admitted");
+exit;

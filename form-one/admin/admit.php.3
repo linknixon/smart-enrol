@@ -1,0 +1,94 @@
+<?php
+require 'auth.php';
+require '../config/db.php';
+require '../includes/mailer.php';
+
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Invalid request");
+}
+
+$id = (int)$_GET['id'];
+
+/* ================= FETCH APPLICANT ================= */
+$stmt = $pdo->prepare("SELECT * FROM s1_applications WHERE id = ?");
+$stmt->execute([$id]);
+$applicant = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$applicant) {
+    die("Applicant not found");
+}
+
+/* ================= UPDATE STATUS ================= */
+$update = $pdo->prepare("
+    UPDATE s1_applications 
+    SET application_status = 'admitted' 
+    WHERE id = ?
+");
+$update->execute([$id]);
+
+/* ================= PDF LINK ================= */
+$pdfLink = "https://apply.ncedges.com/admin/admission_offer.php?id=".$id;
+
+/* ================= EMAIL MESSAGE ================= */
+$message = "
+<h2 style='color:#198754;'>Congratulations!</h2>
+
+<p>
+We are pleased to inform you that your child
+<strong>{$applicant['firstname']} {$applicant['surname']}</strong>
+has been <strong>SUCCESSFULLY ADMITTED</strong> to
+<strong>Senior One</strong> for the 2026 academic year.
+</p>
+
+<p>
+Please download and print the official admission offer letter using the link below:
+</p>
+
+<p style='text-align:center; margin:20px 0;'>
+    <a href='{$pdfLink}'
+       style='background:#198754;color:#fff;padding:12px 18px;
+              text-decoration:none;border-radius:6px;
+              display:inline-block;font-weight:bold;'>
+        Download Admission Offer Letter (PDF)
+    </a>
+</p>
+
+<p>
+If the button does not work, copy and paste this link into your browser:
+<br>
+<a href='{$pdfLink}'>{$pdfLink}</a>
+</p>
+
+<p>
+Students should report to school with:
+<ul>
+    <li>Printed admission letter</li>
+    <li>Parent / Guardian National ID</li>
+    <li>PLE result slip</li>
+</ul>
+</p>
+
+<p>
+You may also view the provisional admission list here:<br>
+<a href='https://apply.ncedges.com/admin/admission_list.php'>
+https://apply.ncedges.com/admin/admission_list.php
+</a>
+</p>
+
+<p>
+Regards,<br>
+<strong>Admissions Office</strong><br>
+Nova Cloud Edges Secondary School
+</p>
+";
+
+/* ================= SEND EMAIL ================= */
+sendEmail(
+    $applicant['parent_email'],
+    "Senior One Admission Offer – 2026",
+    $message
+);
+
+/* ================= REDIRECT ================= */
+header("Location: dashboard.php?msg=admitted");
+exit;

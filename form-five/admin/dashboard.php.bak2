@@ -1,0 +1,79 @@
+<?php
+require '../config/db.php';
+// Fetch applications
+$stmt = $pdo->query("SELECT * FROM s1_applications ORDER BY id DESC");
+$applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard – Senior One Admissions</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+<div class="container mt-4">
+
+<h3 class="mb-3">Senior One Applications</h3>
+<div class="mb-3">
+<a href="export_csv.php" class="btn btn-secondary btn-sm">
+Export Admitted Students (CSV)
+<a href="export_pdf.php" class="btn btn-primary btn-sm">
+Download Admitted Students (PDF)
+</a>
+</a>
+</div>
+
+<table class="table table-striped table-hover align-middle">
+<thead class="table-dark">
+<tr>
+    <th>#</th>
+    <th>Passport</th>
+    <th>Name</th>
+    <th>Age</th>
+    <th>Index No</th>
+    <th>Aggregates</th>
+    <th>Division</th>
+    <th>Parent</th>
+    <th>Phone</th>
+    <th>Email</th>
+    <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<?php foreach($applications as $app): ?>
+<tr>
+    <td><?= $app['id'] ?></td>
+    
+    <?php
+    $passport_server = __DIR__ . '/../' . $app['passport_photo']; // Server path
+    $passport_url    = '../' . $app['passport_photo'];            // URL for browser
+    ?>
+    <td>
+        <?php if(!empty($app['passport_photo']) && file_exists($passport_server)): ?>
+            <img src="<?= $passport_url ?>" alt="Passport" width="50" height="50" class="rounded-circle">
+        <?php else: ?>
+            N/A
+        <?php endif; ?>
+    </td>
+    
+    <td><?= htmlspecialchars($app['firstname'].' '.$app['surname']) ?></td>
+    <td><?= $app['age'] ?></td>
+    <td><?= $app['index_number'] ?></td>
+    <td><?= $app['aggregates'] ?></td>
+    <td><?= $app['division'] ?></td>
+    <td><?= htmlspecialchars($app['parent_name']) ?></td>
+    <td><?= htmlspecialchars($app['parent_phone']) ?></td>
+    <td><?= htmlspecialchars($app['parent_email']) ?></td>
+    <td>
+        <a href="admit.php?id=<?= $app['id'] ?>" class="btn btn-success btn-sm">Admit</a>
+        <a href="reject.php?id=<?= $app['id'] ?>" class="btn btn-danger btn-sm">Reject</a>
+    </td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+</div>
+</body>
+</html>

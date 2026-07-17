@@ -1,0 +1,141 @@
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require 'auth.php';
+require '../config/db.php';
+require_once('../tcpdf/tcpdf.php');
+
+/* ================= VALIDATION ================= */
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die('Invalid request');
+}
+
+$id = (int)$_GET['id'];
+
+/* ================= FETCH STUDENT ================= */
+$stmt = $pdo->prepare("
+    SELECT * FROM s1_applications
+    WHERE id = ? AND application_status = 'admitted'
+");
+$stmt->execute([$id]);
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$student) {
+    die('Student not found or not admitted');
+}
+
+/* ================= STUDENT NUMBER ================= */
+$year        = '26'; // 2026
+$class       = '01'; // Senior One
+$school_code = '011';
+
+$countStmt = $pdo->prepare("
+    SELECT COUNT(*) FROM s1_applications
+    WHERE application_status = 'admitted' AND id <= ?
+");
+$countStmt->execute([$id]);
+$serial = str_pad($countStmt->fetchColumn(), 2, '0', STR_PAD_LEFT);
+
+$student_number = $year.$class.$school_code.$serial;
+
+/* ================= PDF SETUP ================= */
+$pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+$pdf->SetMargins(20, 20, 20);
+$pdf->SetAutoPageBreak(true, 35);
+$pdf->AddPage();
+
+/* ================= HEADER IMAGES ================= */
+// School Logo (LEFT)
+$logo = 'http://ntareschool.sc.ug/wp-content/uploads/2019/04/1427618540-nra-e1554190031157.jpg';
+$pdf->Image($logo, 20, 10, 30);
+
+// Student Passport (RIGHT)
+$passport = '../'.$student['passport_photo'];
+if (!empty($student['passport_photo']) && file_exists($passport)) {
+    $pdf->Image($passport, 160, 10, 30, 35);
+}
+
+$pdf->Ln(28);
+
+/* ================= SCHOOL HEADER ================= */
+$pdf->SetFont('helvetica', 'B', 15);
+$pdf->Cell(0, 7, 'NOVA CLOUD EDGES SECONDARY SCHOOL', 0, 1, 'C');
+
+$pdf->SetFont('helvetica', '', 10);
+$pdf->Cell(0, 6, 'P.O. Box 123, Kampala – Uganda | Tel: +256 790 001631', 0, 1, 'C');
+$pdf->Cell(0, 6, 'Email: info@ncedges.com | Website: www.ncedges.com', 0, 1, 'C');
+
+$pdf->Ln(3);
+$pdf->Line(20, $pdf->GetY(), 190, $pdf->GetY());
+$pdf->Ln(6);
+
+/* ================= TITLE ================= */
+$pdf->SetFont('helvetica', 'B', 14);
+$pdf->Cell(0, 10, 'SENIOR ONE ADMISSION OFFER – 2026', 0, 1, 'C');
+$pdf->Ln(4);
+
+/* ================= LETTER BODY ================= */
+$pdf->SetFont('helvetica', '', 11);
+
+$html = '
+<table cellpadding="4">
+<tr><td width="35%"><strong>Student Name:</strong></td><td width="65%">'.$student['surname'].' '.$student['firstname'].'</td></tr>
+<tr><td><strong>Gender:</strong></td><td>'.$student['sex'].'</td></tr>
+<tr><td><strong>PLE Index No:</strong></td><td>'.$student['index_number'].'</td></tr>
+<tr><td><strong>Aggregates:</strong></td><td>'.$student['aggregates'].' ('.$student['division'].')</td></tr>
+<tr><td><strong>Student Number:</strong></td><td><strong>'.$student_number.'</strong></td></tr>
+</table>
+
+<br>
+
+<p>Dear <strong>'.$student['firstname'].'</strong>,</p>
+
+<p>
+We are pleased to inform you that you have been <strong>SUCCESSFULLY ADMITTED</strong>
+to <strong>Senior One</strong> at Nova Cloud Edges Secondary School for the
+<strong>2026 Academic Year</strong>.
+</p>
+
+<p>
+This offer has been granted based on your commendable performance in the
+Primary Leaving Examinations (PLE).
+</p>
+
+<p>
+You are required to report to school on the official opening date with this
+admission letter and all the required scholastic materials.
+</p>
+
+<p>
+Congratulations on your achievement. We warmly welcome you to our school
+community and wish you success in your studies.
+</p>
+
+<br><br>
+
+<p>
+<strong>Head Teacher</strong><br>
+Nova Cloud Edges Secondary School
+</p>
+
+<br>
+
+<p>
+_____________________________<br>
+<em>Official School Stamp</em>
+</p>
+';
+
+$pdf->writeHTML($html, true, false, true, false, '');
+
+/* ================= FOOTER ================= */
+$pdf->SetAutoPageBreak(false);
+$pdf->SetY(-25);
+$pdf->SetFont('helvetica', 'I', 9);
+$pdf->Cell(0, 6, 'Generated on: '.date('d M Y H:i:s'), 0, 1, 'C');
+$pdf->Cell(0, 6, 'Note: This document is valid only when signed and stamped by the school.', 0, 0, 'C');
+
+/* ================= OUTPUT ================= */
+$pdf->Output('Admission_Offer_'.$student_number.'.pdf', 'I');

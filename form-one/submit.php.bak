@@ -1,0 +1,36 @@
+<?php
+require 'config/db.php';
+require 'includes/mailer.php';
+
+$passport = 'uploads/passports/'.time().$_FILES['passport']['name'];
+$result   = 'uploads/results/'.time().$_FILES['result_slip']['name'];
+
+move_uploaded_file($_FILES['passport']['tmp_name'], $passport);
+move_uploaded_file($_FILES['result_slip']['tmp_name'], $result);
+
+$division = ($_POST['aggregates'] <= 12) ? 'Div 1' : 'Div 2';
+
+$stmt = $pdo->prepare("INSERT INTO s1_applications
+(surname, firstname, othernames, sex, dob, age, religion, passport_photo,
+former_school, index_number, english, mathematics, sst, science,
+aggregates, division, result_slip, parent_name, parent_phone, parent_email)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
+$age = date_diff(date_create($_POST['dob']), date_create('today'))->y;
+
+$stmt->execute([
+$_POST['surname'], $_POST['firstname'], $_POST['othernames'],
+$_POST['sex'], $_POST['dob'], $age, $_POST['religion'], $passport,
+$_POST['former_school'], $_POST['index_number'],
+$_POST['english'], $_POST['mathematics'], $_POST['sst'], $_POST['science'],
+$_POST['aggregates'], $division, $result,
+$_POST['parent_name'], $_POST['parent_phone'], $_POST['parent_email']
+]);
+
+sendEmail(
+$_POST['parent_email'],
+"Application Received",
+"Your Senior One application has been received successfully."
+);
+
+header("Location: success.php");
