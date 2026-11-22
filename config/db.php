@@ -8,6 +8,11 @@ $user = getenv('DB_USER') ?: "webadmin";
 $pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : "User@2026@";
 $charset = "utf8mb4";
 
+// Optional local overrides (ignored by Git)
+if (file_exists(__DIR__ . '/local_db.php')) {
+    include __DIR__ . '/local_db.php';
+}
+
 try {
 $pdo = null;
 $lastException = null;

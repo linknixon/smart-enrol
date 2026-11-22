@@ -10,3 +10,4 @@ uploads/circle_cache/*
 uploads/passports/circle_cache/*
 !uploads/circle_cache/.gitkeep
 !uploads/passports/circle_cache/.gitkeep
+config/local_db.php
