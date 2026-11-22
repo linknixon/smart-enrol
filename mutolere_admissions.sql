@@ -14,6 +14,13 @@ CREATE DATABASE IF NOT EXISTS `mutolere_admissions` DEFAULT CHARACTER SET utf8mb
 USE `mutolere_admissions`;
 
 -- --------------------------------------------------------
+-- Web Application User Provisioning
+-- --------------------------------------------------------
+CREATE USER IF NOT EXISTS 'webadmin'@'localhost' IDENTIFIED BY 'User@2026@';
+GRANT ALL PRIVILEGES ON `mutolere_admissions`.* TO 'webadmin'@'localhost';
+FLUSH PRIVILEGES;
+
+-- --------------------------------------------------------
 -- Table structure for table `admin_users`
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `admin_users` (
