@@ -8,6 +8,12 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+03:00";
 
 -- --------------------------------------------------------
+-- Database Creation & Selection
+-- --------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS `mutolere_admissions` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `mutolere_admissions`;
+
+-- --------------------------------------------------------
 -- Table structure for table `admin_users`
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `admin_users` (

@@ -2,10 +2,10 @@
 // Enforce official Uganda / East Africa Time (EAT - UTC+3) system-wide
 date_default_timezone_set('Africa/Kampala');
 
-$host = "localhost";
-$db   = "mutolere-admissions";
-$user = "webadmin";
-$pass = "User@2026@";
+$host = getenv('DB_HOST') ?: "localhost";
+$db   = getenv('DB_NAME') ?: "mutolere_admissions";
+$user = getenv('DB_USER') ?: "webadmin";
+$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : "User@2026@";
 $charset = "utf8mb4";
 
 try {
@@ -14,22 +14,25 @@ $lastException = null;
 
 // Candidates for PDO connection (standard local MySQL, MAMP port 8889, MAMP socket, root fallback)
 $candidates = [
-    // 1. Configured default
+    // 1. Configured default (mutolere_admissions)
     ['host' => $host, 'port' => null, 'socket' => null, 'user' => $user, 'pass' => $pass, 'db' => $db],
+    // 1b. Fallback with hyphenated DB name (mutolere-admissions)
+    ['host' => $host, 'port' => null, 'socket' => null, 'user' => $user, 'pass' => $pass, 'db' => 'mutolere-admissions'],
     // 2. MAMP Port 8889 with configured credentials
     ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => $user, 'pass' => $pass, 'db' => $db],
+    ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => $user, 'pass' => $pass, 'db' => 'mutolere-admissions'],
     // 3. MAMP Socket with configured credentials
     ['host' => null, 'port' => null, 'socket' => '/Applications/MAMP/tmp/mysql/mysql.sock', 'user' => $user, 'pass' => $pass, 'db' => $db],
     // 4. MAMP Port 8889 with default MAMP root/root
     ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => 'root', 'pass' => 'root', 'db' => $db],
+    ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => 'root', 'pass' => 'root', 'db' => 'mutolere-admissions'],
     // 5. MAMP Socket with default MAMP root/root
     ['host' => null, 'port' => null, 'socket' => '/Applications/MAMP/tmp/mysql/mysql.sock', 'user' => 'root', 'pass' => 'root', 'db' => $db],
-    // 6. Standard 3306 with root / root or empty pass
+    // 6. Standard Linux / 3306 with root / root or empty pass or socket
     ['host' => '127.0.0.1', 'port' => 3306, 'socket' => null, 'user' => 'root', 'pass' => 'root', 'db' => $db],
     ['host' => '127.0.0.1', 'port' => 3306, 'socket' => null, 'user' => 'root', 'pass' => '', 'db' => $db],
-    // 7. Alternate database name with underscore (mutolere_admissions)
-    ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => 'root', 'pass' => 'root', 'db' => 'mutolere_admissions'],
-    ['host' => $host, 'port' => null, 'socket' => null, 'user' => $user, 'pass' => $pass, 'db' => 'mutolere_admissions'],
+    ['host' => 'localhost', 'port' => null, 'socket' => null, 'user' => 'root', 'pass' => '', 'db' => $db],
+    ['host' => 'localhost', 'port' => null, 'socket' => null, 'user' => 'root', 'pass' => 'root', 'db' => $db],
 ];
 
 foreach ($candidates as $c) {
