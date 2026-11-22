@@ -81,7 +81,24 @@ foreach ($candidates as $c) {
 }
 
 if (!$pdo) {
-    throw ($lastException ?: new Exception("Could not connect to MySQL database"));
+    if (php_sapi_name() === 'cli') {
+        throw ($lastException ?: new Exception("Could not connect to MySQL database"));
+    }
+    http_response_code(500);
+    $errMsg = $lastException ? $lastException->getMessage() : 'Could not connect to MySQL database';
+    echo "<!DOCTYPE html><html><head><title>Database Configuration Required</title>";
+    echo "<style>body{font-family:system-ui,-apple-system,sans-serif;max-width:650px;margin:60px auto;padding:24px;background:#f8fafc;color:#1e293b;}";
+    echo ".card{background:#fff;border-radius:12px;padding:32px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid #e2e8f0;}";
+    echo ".alert{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:13px;margin:16px 0;word-break:break-all;}";
+    echo "pre{background:#f1f5f9;padding:14px;border-radius:8px;overflow-x:auto;font-size:13px;border:1px solid #e2e8f0;}";
+    echo "</style></head><body><div class='card'>";
+    echo "<h2 style='color:#0f172a;margin-top:0;'>Database Connection Required</h2>";
+    echo "<p>The admissions portal could not connect to MySQL with the default credentials.</p>";
+    echo "<div class='alert'><strong>MySQL Notice:</strong> " . htmlspecialchars($errMsg) . "</div>";
+    echo "<p>Please create <code>config/local_db.php</code> with your server's database credentials:</p>";
+    echo "<pre>&lt;?php\n\$host = 'localhost';\n\$db   = 'your_database_name';\n\$user = 'your_mysql_username';\n\$pass = 'your_mysql_password';</pre>";
+    echo "</div></body></html>";
+    exit;
 }
 
 try {
