@@ -101,7 +101,7 @@ try {
             $hasLogo = true;
         } catch (Exception $e) {}
     }
-    $logoHtml = $hasLogo ? "<img src='cid:school_logo' alt='Logo' style='max-height: 60px; max-width: 140px; margin-bottom: 10px; object-fit: contain;'>" : "";
+    $logoHtml = $hasLogo ? "<table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 12px auto; text-align: center; border-collapse: collapse;'><tr><td align='center' style='text-align: center; background: transparent; background-color: transparent;'><img src='cid:school_logo' alt='Logo' style='display: block; margin: 0 auto; max-height: 70px; max-width: 150px; height: auto; width: auto; background-color: transparent; background: transparent; border: 0; outline: none; object-fit: contain;'></td></tr></table>" : "";
 
     $timestamp = date('d-M-Y H:i:s T');
     $mail->Body = "
