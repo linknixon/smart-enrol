@@ -341,8 +341,8 @@ $msg = $_GET['msg'] ?? '';
 <title>Admin Dashboard | <?= htmlspecialchars($school_short_name) ?></title>
 <link rel="icon" type="image/png" href="<?= !empty($logo_source) ? htmlspecialchars($logo_source) : '../images/default_logo.png' ?>">
 <!-- Tailwind CDN & Chart.js -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" data-cfasync="false"></script>
 <!-- Font Awesome & Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

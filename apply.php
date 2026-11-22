@@ -85,7 +85,7 @@ if (!empty($configuredCombsJson)) {
 <title>Student Admission Application | <?= htmlspecialchars($school_short_name) ?></title>
 <link rel="icon" type="image/png" href="<?= !empty($school_logo) ? htmlspecialchars($school_logo) : 'images/default_logo.png' ?>">
 <!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
 <?php if ($cf_turnstile_enabled === '1' && !empty($cf_turnstile_site_key)): ?>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <?php endif; ?>

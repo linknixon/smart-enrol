@@ -43,7 +43,7 @@ $combinations = ['PCM', 'PCB', 'BCM', 'PEM', 'MEG', 'HEM', 'HEG', 'HEL', 'HLD', 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Custom Admission Reports (S5) | <?= htmlspecialchars($school_short_name) ?></title>
 <!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
 <!-- Font Awesome & Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

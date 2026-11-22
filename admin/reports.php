@@ -156,7 +156,7 @@ $count = count($applications);
 <title>Custom Admission Reports | <?= htmlspecialchars($school_short_name) ?></title>
 <link rel="icon" type="image/png" href="<?= !empty($logo_source) ? htmlspecialchars($logo_source) : '../images/default_logo.png' ?>">
 <!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
 <!-- Font Awesome & Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

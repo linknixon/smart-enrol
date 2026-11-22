@@ -47,7 +47,7 @@ if (empty($slider_images)) {
 <title><?= htmlspecialchars($school_name) ?> - Online Admissions Portal</title>
 <link rel="icon" type="image/png" href="<?= !empty($school_logo) ? htmlspecialchars($school_logo) : 'images/default_logo.png' ?>">
 <!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
 <!-- Google Fonts & Font Awesome -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
