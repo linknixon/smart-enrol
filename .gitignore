@@ -1,0 +1,12 @@
+.DS_Store
+*/.DS_Store
+*~
+*.log
+Thumbs.db
+.idea/
+.vscode/
+nbproject/
+uploads/circle_cache/*
+uploads/passports/circle_cache/*
+!uploads/circle_cache/.gitkeep
+!uploads/passports/circle_cache/.gitkeep

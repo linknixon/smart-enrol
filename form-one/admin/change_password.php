@@ -2,6 +2,9 @@
 require 'auth.php';
 require '../config/db.php';
 
+$school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+$logo_source       = getSchoolLogoSrc($pdo, '../../');
+
 $msg = '';
 $error = '';
 
@@ -50,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Change Password | St. Paul's Mutolere SS</title>
+<title>Change Password | <?= htmlspecialchars($school_short_name) ?></title>
 <!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Font Awesome & Google Fonts -->
@@ -58,26 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Outfit', 'sans-serif'],
-            },
-            colors: {
-                brand: {
-                    700: '#0c4a24',
-                    800: '#062f14',
-                },
-                gold: {
-                    500: '#b58d2f',
-                }
-            }
-        }
-    }
-}
-</script>
+<?= renderThemeConfig($pdo) ?>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex items-center justify-center p-4">
 
@@ -85,7 +69,7 @@ tailwind.config = {
         
         <!-- Header -->
         <div class="text-center">
-            <img src="https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png" alt="Logo" class="w-16 h-16 mx-auto mb-4 bg-white rounded-full p-1 border border-slate-200">
+            <img src="<?= htmlspecialchars($logo_source) ?>" alt="Logo" class="w-16 h-16 mx-auto mb-4 bg-white rounded-full p-1 border border-slate-200 object-contain">
             <h3 class="text-xl font-bold text-slate-800 tracking-tight">Security Control Panel</h3>
             <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">Change Password</p>
         </div>

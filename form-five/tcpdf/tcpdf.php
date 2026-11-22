@@ -3154,7 +3154,7 @@ class TCPDF {
 	 * @see setPage(), getPage(), lastpage()
 	 */
 	public function getNumPages() {
-		return $this->numpages;
+		return isset($this->numpages) ? $this->numpages : $this->page;
 	}
 
 	/**

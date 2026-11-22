@@ -1,0 +1,8 @@
+# Apache configuration for admissions portal
+DirectoryIndex index.php index.html
+
+<IfModule mod_dir.c>
+    DirectoryIndex index.php index.html
+</IfModule>
+
+Options +FollowSymLinks

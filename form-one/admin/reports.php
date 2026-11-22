@@ -3,6 +3,14 @@ session_start();
 require 'auth.php';
 require '../config/db.php';
 
+// Fetch dynamic configurations
+$school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+$school_address    = getSetting($pdo, 'school_address', 'P.O. Box 12, Kisoro - Uganda');
+$school_phone      = getSetting($pdo, 'school_phone', '+256 790 001 631');
+$academic_year     = getAcademicYear($pdo, 'S1');
+$logo_source       = getSchoolLogoSrc($pdo, '../../');
+
 $filterStatus = $_GET['status'] ?? 'all';
 $query = "SELECT * FROM s1_applications";
 $params = [];
@@ -25,7 +33,7 @@ $count = count($applications);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Custom Admission Reports | S1</title>
+<title>Custom Admission Reports (S1) | <?= htmlspecialchars($school_short_name) ?></title>
 <!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Font Awesome & Google Fonts -->
@@ -33,31 +41,7 @@ $count = count($applications);
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Outfit', 'sans-serif'],
-            },
-            colors: {
-                brand: {
-                    50: '#edf5ef',
-                    100: '#dbeade',
-                    200: '#b7d5be',
-                    700: '#0c4a24',
-                    800: '#062f14',
-                    900: '#031b0b',
-                },
-                gold: {
-                    500: '#b58d2f',
-                    600: '#8a661c',
-                }
-            }
-        }
-    }
-}
-</script>
+<?= renderThemeConfig($pdo) ?>
 <style>
 @media print {
     .no-print {
@@ -93,9 +77,9 @@ tailwind.config = {
     <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0 min-h-screen no-print">
         <!-- Brand Header -->
         <div class="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
-            <img src="https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500">
+            <img src="<?= htmlspecialchars($logo_source) ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
             <div>
-                <span class="block text-sm font-bold text-white tracking-tight leading-tight">MUTOLERE SS</span>
+                <span class="block text-sm font-bold text-white tracking-tight leading-tight uppercase"><?= htmlspecialchars($school_short_name) ?></span>
                 <span class="block text-xs font-semibold text-gold-500 uppercase tracking-widest">S1 Admin Portal</span>
             </div>
         </div>
@@ -119,6 +103,16 @@ tailwind.config = {
                 <i class="fa-solid fa-list-check text-lg"></i> Activity Logs
             </a>
             <?php endif; ?>
+            <?php if ($_SESSION['admin_role'] === 'super_admin'): ?>
+            <a href="../../admin/settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+                <i class="fa-solid fa-gear text-lg text-gold-500"></i> System Settings
+            </a>
+            <?php endif; ?>
+            <div class="pt-6 border-t border-slate-800 my-4"></div>
+            <a href="../../form-five/admin/dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+                <i class="fa-solid fa-right-left text-lg text-gold-500"></i> Go to S5 Portal
+            </a>
+        </nav>
             <div class="pt-6 border-t border-slate-800 my-4"></div>
             <a href="../../form-five/admin/dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
                 <i class="fa-solid fa-right-left text-lg text-gold-500"></i> Go to S5 Portal
@@ -127,7 +121,7 @@ tailwind.config = {
 
         <!-- Footer Note -->
         <div class="px-6 py-4 border-t border-slate-800 text-xs text-slate-500 text-center">
-            Admissions Office · 2026
+            Admissions Office · <?= htmlspecialchars($academic_year) ?>
         </div>
     </aside>
 
@@ -170,15 +164,16 @@ tailwind.config = {
             <!-- Print Banner (Visible ONLY on print) -->
             <div class="hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6">
                 <div class="flex justify-center items-center gap-4">
-                    <img src="https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png" alt="Logo" class="w-16 h-16">
+                    <img src="<?= htmlspecialchars($logo_source) ?>" alt="Logo" class="w-16 h-16 object-contain">
                     <div class="text-left">
-                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">ST. PAUL'S MUTOLERE SECONDARY SCHOOL</h1>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">P.O. BOX 152, Kisoro, Uganda | Tel: 0790001631</p>
-                        <p class="text-sm font-extrabold text-brand-700 mt-1 uppercase">Official Online Admissions Report – Senior One</p>
+                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight"><?= strtoupper($school_name) ?></h1>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest"><?= htmlspecialchars($school_address) ?> | Tel: <?= htmlspecialchars($school_phone) ?></p>
+                        <p class="text-sm font-extrabold text-brand-700 mt-1 uppercase">Official Online Admissions Report - Senior One • Academic Year <?= htmlspecialchars($academic_year) ?></p>
                     </div>
                 </div>
                 
                 <div class="mt-4 flex justify-between text-xs font-bold text-slate-600 border-t border-slate-200 pt-2">
+                    <span>INTAKE YEAR: <?= htmlspecialchars($academic_year) ?></span>
                     <span>REPORT FILTER: <?= strtoupper($filterStatus) ?> STATUS</span>
                     <span>TOTAL STUDENTS LISTED: <?= $count ?></span>
                     <span>GENERATED ON: <?= date('d-m-Y H:i:s') ?></span>
@@ -230,6 +225,7 @@ tailwind.config = {
                                 <th class="px-6 py-3.5 text-center">Division</th>
                                 <th class="px-6 py-3.5">Parent Contact Details</th>
                                 <th class="px-6 py-3.5 text-center">Status</th>
+                                <th class="px-6 py-3.5 text-center">Admitted By</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm print:divide-y print:divide-slate-300">
@@ -248,12 +244,15 @@ tailwind.config = {
                                 <td class="px-6 py-3 text-center capitalize print:text-black font-semibold">
                                     <?= htmlspecialchars($app['application_status']) ?>
                                 </td>
+                                <td class="px-6 py-3 text-center print:text-black">
+                                    <?= !empty($app['admitted_by']) ? htmlspecialchars($app['admitted_by']) : ($app['application_status'] === 'admitted' ? 'Admissions Office' : '—') ?>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
 
                             <?php if (count($applications) === 0): ?>
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-slate-400 font-semibold print:text-black">
+                                <td colspan="10" class="px-6 py-12 text-center text-slate-400 font-semibold print:text-black">
                                     <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300 print:hidden"></i>
                                     No records match selected filter criteria.
                                 </td>

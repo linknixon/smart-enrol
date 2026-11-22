@@ -2,29 +2,113 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 function sendEmail($to, $subject, $body) {
+    global $pdo;
+
+    $enabled = $pdo ? getSetting($pdo, 'smtp_enabled', '1') : '1';
+    if ($enabled === '0' || $enabled === 'false') {
+        // SMTP disabled
+        return false;
+    }
+
     $mail = new PHPMailer(true);
 
     try {
         $mail->isSMTP();
-        $mail->Host       = 'mail-gw.ncedges.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admissions-mutoleress@ncedges.com';
-        $mail->Password   = 'Uganda@23';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port       = 587;
 
-        $mail->setFrom('admissions-mutoleress@ncedges.com', 'Admissions Office');
+        $host       = $pdo ? getSetting($pdo, 'smtp_host', 'mail-gw.ncedges.com') : 'mail-gw.ncedges.com';
+        $port       = (int)($pdo ? getSetting($pdo, 'smtp_port', 587) : 587);
+        $encryption = strtolower($pdo ? getSetting($pdo, 'smtp_encryption', 'tls') : 'tls');
+        $username   = $pdo ? getSetting($pdo, 'smtp_username', 'admissions-mutoleress@ncedges.com') : 'admissions-mutoleress@ncedges.com';
+        $password   = $pdo ? getSetting($pdo, 'smtp_password', 'Uganda@23') : 'Uganda@23';
+        
+        $mail->Host       = $host;
+        $mail->SMTPAuth   = !empty($username);
+        $mail->Username   = $username;
+        $mail->Password   = $password;
+
+        if ($encryption === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($encryption === 'tls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = false;
+            $mail->SMTPAutoTLS = false;
+        }
+
+        $mail->Port       = $port;
+        $mail->Timeout    = 15;
+
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ];
+
+        // Dynamic sender name from school settings
+        $fromName = 'Admissions Office';
+        if ($pdo) {
+            $configuredFromName = getSetting($pdo, 'smtp_from_name', '');
+            if (!empty($configuredFromName)) {
+                $fromName = $configuredFromName;
+            } else {
+                $sName = getSetting($pdo, 'school_short_name', getSetting($pdo, 'school_name', ''));
+                if (!empty($sName)) {
+                    $fromName = $sName . ' Admissions';
+                }
+            }
+        }
+
+        $fromEmail = $pdo ? getSetting($pdo, 'smtp_from_email', $username) : $username;
+        if (empty($fromEmail)) {
+            $fromEmail = $username;
+        }
+
+        $mail->setFrom($fromEmail, $fromName);
+
+        // Add reply-to if school email is configured
+        if ($pdo) {
+            $schoolEmail = getSetting($pdo, 'school_email', '');
+            if (!empty($schoolEmail) && filter_var($schoolEmail, FILTER_VALIDATE_EMAIL)) {
+                $mail->addReplyTo($schoolEmail, $fromName);
+            }
+        }
+
         $mail->addAddress($to);
 
+        // Embed official school logo from settings so it displays reliably in all email clients
+        if ($pdo) {
+            $logoPath = getSchoolLogoFilePath($pdo, realpath(__DIR__ . '/../..'));
+            if ($logoPath && file_exists($logoPath)) {
+                try {
+                    $mail->addEmbeddedImage($logoPath, 'school_logo', basename($logoPath));
+                } catch (Exception $e) {}
+            }
+        }
+
+        $cleanSubject = str_replace(["\xe2\x80\x93", "–", "â€“"], "-", $subject);
+        $cleanBody    = str_replace(["\xe2\x80\x93", "–", "â€“"], "-", $body);
+
+        // If cid:school_logo was used but no embedded image exists, fallback to public web URL
+        if ($pdo && strpos($cleanBody, 'cid:school_logo') !== false && empty($mail->getAttachments())) {
+            $webLogo = getSchoolLogoSrc($pdo);
+            $cleanBody = str_replace('cid:school_logo', $webLogo, $cleanBody);
+        }
+
+        $mail->CharSet  = 'UTF-8';
+        $mail->Encoding = 'base64';
         $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $body;
+        $mail->Subject  = $cleanSubject;
+        $mail->Body     = $cleanBody;
 
         $mail->send();
+        return true;
     } catch (Exception $e) {
-        // silent fail for now
+        error_log("Admissions Mailer Error: " . $e->getMessage());
+        return false;
     }
 }

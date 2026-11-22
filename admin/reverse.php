@@ -12,11 +12,15 @@ if(!isset($_GET['id']) || !is_numeric($_GET['id'])){
 
 $id = (int)$_GET['id'];
 
-$fetch = $pdo->prepare("SELECT firstname, surname, class_of_entry FROM applications WHERE id = ?");
+$fetch = $pdo->prepare("SELECT firstname, surname, class_of_entry, application_status FROM applications WHERE id = ?");
 $fetch->execute([$id]);
 $applicant = $fetch->fetch(PDO::FETCH_ASSOC);
 
 if ($applicant) {
+    if (strtolower($applicant['application_status'] ?? '') === 'reported') {
+        die("Security Restriction: Physically reported and enrolled admissions cannot be reversed.");
+    }
+
     $stmt = $pdo->prepare("
         UPDATE applications 
         SET application_status = 'pending'

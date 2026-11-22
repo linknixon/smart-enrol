@@ -3,9 +3,15 @@ require '../config/db.php';
 require 'fpdf.php';
 require 'qrlib.php'; // QR code generation
 
+$school_name = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$logoUrl     = getSchoolLogoFilePath($pdo, __DIR__ . '/../../');
+$qrUrl       = getBaseUrl($pdo) . '/form-one/admin/admission_list.php';
+
 class PDF extends FPDF {
 
+    public $schoolName = '';
     public $logoUrl = '';
+    public $qrUrl = '';
     public $pageWidth;
 
     function Header() {
@@ -13,22 +19,24 @@ class PDF extends FPDF {
         $this->pageWidth = $this->GetPageWidth();
 
         /* ===== LOGO (Centered & Official Size) ===== */
-        if($this->logoUrl) {
-            $logoWidth = 25; // reduced size
+        if($this->logoUrl && file_exists($this->logoUrl)) {
+            $logoWidth = 22;
             $logoX = ($this->pageWidth - $logoWidth) / 2;
             $this->Image($this->logoUrl, $logoX, 10, $logoWidth);
-            $this->Ln(28); // space below logo
+            $this->Ln(25);
+        } else {
+            $this->Ln(5);
         }
 
         /* ===== SCHOOL NAME ===== */
-        $this->SetFont('Helvetica','B',16);
-        $this->Cell(0,8,'MUTOLERE SECONDARY SCHOOL',0,1,'C');
+        $this->SetFont('Helvetica','B',15);
+        $this->Cell(0,8, strtoupper($this->schoolName),0,1,'C');
 
         /* ===== SUBTITLE ===== */
-        $this->SetFont('Helvetica','BU',14);
-        $this->Cell(0,8,'Senior One Admitted Students',0,1,'C');
+        $this->SetFont('Helvetica','BU',12);
+        $this->Cell(0,7,'Senior One Admitted Students Register',0,1,'C');
 
-        $this->Ln(5);
+        $this->Ln(4);
 
         /* ===== PROFESSIONAL LINE ===== */
         $this->Line(15, $this->GetY(), $this->pageWidth - 15, $this->GetY());
@@ -37,14 +45,14 @@ class PDF extends FPDF {
         /* ===== TABLE HEADER (Centered) ===== */
         $this->SetFont('Helvetica','B',10);
 
-        $tableWidth = 130;
+        $tableWidth = 145;
         $startX = ($this->pageWidth - $tableWidth) / 2;
         $this->SetX($startX);
 
-        $this->Cell(40,8,'Name',1);
+        $this->Cell(45,8,'Name',1);
         $this->Cell(15,8,'Age',1);
-        $this->Cell(30,8,'Index No',1);
-        $this->Cell(20,8,'Aggregate',1);
+        $this->Cell(35,8,'Index No',1);
+        $this->Cell(25,8,'Aggregates',1);
         $this->Cell(25,8,'Division',1);
         $this->Ln();
     }
@@ -61,29 +69,35 @@ class PDF extends FPDF {
         $this->Cell(0,5,'Page '.$this->PageNo().'/{nb}',0,1,'C');
 
         // QR Code (Bottom Right)
-        $qrFile = tempnam(sys_get_temp_dir(), 'qr_').'.png';
-        QRcode::png(
-            'https://apply.mutolere.sc.ug/form-one/admin/admission_list.php',
-            $qrFile,
-            QR_ECLEVEL_L,
-            3
-        );
+        if (!empty($this->qrUrl)) {
+            $qrFile = tempnam(sys_get_temp_dir(), 'qr_').'.png';
+            QRcode::png(
+                $this->qrUrl,
+                $qrFile,
+                QR_ECLEVEL_L,
+                3
+            );
 
-        $qrSize = 20;
-        $qrX = $this->pageWidth - 30;
-        $qrY = $this->GetY();
+            $qrSize = 20;
+            $qrX = $this->pageWidth - 30;
+            $qrY = $this->GetY();
 
-        $this->Image($qrFile, $qrX, $qrY, $qrSize, $qrSize);
-        unlink($qrFile);
+            if (file_exists($qrFile)) {
+                $this->Image($qrFile, $qrX, $qrY, $qrSize, $qrSize);
+                @unlink($qrFile);
+            }
+        }
     }
 }
 
 /* ===== CREATE PDF ===== */
 $pdf = new PDF();
-$pdf->logoUrl = 'https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png';
+$pdf->schoolName = $school_name;
+$pdf->logoUrl    = $logoUrl;
+$pdf->qrUrl      = $qrUrl;
 $pdf->AliasNbPages();
 $pdf->AddPage();
-$pdf->SetFont('Helvetica','',10);
+$pdf->SetFont('Helvetica','',9.5);
 
 /* ===== FETCH ADMITTED STUDENTS ===== */
 $stmt = $pdo->query("
@@ -93,20 +107,19 @@ $stmt = $pdo->query("
 ");
 
 /* ===== TABLE ROWS (Centered Properly) ===== */
+$tableWidth = 145;
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-
-    $tableWidth = 130;
     $startX = ($pdf->GetPageWidth() - $tableWidth) / 2;
     $pdf->SetX($startX);
 
-    $pdf->Cell(40,8,$row['surname'].' '.$row['firstname'],1);
+    $pdf->Cell(45,8,$row['surname'].' '.$row['firstname'],1);
     $pdf->Cell(15,8,$row['age'],1);
-    $pdf->Cell(30,8,$row['index_number'],1);
-    $pdf->Cell(20,8,$row['aggregates'],1);
+    $pdf->Cell(35,8,$row['index_number'],1);
+    $pdf->Cell(25,8,$row['aggregates'],1);
     $pdf->Cell(25,8,$row['division'],1);
     $pdf->Ln();
 }
 
 /* ===== OUTPUT PDF ===== */
-$pdf->Output('D','admitted_s1_students.pdf');
+$pdf->Output('D','Senior_One_Admitted_Students.pdf');
 exit;

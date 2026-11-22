@@ -1,9 +1,14 @@
+<?php
+require 'config/db.php';
+$school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Application Submitted | St. Paul's Mutolere SS</title>
+<title>Application Submitted | <?= htmlspecialchars($school_short_name) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">

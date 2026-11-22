@@ -1,11 +1,17 @@
 <?php
-session_start();
-require 'auth.php';
-require '../config/db.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require __DIR__ . '/auth.php';
+require __DIR__ . '/../config/db.php';
 
-// Secretary or Admin (Editor) cannot access system settings - Super Admin only
-if ($_SESSION['admin_role'] !== 'super_admin') {
-    header("Location: dashboard.php");
+// Check Permissions: Super Admin or Admissions Policy Manager
+$currentRole = $_SESSION['admin_role'] ?? '';
+$canAllSettings = hasPermission($pdo, $currentRole, 'can_manage_settings');
+$canPolicySettings = hasPermission($pdo, $currentRole, 'can_manage_admission_policies');
+
+if (!$canAllSettings && !$canPolicySettings) {
+    header("Location: dashboard.php?error=unauthorized");
     exit;
 }
 
@@ -17,39 +23,192 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
 
-        $settingsKeys = [
-            'school_name', 'school_address', 'school_phone', 'school_email', 'school_website',
-            'admin_email',
-            'fees_s1_tuition', 'fees_s1_admission', 'fees_s1_functional',
-            'fees_s5_tuition', 'fees_s5_admission', 'fees_s5_functional',
-            'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional'
-        ];
+        if (!$canAllSettings && $canPolicySettings) {
+            // Restricted keys for Admissions Policy Manager (Policies, Fees, Letters, Signature & Documents)
+            $settingsKeys = [
+                'academic_year',
+                'a_level_combinations',
+                'ai_auto_admit_enabled', 'ai_auto_combination_enabled',
+                'admission_s1_start_date', 'admission_s1_end_date',
+                'admission_s5_start_date', 'admission_s5_end_date',
+                'admission_trans_start_date', 'admission_trans_end_date',
+                'admission_s1_passmark', 'admission_s5_passmark', 'admission_trans_passmark',
+                'reporting_date_s1', 'reporting_date_s5', 'reporting_date_trans',
+                'school_requirements', 'admission_letter_custom_note',
+                'head_teacher_name', 'head_teacher_title',
+                'student_number_format',
+                // Fees matrices
+                'fees_s1_tuition', 'fees_s1_admission', 'fees_s1_functional',
+                'fees_s2_tuition', 'fees_s2_admission', 'fees_s2_functional',
+                'fees_s3_tuition', 'fees_s3_admission', 'fees_s3_functional',
+                'fees_s4_tuition', 'fees_s4_admission', 'fees_s4_functional',
+                'fees_s5_tuition', 'fees_s5_admission', 'fees_s5_functional',
+                'fees_s6_tuition', 'fees_s6_admission', 'fees_s6_functional',
+                'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional'
+            ];
+        } else {
+            $settingsKeys = [
+                'school_name', 'school_short_name', 'school_motto',
+                'school_address', 'school_phone', 'school_email', 'school_website', 'portal_base_url',
+                'head_teacher_name', 'head_teacher_title', 'school_code', 'academic_year',
+                'student_number_format',
+                'school_gender_type',
+                'a_level_combinations',
+                'ai_auto_admit_enabled', 'ai_auto_combination_enabled',
+                'cf_turnstile_enabled', 'cf_turnstile_site_key', 'cf_turnstile_secret_key',
+                'staff_mfa_enabled',
+                'primary_color', 'accent_color',
+                'admin_email', 'application_notification_emails',
+                'admission_s1_start_date', 'admission_s1_end_date',
+                'admission_s5_start_date', 'admission_s5_end_date',
+                'admission_trans_start_date', 'admission_trans_end_date',
+                'admission_s1_passmark', 'admission_s5_passmark', 'admission_trans_passmark',
+                'reporting_date_s1', 'reporting_date_s5', 'reporting_date_trans',
+                'school_requirements', 'admission_letter_custom_note',
+                // SMTP Settings
+                'smtp_enabled', 'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_auth',
+                'smtp_username', 'smtp_password', 'smtp_from_email', 'smtp_from_name',
+                // Fees matrices
+                'fees_s1_tuition', 'fees_s1_admission', 'fees_s1_functional',
+                'fees_s2_tuition', 'fees_s2_admission', 'fees_s2_functional',
+                'fees_s3_tuition', 'fees_s3_admission', 'fees_s3_functional',
+                'fees_s4_tuition', 'fees_s4_admission', 'fees_s4_functional',
+                'fees_s5_tuition', 'fees_s5_admission', 'fees_s5_functional',
+                'fees_s6_tuition', 'fees_s6_admission', 'fees_s6_functional',
+                'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional'
+            ];
+        }
 
-        $updateStmt = $pdo->prepare("UPDATE system_settings SET setting_value = ? WHERE setting_key = ?");
+        $saveStmt = $pdo->prepare("
+            INSERT INTO system_settings (setting_key, setting_value) 
+            VALUES (?, ?) 
+            ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+        ");
 
         foreach ($settingsKeys as $key) {
+            // Strictly enforce: Only Super Admin can change school gender admission policy
+            if ($key === 'school_gender_type' && ($_SESSION['admin_role'] ?? '') !== 'super_admin') {
+                continue;
+            }
             if (isset($_POST[$key])) {
                 $val = trim($_POST[$key]);
-                $updateStmt->execute([$val, $key]);
+                if (strpos($key, 'fees_') === 0) {
+                    $val = preg_replace('/[^\d]/', '', $val);
+                }
+                $saveStmt->execute([$key, $val]);
             }
         }
 
-        // Handle Custom Logo Upload
-        if (isset($_FILES['logo_upload']) && $_FILES['logo_upload']['error'] === UPLOAD_ERR_OK) {
-            @mkdir('../images', 0777, true);
-            $logoPath = 'images/logo_custom.png';
-            $dest = '../' . $logoPath;
+        $baseDir = realpath(__DIR__ . '/..');
 
-            if (move_uploaded_file($_FILES['logo_upload']['tmp_name'], $dest)) {
-                $updateStmt->execute([$logoPath, 'school_logo']);
-            } else {
-                throw new Exception("Failed to save uploaded logo file to destination.");
+        // Handle Official Enclosure Document Uploads (Rules, Circular, Medical Form)
+        $docUploads = [
+            'doc_school_rules_file'       => 'doc_school_rules',
+            'doc_admission_circular_file' => 'doc_admission_circular',
+            'doc_medical_form_file'       => 'doc_medical_form'
+        ];
+        @mkdir($baseDir . '/uploads/documents', 0777, true);
+
+        foreach ($docUploads as $fileKey => $settingKey) {
+            if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+                $fileInfo = pathinfo($_FILES[$fileKey]['name']);
+                $ext = strtolower($fileInfo['extension'] ?? 'pdf');
+                $docFilename = $settingKey . '_' . time() . '.' . $ext;
+                $docRelPath = 'uploads/documents/' . $docFilename;
+                $docDest = $baseDir . '/' . $docRelPath;
+                if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $docDest)) {
+                    $saveStmt->execute([$settingKey, $docRelPath]);
+                }
+            }
+        }
+
+        // Handle Custom Logo Upload or Direct URL (Super Admin only)
+        if ($canAllSettings) {
+            if (isset($_FILES['logo_upload']) && $_FILES['logo_upload']['error'] === UPLOAD_ERR_OK) {
+                @mkdir($baseDir . '/images', 0777, true);
+                $fileInfo = pathinfo($_FILES['logo_upload']['name']);
+                $ext = strtolower($fileInfo['extension'] ?? 'png');
+                if (!in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'])) {
+                    $ext = 'png';
+                }
+                $newFilename = 'logo_custom_' . time() . '.' . $ext;
+                $logoPath = 'images/' . $newFilename;
+                $dest = $baseDir . '/' . $logoPath;
+
+                if (move_uploaded_file($_FILES['logo_upload']['tmp_name'], $dest)) {
+                    @copy($dest, $baseDir . '/images/logo_custom.png');
+                    $saveStmt->execute(['school_logo', $logoPath]);
+                } else {
+                    throw new Exception("Failed to save uploaded logo file.");
+                }
+            } elseif (!empty($_POST['school_logo_url']) && (strpos($_POST['school_logo_url'], 'http://') === 0 || strpos($_POST['school_logo_url'], 'https://') === 0)) {
+                $saveStmt->execute(['school_logo', trim($_POST['school_logo_url'])]);
+            }
+        }
+
+        // Handle Head Teacher E-Signature Upload
+        if (isset($_FILES['headteacher_signature_upload']) && $_FILES['headteacher_signature_upload']['error'] === UPLOAD_ERR_OK) {
+            @mkdir($baseDir . '/images', 0777, true);
+            $fileInfo = pathinfo($_FILES['headteacher_signature_upload']['name']);
+            $ext = strtolower($fileInfo['extension'] ?? 'png');
+            if (!in_array($ext, ['png', 'jpg', 'jpeg', 'webp'])) {
+                $ext = 'png';
+            }
+            $sigFilename = 'signature_headteacher_' . time() . '.' . $ext;
+            $sigRelPath = 'images/' . $sigFilename;
+            $dest = $baseDir . '/' . $sigRelPath;
+
+            if (move_uploaded_file($_FILES['headteacher_signature_upload']['tmp_name'], $dest)) {
+                @copy($dest, $baseDir . '/images/signature_headteacher.png');
+                $saveStmt->execute(['head_teacher_signature', $sigRelPath]);
+            }
+        }
+
+        // Handle Hero Background Slider Images Uploads & URLs
+        if ($canAllSettings) {
+            $sliderImages = [];
+            for ($i = 1; $i <= 4; $i++) {
+                $fileKey = "slider_image_file_{$i}";
+                $urlKey  = "slider_image_url_{$i}";
+                $imgPath = '';
+
+                if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+                    @mkdir($baseDir . '/images/slider', 0777, true);
+                    $fileInfo = pathinfo($_FILES[$fileKey]['name']);
+                    $ext = strtolower($fileInfo['extension'] ?? 'jpg');
+                    if (!in_array($ext, ['png', 'jpg', 'jpeg', 'webp'])) {
+                        $ext = 'jpg';
+                    }
+                    $slideFilename = 'hero_slide_' . $i . '_' . time() . '.' . $ext;
+                    $slideRelPath = 'images/slider/' . $slideFilename;
+                    $dest = $baseDir . '/' . $slideRelPath;
+                    if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $dest)) {
+                        $imgPath = $slideRelPath;
+                    }
+                }
+                
+                if (empty($imgPath) && !empty($_POST[$urlKey])) {
+                    $imgPath = trim($_POST[$urlKey]);
+                }
+
+                if (!empty($imgPath)) {
+                    $sliderImages[] = $imgPath;
+                }
+            }
+
+            if (!empty($sliderImages)) {
+                $saveStmt->execute(['hero_slider_images', json_encode(array_values($sliderImages))]);
             }
         }
 
         $pdo->commit();
-        logActivity($pdo, $_SESSION['admin_username'], "Update Settings", "Updated system configurations, contacts, and tuition rates");
-        $success = "System configurations updated successfully.";
+
+        // Invalidate settings cache
+        getSetting($pdo, 'school_name', '', true);
+        getAllSettings($pdo, true);
+
+        logActivity($pdo, $_SESSION['admin_username'], "Update Settings", "Updated system configurations, branding, SMTP gateway, fee schedules, and e-signatures");
+        $success = "System configurations updated successfully! All changes are live system-wide.";
     } catch (Exception $e) {
         $pdo->rollBack();
         $error = "Failed to update configurations: " . $e->getMessage();
@@ -57,30 +216,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch settings values dynamically
-$school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
-$school_logo       = getSetting($pdo, 'school_logo', 'https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png');
-$school_address    = getSetting($pdo, 'school_address', 'P.O. Box 12, Kisoro – Uganda');
-$school_phone      = getSetting($pdo, 'school_phone', '+256 790 001 631');
-$school_email      = getSetting($pdo, 'school_email', 'info@ncedges.com');
-$school_website    = getSetting($pdo, 'school_website', 'www.mutolere.sc.ug');
-$admin_email       = getSetting($pdo, 'admin_email', 'info@ncedges.com');
+$school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$school_short_name  = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+$school_motto       = getSetting($pdo, 'school_motto', 'Education for Service');
+$school_logo        = getSetting($pdo, 'school_logo', '');
+$primary_color      = getPrimaryColor($pdo);
+$accent_color       = getAccentColor($pdo);
+$school_address     = getSetting($pdo, 'school_address', 'P.O. Box 12, Kisoro - Uganda');
+$school_phone       = getSetting($pdo, 'school_phone', '+256 790 001 631');
+$school_email       = getSetting($pdo, 'school_email', 'info@ncedges.com');
+$school_website     = getSetting($pdo, 'school_website', 'www.mutolere.sc.ug');
+$portal_base_url    = getSetting($pdo, 'portal_base_url', '');
 
-$fees_s1_tuition   = getSetting($pdo, 'fees_s1_tuition', '550000');
-$fees_s1_admission = getSetting($pdo, 'fees_s1_admission', '100000');
-$fees_s1_functional= getSetting($pdo, 'fees_s1_functional', '150000');
+$head_teacher_name  = getSetting($pdo, 'head_teacher_name', 'MRS. PEACE RUZAZA');
+$head_teacher_title = getSetting($pdo, 'head_teacher_title', 'Head Teacher');
+$school_code        = getSetting($pdo, 'school_code', '011');
+$student_number_format = getSetting($pdo, 'student_number_format', '{YY}{CLASS}{CODE}{SERIAL}');
+$academic_year      = getAcademicYear($pdo);
+$school_gender_type = getSchoolGenderType($pdo);
 
-$fees_s5_tuition   = getSetting($pdo, 'fees_s5_tuition', '600000');
-$fees_s5_admission = getSetting($pdo, 'fees_s5_admission', '120000');
-$fees_s5_functional= getSetting($pdo, 'fees_s5_functional', '180000');
+$admin_email        = getSetting($pdo, 'admin_email', 'info@ncedges.com');
+$application_notification_emails = getSetting($pdo, 'application_notification_emails', $admin_email);
 
-$fees_trans_tuition   = getSetting($pdo, 'fees_trans_tuition', '570000');
-$fees_trans_admission = getSetting($pdo, 'fees_trans_admission', '110000');
-$fees_trans_functional= getSetting($pdo, 'fees_trans_functional', '170000');
+// SMTP Settings
+$smtp_enabled       = getSetting($pdo, 'smtp_enabled', '1');
+$smtp_host          = getSetting($pdo, 'smtp_host', 'mail-gw.ncedges.com');
+$smtp_port          = getSetting($pdo, 'smtp_port', '587');
+$smtp_encryption    = getSetting($pdo, 'smtp_encryption', 'tls');
+$smtp_auth          = getSetting($pdo, 'smtp_auth', '1');
+$smtp_username      = getSetting($pdo, 'smtp_username', 'admissions-mutoleress@ncedges.com');
+$smtp_password      = getSetting($pdo, 'smtp_password', 'Uganda@23');
+$smtp_from_email    = getSetting($pdo, 'smtp_from_email', 'admissions-mutoleress@ncedges.com');
+$smtp_from_name     = getSetting($pdo, 'smtp_from_name', 'Admissions Office');
 
-// Generate local source path for preview
-$logo_source = $school_logo;
-if (strpos($logo_source, 'http') === false) {
-    $logo_source = '../' . $logo_source;
+// Intake Dates
+$admission_s1_start_date    = getSetting($pdo, 'admission_s1_start_date', '2026-01-05');
+$admission_s1_end_date      = getSetting($pdo, 'admission_s1_end_date', '2026-12-31');
+$admission_s5_start_date    = getSetting($pdo, 'admission_s5_start_date', '2026-01-10');
+$admission_s5_end_date      = getSetting($pdo, 'admission_s5_end_date', '2026-12-31');
+$admission_trans_start_date = getSetting($pdo, 'admission_trans_start_date', '2026-01-15');
+$admission_trans_end_date   = getSetting($pdo, 'admission_trans_end_date', '2026-12-31');
+
+$admission_s1_passmark      = getSetting($pdo, 'admission_s1_passmark', '28');
+$admission_s5_passmark      = getSetting($pdo, 'admission_s5_passmark', '42');
+
+$reporting_date_s1          = getSetting($pdo, 'reporting_date_s1', '2026-02-02');
+$reporting_date_s5          = getSetting($pdo, 'reporting_date_s5', '2026-02-09');
+$reporting_date_trans       = getSetting($pdo, 'reporting_date_trans', '2026-02-02');
+
+$val_date_s1    = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($reporting_date_s1)) ? trim($reporting_date_s1) : (strtotime($reporting_date_s1) ? date('Y-m-d', strtotime($reporting_date_s1)) : '2026-02-02');
+$val_date_s5    = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($reporting_date_s5)) ? trim($reporting_date_s5) : (strtotime($reporting_date_s5) ? date('Y-m-d', strtotime($reporting_date_s5)) : '2026-02-09');
+$val_date_trans = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($reporting_date_trans)) ? trim($reporting_date_trans) : (strtotime($reporting_date_trans) ? date('Y-m-d', strtotime($reporting_date_trans)) : '2026-02-02');
+
+$school_requirements        = getSetting($pdo, 'school_requirements', "1. School Uniform (Available at School Bursar's Office)\n2. Black leather shoes and white socks / stockings\n3. 10 Counter books (4-quire) and mathematical set\n4. Ream of photocopy paper (Rotatrim / Double A)\n5. 1 Hoe with handle and 1 Slasher\n6. Standard 2.5-inch Mattress, 2 pairs of bedsheets, and a blanket\n7. Metallic suitcase / trunk with sturdy padlock\n8. Passport photos (4 copies) and original PLE / UCE result slip");
+$admission_letter_custom_note = getSetting($pdo, 'admission_letter_custom_note', 'Please note: This provisional admission offer is subject to physical verification of original UNEB results slips and birth certificate upon arrival on the reporting date. Fees once paid are non-refundable.');
+
+$ai_auto_admit_enabled       = getSetting($pdo, 'ai_auto_admit_enabled', '1');
+$ai_auto_combination_enabled = getSetting($pdo, 'ai_auto_combination_enabled', '1');
+
+$doc_school_rules           = getSetting($pdo, 'doc_school_rules', '');
+$doc_admission_circular     = getSetting($pdo, 'doc_admission_circular', '');
+$doc_medical_form           = getSetting($pdo, 'doc_medical_form', '');
+
+$status_s1    = getAdmissionStatus($pdo, 'S1');
+$status_s5    = getAdmissionStatus($pdo, 'S5');
+$status_trans = getAdmissionStatus($pdo, 'trans');
+
+// Fees
+$fees_s1_tuition    = getSetting($pdo, 'fees_s1_tuition', '550000');
+$fees_s1_admission  = getSetting($pdo, 'fees_s1_admission', '100000');
+$fees_s1_functional = getSetting($pdo, 'fees_s1_functional', '150000');
+
+$fees_s2_tuition    = getSetting($pdo, 'fees_s2_tuition', '560000');
+$fees_s2_admission  = getSetting($pdo, 'fees_s2_admission', '100000');
+$fees_s2_functional = getSetting($pdo, 'fees_s2_functional', '155000');
+
+$fees_s3_tuition    = getSetting($pdo, 'fees_s3_tuition', '570000');
+$fees_s3_admission  = getSetting($pdo, 'fees_s3_admission', '100000');
+$fees_s3_functional = getSetting($pdo, 'fees_s3_functional', '160000');
+
+$fees_s4_tuition    = getSetting($pdo, 'fees_s4_tuition', '580000');
+$fees_s4_admission  = getSetting($pdo, 'fees_s4_admission', '110000');
+$fees_s4_functional = getSetting($pdo, 'fees_s4_functional', '165000');
+
+$fees_s5_tuition    = getSetting($pdo, 'fees_s5_tuition', '600000');
+$fees_s5_admission  = getSetting($pdo, 'fees_s5_admission', '120000');
+$fees_s5_functional = getSetting($pdo, 'fees_s5_functional', '180000');
+
+$fees_s6_tuition    = getSetting($pdo, 'fees_s6_tuition', '620000');
+$fees_s6_admission  = getSetting($pdo, 'fees_s6_admission', '120000');
+$fees_s6_functional = getSetting($pdo, 'fees_s6_functional', '185000');
+
+// Logo and Signature preview URLs
+$logo_source = getSchoolLogoSrc($pdo, '../');
+$signature_url = getSchoolSignatureUrl($pdo, '../');
+$school_website_url = getSchoolWebsiteUrl($pdo);
+$adminFirstName = getAdminDisplayName($pdo, $_SESSION['admin_username'] ?? '');
+
+$cf_turnstile_enabled    = getSetting($pdo, 'cf_turnstile_enabled', '0');
+$cf_turnstile_site_key   = getSetting($pdo, 'cf_turnstile_site_key', '');
+$cf_turnstile_secret_key = getSetting($pdo, 'cf_turnstile_secret_key', '');
+$staff_mfa_enabled       = getSetting($pdo, 'staff_mfa_enabled', '1');
+$a_level_combinations    = getSetting($pdo, 'a_level_combinations', '');
+
+$slider_images_json      = getSetting($pdo, 'hero_slider_images', '');
+$current_slider_images   = [];
+if (!empty($slider_images_json)) {
+    $decoded = json_decode($slider_images_json, true);
+    if (is_array($decoded)) {
+        $current_slider_images = $decoded;
+    }
+}
+if (empty($current_slider_images)) {
+    $current_slider_images = [
+        'images/campus.png',
+        'images/students.png',
+        'images/lab.png'
+    ];
 }
 ?>
 <!DOCTYPE html>
@@ -88,235 +340,1328 @@ if (strpos($logo_source, 'http') === false) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Settings | Admissions Central Portal</title>
-<!-- Tailwind CDN -->
+<title><?= $canAllSettings ? 'System Settings' : 'Admissions Intake Policies & Fees Matrix' ?> | <?= htmlspecialchars($school_short_name) ?></title>
+<link rel="icon" type="image/png" href="<?= !empty($logo_source) ? htmlspecialchars($logo_source) : '../images/default_logo.png' ?>">
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Font Awesome & Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Outfit', 'sans-serif'],
-            },
-            colors: {
-                brand: {
-                    50: '#edf5ef',
-                    100: '#dbeade',
-                    200: '#b7d5be',
-                    700: '#0c4a24',
-                    800: '#062f14',
-                    900: '#031b0b',
-                },
-                gold: {
-                    500: '#b58d2f',
-                    600: '#8a661c',
-                }
-            }
-        }
-    }
-}
-</script>
+<?= renderThemeConfig($pdo) ?>
 </head>
-<body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex">
+<body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0 min-h-screen">
+    <!-- Mobile Drawer Overlay & Sidebar -->
+    <div id="mobileSidebarBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden" onclick="toggleMobileSidebar()"></div>
+    <aside id="mobileSidebar" class="fixed top-0 bottom-0 left-0 w-72 bg-slate-900 text-slate-100 flex flex-col z-50 transform -translate-x-full transition-transform duration-200 ease-in-out md:hidden shadow-2xl">
+        <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="<?= htmlspecialchars($logo_source) ?>" alt="Logo" class="w-9 h-9 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+                <div class="min-w-0">
+                    <span class="block text-xs font-bold text-white tracking-tight uppercase truncate"><?= htmlspecialchars($school_short_name) ?></span>
+                    <span class="block text-[9px] font-semibold text-gold-500 uppercase tracking-widest">Staff Portal</span>
+                </div>
+            </div>
+            <button type="button" onclick="toggleMobileSidebar()" class="text-slate-400 hover:text-white p-1" aria-label="Close menu">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <nav class="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
+            <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-chart-line text-lg"></i> Dashboard
+            </a>
+            <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-graduation-cap text-lg"></i> Admitted Register
+            </a>
+            <a href="reports.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-file-invoice text-lg text-gold-500"></i> Custom Reports
+            </a>
+            <?php if (hasPermission($pdo, $currentRole, 'can_manage_users')): ?>
+            <a href="users.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-users text-lg"></i> Staff Users
+            </a>
+            <?php endif; ?>
+            <?php if (hasPermission($pdo, $currentRole, 'can_manage_roles') || hasPermission($pdo, $currentRole, 'can_manage_users')): ?>
+            <a href="roles.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-shield-halved text-lg"></i> Roles & Access
+            </a>
+            <?php endif; ?>
+            <?php if (hasPermission($pdo, $currentRole, 'can_view_logs')): ?>
+            <a href="logs.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-clock-rotate-left text-lg"></i> Activity Logs
+            </a>
+            <?php endif; ?>
+            <a href="settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold bg-brand-700 text-white transition">
+                <i class="fa-solid fa-sliders text-lg"></i> <?= $canAllSettings ? 'System Settings' : 'Policies & Fees' ?>
+            </a>
+            <div class="pt-4 border-t border-slate-800 mt-4">
+                <a href="<?= htmlspecialchars($school_website_url) ?>" target="_blank" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-globe text-gold-500"></i> Main School Website <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-auto"></i>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden md:flex w-64 bg-slate-900 text-slate-100 flex-col shrink-0 min-h-screen">
         <div class="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
-            <img src="<?= $logo_source ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
-            <div>
-                <span class="block text-sm font-bold text-white tracking-tight leading-tight uppercase"><?= htmlspecialchars(substr($school_name, 0, 15)) ?>...</span>
-                <span class="block text-xs font-semibold text-gold-500 uppercase tracking-widest text-[9px]">Consolidated Portal</span>
+            <img src="<?= htmlspecialchars($logo_source) ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+            <div class="min-w-0">
+                <span class="block text-sm font-bold text-white tracking-tight uppercase truncate"><?= htmlspecialchars($school_short_name) ?></span>
+                <span class="block text-xs font-semibold text-gold-500 uppercase tracking-widest text-[9px]">Staff Portal</span>
             </div>
         </div>
 
         <nav class="flex-1 px-4 py-6 space-y-1.5">
-            <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
-                <i class="fa-solid fa-chart-line text-lg"></i> Dashboard (S1-S6)
+            <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-chart-line text-lg"></i> Dashboard
             </a>
-            <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+            <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-graduation-cap text-lg"></i> Admitted Register
             </a>
-            <a href="reports.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+            <a href="reports.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-file-invoice text-lg text-gold-500"></i> Custom Reports
             </a>
-            <a href="users.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
-                <i class="fa-solid fa-users text-lg"></i> User Management
+            <?php if (hasPermission($pdo, $currentRole, 'can_manage_users')): ?>
+            <a href="users.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-users text-lg"></i> Staff Users
             </a>
-            <a href="logs.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
-                <i class="fa-solid fa-list-check text-lg"></i> Activity Logs
+            <?php endif; ?>
+            <?php if (hasPermission($pdo, $currentRole, 'can_manage_roles') || hasPermission($pdo, $currentRole, 'can_manage_users')): ?>
+            <a href="roles.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-shield-halved text-lg"></i> Roles & Access
             </a>
-            <a href="settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold bg-brand-700 text-white transition duration-150">
-                <i class="fa-solid fa-gears text-lg text-gold-500"></i> System Settings
+            <?php endif; ?>
+            <?php if (hasPermission($pdo, $currentRole, 'can_view_logs')): ?>
+            <a href="logs.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-clock-rotate-left text-lg"></i> Activity Logs
             </a>
-        </nav>
+            <?php endif; ?>
+            <a href="settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold bg-brand-700 text-white transition">
+                <i class="fa-solid fa-sliders text-lg"></i> <?= $canAllSettings ? 'System Settings' : 'Policies & Fees' ?>
+            </a>
 
-        <div class="px-6 py-4 border-t border-slate-800 text-xs text-slate-500 text-center">
-            Admissions Office · 2026
-        </div>
+            <div class="pt-4 border-t border-slate-800 mt-4">
+                <a href="<?= htmlspecialchars($school_website_url) ?>" target="_blank" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-globe text-gold-500"></i> Main School Website <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-auto"></i>
+                </a>
+            </div>
+        </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shadow-sm relative z-10">
-            <h1 class="text-xl font-bold text-slate-800 tracking-tight">System Settings & Controls</h1>
-            <span class="text-sm font-bold text-slate-600">Admin: <?= htmlspecialchars($_SESSION['admin_username']) ?></span>
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 min-h-screen">
+        <header class="bg-white border-b border-slate-200 px-4 sm:px-6 md:px-8 py-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="toggleMobileSidebar()" class="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl focus:outline-none" aria-label="Toggle Navigation">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div>
+                    <h1 class="text-base sm:text-xl font-bold text-slate-900 tracking-tight">
+                        <?= $canAllSettings ? 'System Configuration & Master Controls' : 'Intake Policies, Fees Matrix & Offer Letters' ?>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5 hidden sm:block">
+                        <?= $canAllSettings ? 'Customize school branding, intake dates, fee matrices, SMTP gateways, and official documents.' : 'Manage intake dates, passmarks, class fee matrices, offer letter details, and signature.' ?>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Profile & Header Actions -->
+            <div class="flex items-center gap-3 self-end sm:self-auto">
+                <button type="submit" form="mainSettingsForm" class="px-3.5 sm:px-4 py-2 bg-brand-700 hover:bg-brand-800 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Save</span> All Settings
+                </button>
+
+                <div class="relative">
+                    <button id="profileDropdownBtn" onclick="toggleDropdown()" class="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition focus:outline-none">
+                        <div class="w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                            <?= strtoupper(substr($adminFirstName, 0, 1)) ?>
+                        </div>
+                        <div class="text-left hidden sm:block">
+                            <span class="block text-xs font-bold text-slate-800">Welcome, <?= htmlspecialchars($adminFirstName) ?></span>
+                            <span class="block text-[10px] text-slate-400 capitalize"><?= htmlspecialchars(str_replace('_', ' ', $currentRole)) ?></span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs ml-1"></i>
+                    </button>
+
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50">
+                        <a href="change_password.php" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <i class="fa-solid fa-key text-slate-400"></i> Change Password
+                        </a>
+                        <div class="border-t border-slate-100 my-1"></div>
+                        <a href="logout.php" class="block px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                        </a>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <!-- Page Content -->
-        <div class="flex-1 px-8 py-6 space-y-6">
+        <!-- Interactive Settings Category Navigation Pills (Condensed titles to avoid horizontal scrolling) -->
+        <div class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 overflow-x-auto">
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <?php if ($canAllSettings): ?>
+                <button type="button" onclick="switchTab('profile')" id="pill-profile" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-brand-700 text-white shadow-sm whitespace-nowrap">
+                    <i class="fa-solid fa-school text-[11px]"></i> Branding
+                </button>
+                <?php endif; ?>
+                <button type="button" onclick="switchTab('admissions')" id="pill-admissions" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 <?= !$canAllSettings ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?> whitespace-nowrap">
+                    <i class="fa-solid fa-calendar-check text-[11px] text-gold-600"></i> Admissions
+                </button>
+                <button type="button" onclick="switchTab('fees')" id="pill-fees" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-coins text-[11px] text-brand-700"></i> Fees
+                </button>
+                <?php if ($canAllSettings): ?>
+                <button type="button" onclick="switchTab('smtp')" id="pill-smtp" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-envelope-circle-check text-[11px] text-blue-600"></i> SMTP
+                </button>
+                <?php endif; ?>
+                <button type="button" onclick="switchTab('letters')" id="pill-letters" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-file-signature text-[11px] text-purple-600"></i> Letters
+                </button>
+                <?php if ($canAllSettings): ?>
+                <button type="button" onclick="switchTab('slider')" id="pill-slider" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-images text-[11px] text-amber-600"></i> Slider
+                </button>
+                <button type="button" onclick="switchTab('security')" id="pill-security" class="tab-pill px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-shield-halved text-[11px] text-emerald-600"></i> Security
+                </button>
+                <?php endif; ?>
+                <?php if ($canAllSettings || hasPermission($pdo, $currentRole, 'can_manage_roles')): ?>
+                <a href="roles.php" class="px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap ms-auto">
+                    <i class="fa-solid fa-user-shield text-[11px] text-slate-500"></i> Roles & Access
+                </a>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
 
             <!-- Alerts -->
             <?php if ($error): ?>
-                <div class="bg-rose-50 border-l-4 border-rose-500 text-rose-800 p-4 rounded-lg flex items-center gap-3 shadow-sm animate-shake">
-                    <i class="fa-solid fa-triangle-exclamation text-xl text-rose-500"></i>
-                    <span class="text-sm font-semibold"><?= htmlspecialchars($error) ?></span>
+                <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold rounded-xl flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                    <span><?= htmlspecialchars($error) ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if ($success): ?>
-                <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 p-4 rounded-lg flex items-center gap-3 shadow-sm">
-                    <i class="fa-solid fa-circle-check text-xl text-emerald-500"></i>
-                    <span class="text-sm font-semibold"><?= htmlspecialchars($success) ?></span>
+                <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-xl flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                    <span><?= htmlspecialchars($success) ?></span>
                 </div>
             <?php endif; ?>
 
-            <form method="POST" enctype="multipart/form-data" class="space-y-6">
-                
-                <!-- School Profile section -->
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider border-b border-slate-100 pb-2">
-                        <i class="fa-solid fa-school text-brand-700 me-1.5"></i> School Profile Details
-                    </h3>
+            <form id="mainSettingsForm" method="POST" enctype="multipart/form-data">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Official School Name</label>
-                            <input type="text" name="school_name" value="<?= htmlspecialchars($school_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                <!-- TAB 1: SCHOOL PROFILE & BRANDING (Super Admin Only) -->
+                <?php if ($canAllSettings): ?>
+                <div id="tab-profile" class="tab-content space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-building-columns text-brand-700"></i> General School Identity
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">These parameters populate all web headers, offer letters, student documents, and report headers.</p>
+                            </div>
                         </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Official School Name *</label>
+                                <input type="text" name="school_name" value="<?= htmlspecialchars($school_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-700" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Short Name / Acronym *</label>
+                                <input type="text" name="school_short_name" value="<?= htmlspecialchars($school_short_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-700" required>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">School Motto</label>
+                                <input type="text" name="school_motto" value="<?= htmlspecialchars($school_motto) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">UNEB Centre Code</label>
+                                <input type="text" name="school_code" value="<?= htmlspecialchars($school_code) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. 011">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Current Academic Intake Year</label>
+                                <input type="text" name="academic_year" value="<?= htmlspecialchars($academic_year) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. 2026">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Physical Campus Address</label>
+                                <input type="text" name="school_address" value="<?= htmlspecialchars($school_address) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Official Telephone Line</label>
+                                <input type="text" name="school_phone" value="<?= htmlspecialchars($school_phone) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Official School Email</label>
+                                <input type="email" name="school_email" value="<?= htmlspecialchars($school_email) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Main School Website (URL)</label>
+                                <input type="text" name="school_website" value="<?= htmlspecialchars($school_website) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. www.sesemegirls.sc.ug">
+                                <p class="text-[11px] text-slate-400 mt-1">Appears on navigation menus and offer letters with direct link.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Portal Base URL (Optional)</label>
+                                <input type="text" name="portal_base_url" value="<?= htmlspecialchars($portal_base_url) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="Leave blank for auto-detect">
+                            </div>
+                        </div>
+
+                        <!-- Student Number Format Configuration Card -->
+                        <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200/80 pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center text-sm font-bold border border-brand-200">
+                                        <i class="fa-solid fa-id-card-clip"></i>
+                                    </span>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-900 uppercase">Student Number / Admission ID Format</h4>
+                                        <p class="text-[11px] text-slate-500">Configure institutional numbering rules for enrolled and admitted students.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 self-start sm:self-auto">
+                                    <span class="text-[11px] font-bold text-slate-500">Live Preview:</span>
+                                    <span id="studentNumberPreviewBadge" class="px-2.5 py-1 rounded-lg text-xs font-mono font-black bg-brand-100 text-brand-900 border border-brand-300">
+                                        <?= htmlspecialchars(getAdmissionNumber(['id' => 1, 'class_of_entry' => 'S5', 'academic_year' => $academic_year], $pdo)) ?>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase">
+                                    Pattern / Format String
+                                </label>
+                                <input type="text" name="student_number_format" id="studentNumberFormatInput" value="<?= htmlspecialchars($student_number_format) ?>" oninput="updateStudentNumberPreview()" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-800 bg-white focus:outline-none focus:border-brand-700 transition" placeholder="{YY}{CLASS}{CODE}{SERIAL}">
+                            </div>
+
+                            <!-- Preset Buttons -->
+                            <div class="space-y-1.5 pt-1">
+                                <span class="block text-[10.5px] font-bold text-slate-500 uppercase">Quick Presets (Click to apply):</span>
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    <button type="button" onclick="setStudentNumberPreset('{YY}{CLASS}{CODE}{SERIAL}')" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-mono text-[11px] transition">
+                                        {YY}{CLASS}{CODE}{SERIAL} <span class="text-slate-400 font-sans">(e.g. 270509801)</span>
+                                    </button>
+                                    <button type="button" onclick="setStudentNumberPreset('ADM/{YYYY}/{CLASS}/{SERIAL4}')" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-mono text-[11px] transition">
+                                        ADM/{YYYY}/{CLASS}/{SERIAL4} <span class="text-slate-400 font-sans">(e.g. ADM/2026/05/0001)</span>
+                                    </button>
+                                    <button type="button" onclick="setStudentNumberPreset('{CODE}/{YY}/{SERIAL4}')" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-mono text-[11px] transition">
+                                        {CODE}/{YY}/{SERIAL4} <span class="text-slate-400 font-sans">(e.g. 011/26/0001)</span>
+                                    </button>
+                                    <button type="button" onclick="setStudentNumberPreset('{YYYY}-{CLASS_NAME}-{SERIAL3}')" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-mono text-[11px] transition">
+                                        {YYYY}-{CLASS_NAME}-{SERIAL3} <span class="text-slate-400 font-sans">(e.g. 2026-S5-001)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Token Explanation Guide -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[10.5px] text-slate-600 bg-white p-3 rounded-xl border border-slate-200/80">
+                                <div><code class="font-bold text-brand-800">{YY}</code> : 2-digit Year (26)</div>
+                                <div><code class="font-bold text-brand-800">{YYYY}</code> : 4-digit Year (2026)</div>
+                                <div><code class="font-bold text-brand-800">{CLASS}</code> : 2-digit Class (01, 05)</div>
+                                <div><code class="font-bold text-brand-800">{CLASS_NAME}</code> : Class Code (S1, S5)</div>
+                                <div><code class="font-bold text-brand-800">{CODE}</code> : Center Code (011)</div>
+                                <div><code class="font-bold text-brand-800">{SERIAL}</code> : 2-digit Serial (01)</div>
+                                <div><code class="font-bold text-brand-800">{SERIAL3}</code> : 3-digit Serial (001)</div>
+                                <div><code class="font-bold text-brand-800">{SERIAL4}</code> : 4-digit Serial (0001)</div>
+                            </div>
+                        </div>
+
+                        <!-- System Colors & Logo Upload -->
+                        <div class="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Theme Colors -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">System Color Branding</h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Primary Color</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" id="primaryColorPicker" name="primary_color" value="<?= htmlspecialchars($primary_color) ?>" class="w-8 h-8 rounded cursor-pointer border border-slate-200">
+                                            <input type="text" id="primaryColorInput" value="<?= htmlspecialchars($primary_color) ?>" class="w-full px-2 py-1 border border-slate-200 rounded-lg text-xs font-mono">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Accent Gold Color</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" id="accentColorPicker" name="accent_color" value="<?= htmlspecialchars($accent_color) ?>" class="w-8 h-8 rounded cursor-pointer border border-slate-200">
+                                            <input type="text" id="accentColorInput" value="<?= htmlspecialchars($accent_color) ?>" class="w-full px-2 py-1 border border-slate-200 rounded-lg text-xs font-mono">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logo Upload -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Official School Crest / Logo</h4>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-16 h-16 rounded-xl border border-slate-200 p-1 bg-white shadow-sm flex items-center justify-center shrink-0">
+                                        <img src="<?= htmlspecialchars($logo_source) ?>" id="currentLogoPreview" alt="Logo Preview" class="max-w-full max-h-full object-contain">
+                                    </div>
+                                    <div class="flex-1 space-y-1">
+                                        <input type="file" name="logo_upload" accept="image/*" onchange="previewSelectedLogo(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer">
+                                        <p class="text-[10px] text-slate-400">Upload PNG or JPG. Changes reflect immediately system-wide.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- TAB 2: ADMISSIONS & INTAKE POLICIES -->
+                <div id="tab-admissions" class="tab-content <?= $canAllSettings ? 'hidden' : '' ?> space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-venus-mars text-brand-700"></i> School Gender Policy
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Define if the school admits boys only, girls only, or both.</p>
+                            </div>
+                        </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">School Website Address</label>
-                            <input type="text" name="school_website" value="<?= htmlspecialchars($school_website) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-mono" required>
+                            <?php if (($_SESSION['admin_role'] ?? '') === 'super_admin'): ?>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                        <input type="radio" name="school_gender_type" value="mixed" <?= ($school_gender_type === 'mixed') ? 'checked' : '' ?> class="text-brand-700">
+                                        <div>
+                                            <span class="block text-xs font-bold text-slate-800">Mixed School</span>
+                                            <span class="block text-[10px] text-slate-400">Accepts Male & Female</span>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                        <input type="radio" name="school_gender_type" value="girls" <?= ($school_gender_type === 'girls') ? 'checked' : '' ?> class="text-brand-700">
+                                        <div>
+                                            <span class="block text-xs font-bold text-slate-800">Girls Only School</span>
+                                            <span class="block text-[10px] text-slate-400">Female Applicants Only</span>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                        <input type="radio" name="school_gender_type" value="boys" <?= ($school_gender_type === 'boys') ? 'checked' : '' ?> class="text-brand-700">
+                                        <div>
+                                            <span class="block text-xs font-bold text-slate-800">Boys Only School</span>
+                                            <span class="block text-[10px] text-slate-400">Male Applicants Only</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            <?php else: ?>
+                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-amber-800">
+                                        <i class="fa-solid fa-lock text-amber-600"></i>
+                                        <span>Restricted Setting: Only Super Administrator can modify the school gender admission policy.</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <span class="text-xs text-slate-500 font-semibold">Active Institutional Policy:</span>
+                                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-brand-100 text-brand-900 border border-brand-300">
+                                            <?= ($school_gender_type === 'girls') ? 'Girls Only School' : (($school_gender_type === 'boys') ? 'Boys Only School' : 'Mixed School') ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Intake Calendars & Cutoff Passmarks</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <!-- Senior One -->
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                        <span class="font-bold text-brand-700 text-xs uppercase">Senior One (S1)</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold <?= $status_s1['status'] === 'open' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' ?>">
+                                            <?= strtoupper($status_s1['status']) ?>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Start Date</label>
+                                        <input type="date" name="admission_s1_start_date" value="<?= htmlspecialchars($admission_s1_start_date) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Application Deadline</label>
+                                        <input type="date" name="admission_s1_end_date" value="<?= htmlspecialchars($admission_s1_end_date) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">PLE Cutoff Passmark (Aggregates)</label>
+                                        <input type="number" name="admission_s1_passmark" value="<?= htmlspecialchars($admission_s1_passmark) ?>" min="4" max="36" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-mono font-bold bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Reporting Date</label>
+                                        <input type="date" name="reporting_date_s1" value="<?= htmlspecialchars($val_date_s1) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                </div>
+
+                                <!-- Senior Five -->
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                        <span class="font-bold text-brand-700 text-xs uppercase">Senior Five (S5)</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold <?= $status_s5['status'] === 'open' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' ?>">
+                                            <?= strtoupper($status_s5['status']) ?>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Start Date</label>
+                                        <input type="date" name="admission_s5_start_date" value="<?= htmlspecialchars($admission_s5_start_date) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Application Deadline</label>
+                                        <input type="date" name="admission_s5_end_date" value="<?= htmlspecialchars($admission_s5_end_date) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">UCE Cutoff Passmark (Aggregates)</label>
+                                        <input type="number" name="admission_s5_passmark" value="<?= htmlspecialchars($admission_s5_passmark) ?>" min="8" max="54" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-mono font-bold bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Reporting Date</label>
+                                        <input type="date" name="reporting_date_s5" value="<?= htmlspecialchars($val_date_s5) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                </div>
+
+                                <!-- Transfers -->
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                        <span class="font-bold text-brand-700 text-xs uppercase">Transfers (S2-S6)</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold <?= $status_trans['status'] === 'open' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' ?>">
+                                            <?= strtoupper($status_trans['status']) ?>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Start Date</label>
+                                        <input type="date" name="admission_trans_start_date" value="<?= htmlspecialchars($admission_trans_start_date) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Application Deadline</label>
+                                        <input type="date" name="admission_trans_end_date" value="<?= htmlspecialchars($admission_trans_end_date) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                    <div class="p-2 bg-amber-50 rounded-lg border border-amber-200 text-[10px] text-amber-800 font-medium">
+                                        <i class="fa-solid fa-circle-check text-amber-600"></i> No Cutoff Point Required: Transfers are evaluated manually.
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Reporting Date</label>
+                                        <input type="date" name="reporting_date_trans" value="<?= htmlspecialchars($val_date_trans) ?>" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">School Address / P.O. Box</label>
-                            <input type="text" name="school_address" value="<?= htmlspecialchars($school_address) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700" required>
+                    <!-- AI Smart Admissions & Subject Combination Engine Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-brand-700"></i> AI Smart Admissions & Subject Combination Engine
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Automate candidate qualification evaluation, smart merit auto-admissions, and A-Level combination assignments.</p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Official Telephone Contacts</label>
-                            <input type="text" name="school_phone" value="<?= htmlspecialchars($school_phone) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-mono" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Official School Email Address</label>
-                            <input type="email" name="school_email" value="<?= htmlspecialchars($school_email) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700" required>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-800">AI Auto-Admission on Qualifying Merit</span>
+                                        <span class="block text-[11px] text-slate-500">Auto-evaluates submissions against cutoff passmarks and instantly admits candidates.</span>
+                                    </div>
+                                    <input type="checkbox" name="ai_auto_admit_enabled" value="1" <?= ($ai_auto_admit_enabled === '1') ? 'checked' : '' ?> class="w-5 h-5 rounded text-brand-700 focus:ring-brand-700">
+                                </label>
+                                <p class="text-[10px] text-slate-400 leading-relaxed">
+                                    When enabled, candidates meeting cutoff criteria (PLE aggregates for S1, UCE passmarks for S5) are automatically admitted, issued provisional offers via email, and logged to audit trails.
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-800">AI Intelligent S5 Subject Combination Matcher</span>
+                                        <span class="block text-[11px] text-slate-500">Evaluates UCE NLSC competencies to assign optimal subject combinations.</span>
+                                    </div>
+                                    <input type="checkbox" name="ai_auto_combination_enabled" value="1" <?= ($ai_auto_combination_enabled === '1') ? 'checked' : '' ?> class="w-5 h-5 rounded text-brand-700 focus:ring-brand-700">
+                                </label>
+                                <p class="text-[10px] text-slate-400 leading-relaxed">
+                                    Analyzes candidate's top grades in Sciences and Arts to recommend and confirm matching combinations (e.g. PCM, PCB, BCM, HEG, HEL).
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Logo Section -->
-                    <div class="pt-4 border-t border-slate-100 flex flex-col md:flex-row items-center gap-6">
-                        <div class="shrink-0 text-center">
-                            <span class="block text-xs font-bold text-slate-400 uppercase mb-2">Current System Logo</span>
-                            <img src="<?= $logo_source ?>?t=<?= time() ?>" alt="School Logo" class="w-24 h-24 object-contain border border-slate-200 rounded-lg p-2 bg-slate-50">
+                    <!-- Academic Year Cohort Archival & Active Intake Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-clock-rotate-left text-brand-700"></i> Academic Intake Cohort & Historical Archival
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Control the current public admissions year while segregating and preserving historical admission cohorts.</p>
+                            </div>
                         </div>
-                        <div class="flex-1 space-y-1">
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Upload New Logo (Replaces Current Logo System-wide)</label>
-                            <input type="file" name="logo_upload" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
-                            <p class="text-[10px] text-slate-400">Recommended: Transparent PNG or crisp JPEG file on white backgrounds.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Active Academic Year *</label>
+                                <input type="text" name="academic_year" value="<?= htmlspecialchars($academic_year) ?>" required class="w-full px-3 py-2 border-2 border-brand-700/60 rounded-xl text-sm font-bold font-mono text-brand-900 bg-brand-50/20 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. 2026">
+                                <p class="text-[10px] text-slate-400 mt-1">Populates public forms, offer letters, and admission lists.</p>
+                            </div>
+                            <div class="md:col-span-2 p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900 space-y-1">
+                                <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-emerald-600"></i> Zero-Data-Loss Archival Guarantee:</span>
+                                <p class="text-[11px] leading-relaxed text-emerald-800">
+                                    Changing this year automatically isolates the public portal to the new intake. All candidate records from previous academic years (e.g. 2024, 2025) are safely preserved and archived from the public view, remaining fully accessible to authorized staff with the Academic Year filter in the Admin Dashboard and Custom Reports.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A-Level Subject Combinations & Electives Matrix Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-graduation-cap text-brand-700"></i> A-Level Subject Combinations Matrix (S5 & S6)
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Define and customize the subject combinations and subsidiaries offered to Senior Five and Senior Six applicants.</p>
+                            </div>
+                            <button type="button" onclick="resetDefaultCombinations()" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Reset to UNEB Standards
+                            </button>
+                        </div>
+
+                        <?php
+                        $rawCombs = !empty($a_level_combinations) ? $a_level_combinations : json_encode([
+                            'Sciences' => [
+                                'PCM/ICT' => 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)',
+                                'PCM/SMT' => 'PCM/SMT (Physics, Chemistry, Mathematics & Sub-Math)',
+                                'PCB/ICT' => 'PCB/ICT (Physics, Chemistry, Biology & ICT)',
+                                'PCB/SMT' => 'PCB/SMT (Physics, Chemistry, Biology & Sub-Math)',
+                                'BCM/ICT' => 'BCM/ICT (Biology, Chemistry, Mathematics & ICT)',
+                                'BCM/SMT' => 'BCM/SMT (Biology, Chemistry, Mathematics & Sub-Math)',
+                                'PEM/ICT' => 'PEM/ICT (Physics, Economics, Mathematics & ICT)',
+                                'PEM/SMT' => 'PEM/SMT (Physics, Economics, Mathematics & Sub-Math)',
+                                'MEG/ICT' => 'MEG/ICT (Mathematics, Economics, Geography & ICT)',
+                                'MEG/SMT' => 'MEG/SMT (Mathematics, Economics, Geography & Sub-Math)',
+                                'BCG/ICT' => 'BCG/ICT (Biology, Chemistry, Geography & ICT)',
+                                'MAG/ICT' => 'MAG/ICT (Mathematics, Agriculture, Geography & ICT)',
+                            ],
+                            'Arts & Humanities' => [
+                                'HEG/ICT' => 'HEG/ICT (History, Economics, Geography & ICT)',
+                                'HEG/SMT' => 'HEG/SMT (History, Economics, Geography & Sub-Math)',
+                                'HEL/ICT' => 'HEL/ICT (History, Economics, Literature & ICT)',
+                                'HEL/SMT' => 'HEL/SMT (History, Economics, Literature & Sub-Math)',
+                                'HLD/ICT' => 'HLD/ICT (History, Literature, Divinity & ICT)',
+                                'DEG/ICT' => 'DEG/ICT (Divinity, Economics, Geography & ICT)',
+                                'HED/ICT' => 'HED/ICT (History, Economics, Divinity & ICT)',
+                                'LEG/ICT' => 'LEG/ICT (Literature, Economics, Geography & ICT)',
+                                'GEA/ICT' => 'GEA/ICT (Geography, Entrepreneurship, Art & ICT)',
+                                'MEA/ICT' => 'MEA/ICT (Mathematics, Economics, Art & ICT)',
+                            ]
+                        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                        ?>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase">Combinations Configuration (JSON Matrix)</label>
+                            <textarea name="a_level_combinations" id="aLevelCombsTextarea" rows="10" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-brand-700 transition leading-relaxed"><?= htmlspecialchars($rawCombs) ?></textarea>
+                            <p class="text-[11px] text-slate-500">
+                                <i class="fa-solid fa-circle-info mr-1 text-brand-700"></i> Organize combinations by category (e.g. Sciences, Arts & Humanities). Each code maps to its full title and subsidiary (ICT or Sub-Math).
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Notification control -->
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider border-b border-slate-100 pb-2">
-                        <i class="fa-solid fa-envelope-open-text text-brand-700 me-1.5"></i> Admissions Alert Routing
-                    </h3>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Recipient Email Addresses (Comma-separated)</label>
-                        <input type="text" name="admin_email" value="<?= htmlspecialchars($admin_email) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-mono" required>
-                        <p class="text-[10px] text-slate-400 mt-1">Alerts about new student admissions applications will be sent to these addresses automatically.</p>
+                <!-- TAB 3: O & A-LEVEL FEES MATRIX -->
+                <div id="tab-fees" class="tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-coins text-brand-700"></i> Class-by-Class Fee Structures
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Figures auto-format with comma separators. Live totals compute automatically.</p>
+                            </div>
+                        </div>
+
+                        <!-- O-Level -->
+                        <div>
+                            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-brand-50 text-brand-800 border border-brand-200 uppercase tracking-wider inline-block mb-3">
+                                Ordinary Level Classes (S1 - S4)
+                            </span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <?php
+                                $oClasses = [
+                                    's1' => ['Senior One (S1)', $fees_s1_tuition, $fees_s1_admission, $fees_s1_functional],
+                                    's2' => ['Senior Two (S2)', $fees_s2_tuition, $fees_s2_admission, $fees_s2_functional],
+                                    's3' => ['Senior Three (S3)', $fees_s3_tuition, $fees_s3_admission, $fees_s3_functional],
+                                    's4' => ['Senior Four (S4)', $fees_s4_tuition, $fees_s4_admission, $fees_s4_functional],
+                                ];
+                                foreach ($oClasses as $key => $info):
+                                    $tot = (int)$info[1] + (int)$info[2] + (int)$info[3];
+                                ?>
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
+                                    <div class="flex justify-between items-center border-b border-slate-200 pb-1.5">
+                                        <span class="font-bold text-brand-700 text-xs"><?= $info[0] ?></span>
+                                        <span class="text-[10px] font-bold text-slate-600 font-mono" id="total_<?= $key ?>_preview">UGX <?= formatMoney($tot) ?></span>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Tuition</label>
+                                        <input type="text" name="fees_<?= $key ?>_tuition" value="<?= formatMoney($info[1]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Admission Fee</label>
+                                        <input type="text" name="fees_<?= $key ?>_admission" value="<?= formatMoney($info[2]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Functional Fee</label>
+                                        <input type="text" name="fees_<?= $key ?>_functional" value="<?= formatMoney($info[3]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- A-Level -->
+                        <div class="pt-4 border-t border-slate-100">
+                            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-gold-50 text-gold-800 border border-gold-200 uppercase tracking-wider inline-block mb-3">
+                                Advanced Level Classes (S5 - S6)
+                            </span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <?php
+                                $aClasses = [
+                                    's5' => ['Senior Five (S5)', $fees_s5_tuition, $fees_s5_admission, $fees_s5_functional],
+                                    's6' => ['Senior Six (S6)', $fees_s6_tuition, $fees_s6_admission, $fees_s6_functional],
+                                ];
+                                foreach ($aClasses as $key => $info):
+                                    $tot = (int)$info[1] + (int)$info[2] + (int)$info[3];
+                                ?>
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
+                                    <div class="flex justify-between items-center border-b border-slate-200 pb-1.5">
+                                        <span class="font-bold text-brand-700 text-xs"><?= $info[0] ?></span>
+                                        <span class="text-[10px] font-bold text-slate-600 font-mono" id="total_<?= $key ?>_preview">UGX <?= formatMoney($tot) ?></span>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Tuition</label>
+                                        <input type="text" name="fees_<?= $key ?>_tuition" value="<?= formatMoney($info[1]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Admission Fee</label>
+                                        <input type="text" name="fees_<?= $key ?>_admission" value="<?= formatMoney($info[2]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Functional Fee</label>
+                                        <input type="text" name="fees_<?= $key ?>_functional" value="<?= formatMoney($info[3]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Fees Structure Matrix Section -->
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider border-b border-slate-100 pb-2">
-                        <i class="fa-solid fa-coins text-brand-700 me-1.5"></i> Tuition & Fees matrix Configuration
-                    </h3>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                        <!-- S1 Fees Card -->
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                            <h4 class="font-bold text-brand-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-1.5"><i class="fa-solid fa-chevron-right"></i> Senior One (S1)</h4>
+                <!-- TAB 4: EMAIL & SMTP GATEWAY (Super Admin Only) -->
+                <?php if ($canAllSettings): ?>
+                <div id="tab-smtp" class="tab-content hidden space-y-6">
+                    <!-- INCOMING APPLICATION SUBMISSION ALERTS WINDOW -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tuition Fees (UGX)</label>
-                                <input type="number" name="fees_s1_tuition" value="<?= htmlspecialchars($fees_s1_tuition) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-bell text-amber-600"></i> Application Submission Notification Recipients
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Specify who should receive email alerts whenever a new admission application is submitted through the portal.</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">Instant Alerts</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Notification Recipient Emails (Comma-separated) *</label>
+                                <textarea name="application_notification_emails" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. admissions@sesemegirls.sc.ug, headteacher@sesemegirls.sc.ug, registrar@sesemegirls.sc.ug"><?= htmlspecialchars($application_notification_emails) ?></textarea>
+                                <span class="text-[11px] text-slate-500 mt-1 block">Enter one or multiple email addresses separated by commas. Every email listed here will instantly receive full student summary alerts for incoming applications.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-server text-blue-600"></i> SMTP Mail Server Gateway Setup
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Configure custom SMTP servers (webmail.ncedges.com, Gmail, Outlook, cPanel). All system emails route through this server.</p>
+                            </div>
+                            <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                                <input type="checkbox" name="smtp_enabled" value="1" <?= ($smtp_enabled == '1') ? 'checked' : '' ?> class="rounded text-brand-700">
+                                <span>Enable SMTP Gateway</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">SMTP Server Host *</label>
+                                <input type="text" id="smtpHostInput" name="smtp_host" value="<?= htmlspecialchars($smtp_host) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. mail-gw.ncedges.com, smtp.gmail.com">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Admission Fees (UGX)</label>
-                                <input type="number" name="fees_s1_admission" value="<?= htmlspecialchars($fees_s1_admission) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">SMTP Port *</label>
+                                <input type="number" id="smtpPortInput" name="smtp_port" value="<?= htmlspecialchars($smtp_port) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="465, 587, or 25">
+                                <span class="text-[10px] text-slate-400">465 (SSL) / 587 (TLS) / 25 (Standard)</span>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Functional & Other Fees (UGX)</label>
-                                <input type="number" name="fees_s1_functional" value="<?= htmlspecialchars($fees_s1_functional) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Security Encryption *</label>
+                                <select id="smtpEncInput" name="smtp_encryption" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700 bg-white">
+                                    <option value="tls" <?= ($smtp_encryption === 'tls') ? 'selected' : '' ?>>TLS (Recommended for Port 587)</option>
+                                    <option value="ssl" <?= ($smtp_encryption === 'ssl') ? 'selected' : '' ?>>SSL (Port 465)</option>
+                                    <option value="none" <?= ($smtp_encryption === 'none' || empty($smtp_encryption)) ? 'selected' : '' ?>>None / Unencrypted (Port 25)</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- S5 Fees Card -->
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                            <h4 class="font-bold text-brand-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-1.5"><i class="fa-solid fa-chevron-right"></i> Senior Five (S5)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tuition Fees (UGX)</label>
-                                <input type="number" name="fees_s5_tuition" value="<?= htmlspecialchars($fees_s5_tuition) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">SMTP Username / Email *</label>
+                                <input type="text" id="smtpUserInput" name="smtp_username" value="<?= htmlspecialchars($smtp_username) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. admissions@sesemegirls.sc.ug">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Admission Fees (UGX)</label>
-                                <input type="number" name="fees_s5_admission" value="<?= htmlspecialchars($fees_s5_admission) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Functional & Other Fees (UGX)</label>
-                                <input type="number" name="fees_s5_functional" value="<?= htmlspecialchars($fees_s5_functional) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">SMTP Password *</label>
+                                <input type="password" id="smtpPassInput" name="smtp_password" value="<?= htmlspecialchars($smtp_password) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700">
                             </div>
                         </div>
 
-                        <!-- Transfers Fees Card -->
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                            <h4 class="font-bold text-brand-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-1.5"><i class="fa-solid fa-chevron-right"></i> Transfers (S2, S3, S4, S6)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tuition Fees (UGX)</label>
-                                <input type="number" name="fees_trans_tuition" value="<?= htmlspecialchars($fees_trans_tuition) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">From Sender Email</label>
+                                <input type="email" id="smtpFromEmailInput" name="smtp_from_email" value="<?= htmlspecialchars($smtp_from_email) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="admissions@school.sc.ug">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Admission Fees (UGX)</label>
-                                <input type="number" name="fees_trans_admission" value="<?= htmlspecialchars($fees_trans_admission) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Functional & Other Fees (UGX)</label>
-                                <input type="number" name="fees_trans_functional" value="<?= htmlspecialchars($fees_trans_functional) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700 font-semibold" required>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">From Sender Display Name</label>
+                                <input type="text" id="smtpFromNameInput" name="smtp_from_name" value="<?= htmlspecialchars($smtp_from_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. Seseme Girls SS Admissions">
                             </div>
                         </div>
 
+                        <!-- LIVE SMTP TEST UTILITY -->
+                        <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-paper-plane text-brand-700"></i> Test SMTP Gateway Connection
+                            </h4>
+                            <p class="text-xs text-slate-500">Send an immediate test verification email to ensure host, port, credentials, and handshake succeed before live admissions emails are dispatched.</p>
+
+                            <div class="flex flex-col sm:flex-row items-center gap-3">
+                                <input type="email" id="testEmailRecipient" placeholder="Enter recipient email (e.g. info@ncedges.com)" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700 bg-white">
+                                <button type="button" onclick="runSmtpTest()" id="smtpTestBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-2">
+                                    <i class="fa-solid fa-plug"></i> Test SMTP Connection
+                                </button>
+                            </div>
+
+                            <div id="smtpTestResult" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- TAB 5: LETTERS, SIGNATURE & OFFICIAL DOCUMENTS -->
+                <div id="tab-letters" class="tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-file-contract text-brand-700"></i> Admission Letter Sign-off & Head Teacher Credentials
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Configure sign-off authority and upload transparent e-signature to appear on admission letters.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Head Teacher Official Name *</label>
+                                <input type="text" name="head_teacher_name" value="<?= htmlspecialchars($head_teacher_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. MRS. PEACE RUZAZA">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Signatory Title</label>
+                                <input type="text" name="head_teacher_title" value="<?= htmlspecialchars($head_teacher_title) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="Head Teacher">
+                            </div>
+                        </div>
+
+                        <!-- E-Signature Upload -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Official E-Signature Upload</h4>
+                            <p class="text-xs text-slate-500">Upload high-resolution transparent PNG or clean signature scan. When uploaded, this appears directly on the Head Teacher signature line on admission letters. If not set, a formal signature line is printed for manual pen signing.</p>
+
+                            <div class="flex items-center gap-5">
+                                <div class="w-40 h-16 border border-slate-200 rounded-xl bg-white p-2 flex items-center justify-center shrink-0">
+                                    <?php if ($signature_url): ?>
+                                        <img src="<?= htmlspecialchars($signature_url) ?>" alt="Signature" class="max-h-full max-w-full object-contain">
+                                    <?php else: ?>
+                                        <span class="text-[10px] text-slate-400 font-mono">No Signature Set</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="flex-1 space-y-1">
+                                    <input type="file" name="headteacher_signature_upload" accept="image/png,image/jpeg,image/webp" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer">
+                                    <p class="text-[10px] text-slate-400">Transparent PNG recommended. Size will be neatly balanced on PDF letters.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Note -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Admission Letter Custom Note / Instructions</label>
+                            <textarea name="admission_letter_custom_note" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700"><?= htmlspecialchars($admission_letter_custom_note) ?></textarea>
+                            <p class="text-[10px] text-slate-400 mt-1">Appears at the bottom of the official admission offer letter in small font.</p>
+                        </div>
+
+                        <!-- Requirements Checklist -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">School Requirements Checklist</label>
+                            <textarea name="school_requirements" rows="4" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700"><?= htmlspecialchars($school_requirements) ?></textarea>
+                        </div>
+
+                        <!-- Enclosures -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase">School Rules & Regulations</label>
+                                <?php if (!empty($doc_school_rules)): ?>
+                                    <a href="../<?= htmlspecialchars($doc_school_rules) ?>" target="_blank" class="text-[11px] font-semibold text-brand-700 underline flex items-center gap-1"><i class="fa-solid fa-file-pdf text-rose-500"></i> View Uploaded Rules</a>
+                                <?php endif; ?>
+                                <input type="file" name="doc_school_rules_file" accept=".pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:bg-brand-50 file:text-brand-700 cursor-pointer">
+                            </div>
+                            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase">Term Admissions Circular</label>
+                                <?php if (!empty($doc_admission_circular)): ?>
+                                    <a href="../<?= htmlspecialchars($doc_admission_circular) ?>" target="_blank" class="text-[11px] font-semibold text-brand-700 underline flex items-center gap-1"><i class="fa-solid fa-file-pdf text-rose-500"></i> View Uploaded Circular</a>
+                                <?php endif; ?>
+                                <input type="file" name="doc_admission_circular_file" accept=".pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:bg-brand-50 file:text-brand-700 cursor-pointer">
+                            </div>
+                            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase">Medical Examination Form</label>
+                                <?php if (!empty($doc_medical_form)): ?>
+                                    <a href="../<?= htmlspecialchars($doc_medical_form) ?>" target="_blank" class="text-[11px] font-semibold text-brand-700 underline flex items-center gap-1"><i class="fa-solid fa-file-pdf text-rose-500"></i> View Medical Form</a>
+                                <?php endif; ?>
+                                <input type="file" name="doc_medical_form_file" accept=".pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:bg-brand-50 file:text-brand-700 cursor-pointer">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 py-4">
-                    <a href="dashboard.php" class="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-wider text-center transition duration-150">Cancel Changes</a>
-                    <button type="submit" class="px-8 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-md transition duration-150 flex items-center gap-1.5">
-                        <i class="fa-solid fa-floppy-disk"></i> Save System Config
+                <!-- TAB 6: HERO SLIDER IMAGES (Super Admin Only) -->
+                <?php if ($canAllSettings): ?>
+                <div id="tab-slider" class="tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                        <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-images"></i>
+                            </span>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight">Hero Section Background Slider Images</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Configure cycling slideshow images displayed behind the welcome headline on the public admissions portal (auto-fading every 5 seconds).</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <?php for($i = 1; $i <= 4; $i++): 
+                                $currImg = $current_slider_images[$i - 1] ?? '';
+                            ?>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                                        <i class="fa-regular fa-image text-amber-600"></i> Slide Image <?= $i ?>
+                                    </span>
+                                    <?php if(!empty($currImg)): ?>
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Active</span>
+                                    <?php else: ?>
+                                        <span class="text-[10px] text-slate-400">Optional</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if(!empty($currImg)): ?>
+                                <div class="h-28 w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-900 relative">
+                                    <img src="../<?= htmlspecialchars(ltrim($currImg, './')) ?>" alt="Slide <?= $i ?>" class="w-full h-full object-cover">
+                                    <span class="absolute bottom-1 right-2 text-[10px] text-white/90 bg-black/60 px-2 py-0.5 rounded font-mono truncate max-w-[200px]"><?= htmlspecialchars($currImg) ?></span>
+                                </div>
+                                <?php endif; ?>
+
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Image Relative Path / URL</label>
+                                    <input type="text" name="slider_image_url_<?= $i ?>" value="<?= htmlspecialchars($currImg) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 bg-white" placeholder="images/campus.png or https://...">
+                                </div>
+
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Or Upload Replacement Image File</label>
+                                    <input type="file" name="slider_image_file_<?= $i ?>" accept="image/png,image/jpeg,image/webp" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
+                                </div>
+                            </div>
+                            <?php endfor; ?>
+                        </div>
+
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-amber-600 text-base"></i>
+                            <span>The public page hero welcome section will automatically cycle through all configured slider images with a dark readability tint and smooth CSS fade effect.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 7: SECURITY & MFA CONTROLS (Super Admin Only) -->
+                <div id="tab-security" class="tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                        <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </span>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight">Portal Security & Anti-Bot Verification</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Protect application forms against automated spambots and enforce Staff Two-Factor Authentication.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Cloudflare Turnstile -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-xs">
+                                            <i class="fa-brands fa-cloudflare text-sm"></i>
+                                        </span>
+                                        <span class="text-xs font-bold text-slate-800 uppercase">Cloudflare Turnstile</span>
+                                    </div>
+                                    <select name="cf_turnstile_enabled" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white">
+                                        <option value="0" <?= ($cf_turnstile_enabled !== '1') ? 'selected' : '' ?>>Disabled</option>
+                                        <option value="1" <?= ($cf_turnstile_enabled === '1') ? 'selected' : '' ?>>Enabled</option>
+                                    </select>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed">
+                                    Protects the public online application form (`apply.php`) from bots with zero-friction Turnstile challenges.
+                                </p>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Turnstile Site Key</label>
+                                    <input type="text" name="cf_turnstile_site_key" value="<?= htmlspecialchars($cf_turnstile_site_key) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 bg-white" placeholder="0x4AAAAAA...">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Turnstile Secret Key</label>
+                                    <input type="password" name="cf_turnstile_secret_key" value="<?= htmlspecialchars($cf_turnstile_secret_key) ?>" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 bg-white" placeholder="0x4AAAAAA...">
+                                </div>
+                            </div>
+
+                            <!-- Staff MFA -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
+                                            <i class="fa-solid fa-key text-xs"></i>
+                                        </span>
+                                        <span class="text-xs font-bold text-slate-800 uppercase">Staff Two-Factor Authentication</span>
+                                    </div>
+                                    <select name="staff_mfa_enabled" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white">
+                                        <option value="1" <?= ($staff_mfa_enabled !== '0') ? 'selected' : '' ?>>Enabled (OTP via Email)</option>
+                                        <option value="0" <?= ($staff_mfa_enabled === '0') ? 'selected' : '' ?>>Disabled</option>
+                                    </select>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed">
+                                    Requires all administrative and admissions registry staff to enter a temporary 6-digit passcode sent to their registered staff email address upon login.
+                                </p>
+                                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-900 space-y-1">
+                                    <span class="font-bold block"><i class="fa-solid fa-circle-check text-blue-600 mr-1"></i> Security Enforced</span>
+                                    <span>Passcodes are single-use and expire within 15 minutes of issuance. Inactive sessions automatically terminate after 20 minutes.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- BOTTOM SAVE ACTION -->
+                <div class="flex items-center justify-end gap-3 pt-4">
+                    <a href="dashboard.php" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Save System Settings
                     </button>
                 </div>
             </form>
-
         </div>
     </main>
 
+    <script>
+    // Mobile Sidebar Drawer Toggle
+    function toggleMobileSidebar() {
+        const sidebar = document.getElementById('mobileSidebar');
+        const backdrop = document.getElementById('mobileSidebarBackdrop');
+        if (!sidebar || !backdrop) return;
+        const isClosed = sidebar.classList.contains('-translate-x-full');
+        if (isClosed) {
+            sidebar.classList.remove('-translate-x-full');
+            backdrop.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            backdrop.classList.add('hidden');
+        }
+    }
+
+    // Tab Switching Logic
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.tab-pill').forEach(p => {
+            p.classList.remove('bg-brand-700', 'text-white', 'shadow-sm');
+            p.classList.add('bg-slate-100', 'text-slate-600');
+        });
+
+        const activeContent = document.getElementById('tab-' + tabId);
+        const activePill = document.getElementById('pill-' + tabId);
+        if (activeContent) activeContent.classList.remove('hidden');
+        if (activePill) {
+            activePill.classList.remove('bg-slate-100', 'text-slate-600');
+            activePill.classList.add('bg-brand-700', 'text-white', 'shadow-sm');
+        }
+        window.location.hash = tabId;
+    }
+
+    // Auto load tab from URL hash if available or default tab
+    window.addEventListener('DOMContentLoaded', () => {
+        const defaultTab = '<?= $canAllSettings ? "profile" : "admissions" ?>';
+        const hash = window.location.hash.replace('#', '');
+        if (hash && document.getElementById('tab-' + hash)) {
+            switchTab(hash);
+        } else {
+            switchTab(defaultTab);
+        }
+    });
+
+    // Logo Selection Preview
+    function previewSelectedLogo(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const prev = document.getElementById('currentLogoPreview');
+                if (prev) prev.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Currency Formatting
+    function formatCurrency(val) {
+        let clean = val.toString().replace(/[^\d]/g, '');
+        if (!clean) return '';
+        return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function updateFeeTotals() {
+        ['s1', 's2', 's3', 's4', 's5', 's6'].forEach(cls => {
+            let total = 0;
+            document.querySelectorAll(`.fee-calc[data-class="${cls}"]`).forEach(input => {
+                let val = parseInt(input.value.replace(/[^\d]/g, '') || 0, 10);
+                total += val;
+            });
+            const preview = document.getElementById(`total_${cls}_preview`);
+            if (preview) {
+                preview.textContent = 'UGX ' + formatCurrency(total);
+            }
+        });
+    }
+
+    document.querySelectorAll('.currency-input').forEach(input => {
+        if (input.value) input.value = formatCurrency(input.value);
+        input.addEventListener('input', function() {
+            let cursor = this.selectionStart;
+            let originalLen = this.value.length;
+            this.value = formatCurrency(this.value);
+            let newLen = this.value.length;
+            cursor = cursor + (newLen - originalLen);
+            this.setSelectionRange(cursor, cursor);
+            updateFeeTotals();
+        });
+    });
+
+    // Dynamic Theme Color Pickers
+    const primaryPicker = document.getElementById('primaryColorPicker');
+    const primaryInput  = document.getElementById('primaryColorInput');
+    const accentPicker  = document.getElementById('accentColorPicker');
+    const accentInput   = document.getElementById('accentColorInput');
+
+    if (primaryPicker && primaryInput) {
+        primaryPicker.addEventListener('input', (e) => primaryInput.value = e.target.value.toUpperCase());
+        primaryInput.addEventListener('input', (e) => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) primaryPicker.value = e.target.value;
+        });
+    }
+    if (accentPicker && accentInput) {
+        accentPicker.addEventListener('input', (e) => accentInput.value = e.target.value.toUpperCase());
+        accentInput.addEventListener('input', (e) => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) accentPicker.value = e.target.value;
+        });
+    }
+
+    // SMTP Test Runner
+    function runSmtpTest() {
+        const btn = document.getElementById('smtpTestBtn');
+        const resBox = document.getElementById('smtpTestResult');
+        const recipient = document.getElementById('testEmailRecipient').value.trim();
+
+        if (!recipient) {
+            alert('Please provide a test recipient email address.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+        resBox.classList.add('hidden');
+        resBox.className = 'p-3.5 rounded-xl text-xs font-semibold';
+
+        const formData = new FormData();
+        formData.append('smtp_host', document.getElementById('smtpHostInput').value);
+        formData.append('smtp_port', document.getElementById('smtpPortInput').value);
+        formData.append('smtp_encryption', document.getElementById('smtpEncInput').value);
+        formData.append('smtp_username', document.getElementById('smtpUserInput').value);
+        formData.append('smtp_password', document.getElementById('smtpPassInput').value);
+        formData.append('smtp_from_email', document.getElementById('smtpFromEmailInput').value);
+        formData.append('smtp_from_name', document.getElementById('smtpFromNameInput').value);
+        formData.append('test_recipient', recipient);
+
+        fetch('test_smtp.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-plug"></i> Test SMTP Connection';
+            resBox.classList.remove('hidden');
+
+            if (data.success) {
+                resBox.classList.add('bg-emerald-50', 'border', 'border-emerald-200', 'text-emerald-800');
+                resBox.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> ' + data.message;
+            } else {
+                resBox.classList.add('bg-rose-50', 'border', 'border-rose-200', 'text-rose-800');
+                resBox.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> ' + data.message;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-plug"></i> Test SMTP Connection';
+            resBox.classList.remove('hidden');
+            resBox.classList.add('bg-rose-50', 'border', 'border-rose-200', 'text-rose-800');
+            resBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1.5"></i> AJAX Network Error: ' + err.message;
+        });
+    }
+
+    function resetDefaultCombinations() {
+        const defaultObj = {
+            "Sciences": {
+                "PCM/ICT": "PCM/ICT (Physics, Chemistry, Mathematics & ICT)",
+                "PCM/SMT": "PCM/SMT (Physics, Chemistry, Mathematics & Sub-Math)",
+                "PCB/ICT": "PCB/ICT (Physics, Chemistry, Biology & ICT)",
+                "PCB/SMT": "PCB/SMT (Physics, Chemistry, Biology & Sub-Math)",
+                "BCM/ICT": "BCM/ICT (Biology, Chemistry, Mathematics & ICT)",
+                "BCM/SMT": "BCM/SMT (Biology, Chemistry, Mathematics & Sub-Math)",
+                "PEM/ICT": "PEM/ICT (Physics, Economics, Mathematics & ICT)",
+                "PEM/SMT": "PEM/SMT (Physics, Economics, Mathematics & Sub-Math)",
+                "MEG/ICT": "MEG/ICT (Mathematics, Economics, Geography & ICT)",
+                "MEG/SMT": "MEG/SMT (Mathematics, Economics, Geography & Sub-Math)",
+                "BCG/ICT": "BCG/ICT (Biology, Chemistry, Geography & ICT)",
+                "MAG/ICT": "MAG/ICT (Mathematics, Agriculture, Geography & ICT)"
+            },
+            "Arts & Humanities": {
+                "HEG/ICT": "HEG/ICT (History, Economics, Geography & ICT)",
+                "HEG/SMT": "HEG/SMT (History, Economics, Geography & Sub-Math)",
+                "HEL/ICT": "HEL/ICT (History, Economics, Literature & ICT)",
+                "HEL/SMT": "HEL/SMT (History, Economics, Literature & Sub-Math)",
+                "HLD/ICT": "HLD/ICT (History, Literature, Divinity & ICT)",
+                "DEG/ICT": "DEG/ICT (Divinity, Economics, Geography & ICT)",
+                "HED/ICT": "HED/ICT (History, Economics, Divinity & ICT)",
+                "LEG/ICT": "LEG/ICT (Literature, Economics, Geography & ICT)",
+                "GEA/ICT": "GEA/ICT (Geography, Entrepreneurship, Art & ICT)",
+                "MEA/ICT": "MEA/ICT (Mathematics, Economics, Art & ICT)"
+            }
+        };
+        const textarea = document.getElementById('aLevelCombsTextarea');
+        if (textarea) {
+            textarea.value = JSON.stringify(defaultObj, null, 4);
+        }
+    }
+
+    // Profile Dropdown Hover Support
+    const profileContainer = document.getElementById('profileDropdownBtn')?.parentElement;
+    if (profileContainer) {
+        let hideTimer;
+        profileContainer.addEventListener('mouseenter', function() {
+            clearTimeout(hideTimer);
+            document.getElementById('profileDropdown')?.classList.remove('hidden');
+        });
+        profileContainer.addEventListener('mouseleave', function() {
+            hideTimer = setTimeout(() => {
+                document.getElementById('profileDropdown')?.classList.add('hidden');
+            }, 200);
+        });
+    }
+
+    // Student Number Format Preview
+    function updateStudentNumberPreview() {
+        const input = document.getElementById('studentNumberFormatInput');
+        const badge = document.getElementById('studentNumberPreviewBadge');
+        if (!input || !badge) return;
+        let format = input.value || '{YY}{CLASS}{CODE}{SERIAL}';
+        let sample = format
+            .replace(/\{YY\}/g, '26')
+            .replace(/\{YYYY\}/g, '2026')
+            .replace(/\{CLASS\}/g, '05')
+            .replace(/\{CLASS_NAME\}/g, 'S5')
+            .replace(/\{CODE\}/g, '011')
+            .replace(/\{SERIAL\}/g, '01')
+            .replace(/\{SERIAL2\}/g, '01')
+            .replace(/\{SERIAL3\}/g, '001')
+            .replace(/\{SERIAL4\}/g, '0001')
+            .replace(/\{ID\}/g, '1');
+        badge.textContent = sample;
+    }
+    function setStudentNumberPreset(val) {
+        const input = document.getElementById('studentNumberFormatInput');
+        if (input) {
+            input.value = val;
+            updateStudentNumberPreview();
+        }
+    }
+
+    // Profile Dropdown
+    function toggleDropdown() {
+        const drop = document.getElementById('profileDropdown');
+        if (drop) drop.classList.toggle('hidden');
+    }
+    window.addEventListener('click', function(e) {
+        const btn = document.getElementById('profileDropdownBtn');
+        const drop = document.getElementById('profileDropdown');
+        if (btn && drop && !btn.contains(e.target) && !drop.contains(e.target)) {
+            drop.classList.add('hidden');
+        }
+    });
+
+    // Floating Back to Top Button
+    const bttBtn = document.getElementById('backToTopBtn');
+    if (bttBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 250) {
+                bttBtn.classList.remove('opacity-0', 'pointer-events-none');
+                bttBtn.classList.add('opacity-100', 'pointer-events-auto');
+            } else {
+                bttBtn.classList.add('opacity-0', 'pointer-events-none');
+                bttBtn.classList.remove('opacity-100', 'pointer-events-auto');
+            }
+        });
+        bttBtn.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+    </script>
+
+    <!-- Floating Back-to-Top Button -->
+    <button id="backToTopBtn" type="button" aria-label="Back to Top"
+        class="fixed bottom-6 right-6 z-50 p-3.5 rounded-full text-white shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 focus:outline-none"
+        style="background-color: <?= $primary_color ?>;">
+        <i class="fa-solid fa-arrow-up text-sm"></i>
+    </button>
 </body>
 </html>

@@ -3154,7 +3154,7 @@ class TCPDF {
 	 * @see setPage(), getPage(), lastpage()
 	 */
 	public function getNumPages() {
-		return $this->numpages;
+		return isset($this->numpages) ? $this->numpages : $this->page;
 	}
 
 	/**
@@ -18053,7 +18053,9 @@ class TCPDF {
 											if ($this->isRTLTextDir()) { // RTL
 												if ($currentxpos < $textpos) {
 													$x_diff = ($spacewidth * ($nsmax - $lnstring[3][$strcount]));
-													$w_diff = ($spacewidth * $lnstring[2][$strcount]);
+													if (isset($lnstring[2][$strcount])) {
+														$w_diff = ($spacewidth * $lnstring[2][$strcount]);
+													}
 												} else {
 													if ($strcount > 0) {
 														$x_diff = ($spacewidth * ($nsmax - $lnstring[3][($strcount - 1)]));
@@ -18065,7 +18067,9 @@ class TCPDF {
 													if ($strcount > 0) {
 														$x_diff = ($spacewidth * $lnstring[3][($strcount - 1)]);
 													}
-													$w_diff = ($spacewidth * $lnstring[2][$strcount]);
+													if (isset($lnstring[2][$strcount])) {
+														$w_diff = ($spacewidth * $lnstring[2][$strcount]);
+													}
 												} else {
 													if ($strcount > 1) {
 														$x_diff = ($spacewidth * $lnstring[3][($strcount - 2)]);

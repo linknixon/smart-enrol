@@ -13,37 +13,154 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Ensure uploads folders exist
 @mkdir('uploads/passports', 0777, true);
 @mkdir('uploads/results', 0777, true);
+@mkdir('uploads/parent_ids', 0777, true);
 
 $class = $_POST['class_of_entry'] ?? '';
 if (!in_array($class, ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'])) {
     die("Invalid class of entry");
 }
 
+// Server-side intake deadline enforcement
+$studentName = trim(($_POST['firstname'] ?? '') . ' ' . ($_POST['surname'] ?? ''));
+
+// Cloudflare Turnstile Anti-Bot Verification
+$cfEnabled = getSetting($pdo, 'cf_turnstile_enabled', '0');
+$cfSecret  = getSetting($pdo, 'cf_turnstile_secret_key', '');
+if ($cfEnabled === '1' && !empty($cfSecret)) {
+    $cfToken = $_POST['cf-turnstile-response'] ?? '';
+    if (empty($cfToken)) {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Turnstile Missing)', "Turnstile token missing for {$studentName}");
+        die("Security Verification Failed: Cloudflare anti-bot verification was not completed. Please verify you are human.");
+    }
+    
+    // Verify token with Cloudflare
+    $verifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    $postData = http_build_query([
+        'secret' => $cfSecret,
+        'response' => $cfToken,
+        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+    ]);
+    
+    $opts = [
+        'http' => [
+            'method'  => 'POST',
+            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+            'content' => $postData,
+            'timeout' => 10
+        ]
+    ];
+    $context = stream_context_create($opts);
+    $response = @file_get_contents($verifyUrl, false, $context);
+    if ($response) {
+        $result = json_decode($response, true);
+        if (!$result || empty($result['success'])) {
+            logActivity($pdo, 'Public Portal', 'Submission Blocked (Turnstile Failed)', "Turnstile verification failed for {$studentName}");
+            die("Security Verification Failed: Anti-bot challenge could not be validated. Please refresh and try again.");
+        }
+    }
+}
+
+// Server-side intake deadline enforcement
+$intakeStatus = getAdmissionStatus($pdo, $class);
+if (!$intakeStatus['is_open']) {
+    $classLabel = ($class === 'S1') ? 'Senior One (S1)' : (($class === 'S5') ? 'Senior Five (S5)' : "Transfers ({$class})");
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Intake Closed)', "Class {$class} intake closed for candidate {$studentName}");
+    if ($intakeStatus['status'] === 'closed') {
+        die("Online admissions for {$classLabel} are currently closed. The application deadline passed on {$intakeStatus['formatted_end']}.");
+    } else {
+        die("Online admissions for {$classLabel} have not opened yet. Applications begin on {$intakeStatus['formatted_start']}.");
+    }
+}
+
+// Enforce School Gender Classification
+$schoolGender = getSchoolGenderType($pdo);
+$applicantSex = trim($_POST['sex'] ?? '');
+if ($schoolGender === 'boys' && $applicantSex !== 'Male') {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Gender Ineligible)', "Gender {$applicantSex} rejected for {$schoolGender} school for candidate {$studentName}");
+    die("Ineligible Application: This institution is classified as a Boys-Only school. Only male candidates are eligible.");
+} elseif ($schoolGender === 'girls' && $applicantSex !== 'Female') {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Gender Ineligible)', "Gender {$applicantSex} rejected for {$schoolGender} school for candidate {$studentName}");
+    die("Ineligible Application: This institution is classified as a Girls-Only school. Only female candidates are eligible.");
+}
+
+// Validate Uganda NIN format (14 characters starting with CM, CF, RM, RF)
+$parent_nin = strtoupper(trim($_POST['parent_nin'] ?? ''));
+if (!preg_match('/^(CM|CF|RM|RF)[0-9A-Z]{12}$/', $parent_nin)) {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Invalid NIN)', "Invalid NIN '{$parent_nin}' for candidate {$studentName}");
+    die("Invalid NIN: Please provide a valid Ugandan 14-character National Identification Number (e.g. CM89012345ABCD).");
+}
+
+// Validate Uganda Telephone Number
+$parent_phone = trim($_POST['parent_phone'] ?? '');
+if (!preg_match('/^(?:\+256|256|0)[37][0-9]{8}$/', $parent_phone)) {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Invalid Phone)', "Invalid phone '{$parent_phone}' for candidate {$studentName}");
+    die("Invalid Phone Number: Please provide a valid Uganda phone number (e.g. 0772123456 or +256772123456).");
+}
+
 // 1. Process Passport Photo Upload
 if (!isset($_FILES['passport']) || $_FILES['passport']['error'] !== UPLOAD_ERR_OK) {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Missing Passport)', "Passport photo upload missing for {$studentName}");
     die("Passport photo is required");
 }
 $passport = 'uploads/passports/' . time() . '_' . basename($_FILES['passport']['name']);
 if (!move_uploaded_file($_FILES['passport']['tmp_name'], $passport)) {
     die("Failed to upload passport photo");
 }
+// Automatically normalize and whiten background for student passport photograph
+if (function_exists('processPassportPhotoBackground')) {
+    processPassportPhotoBackground($passport);
+}
 
 // 2. Process Result Slip/Transcript Upload
 $resultSlipInputName = '';
 if ($class === 'S1') {
     $resultSlipInputName = 'result_slip_s1';
-} elseif ($class === 'S5') {
+} elseif ($class === 'S5' || $class === 'S6') {
     $resultSlipInputName = 'result_slip_s5';
 } else {
     $resultSlipInputName = 'result_slip_transfer';
 }
 
 if (!isset($_FILES[$resultSlipInputName]) || $_FILES[$resultSlipInputName]['error'] !== UPLOAD_ERR_OK) {
-    die("Academic record attachment (result slip or report card) is required");
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Missing Academic Record)', "Academic attachment missing for {$studentName} ({$class})");
+    die("Academic record attachment (official result slip or report card) is required");
 }
-$resultSlip = 'uploads/results/' . time() . '_' . basename($_FILES[$resultSlipInputName]['name']);
+$resultSlip = 'uploads/results/' . time() . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '', basename($_FILES[$resultSlipInputName]['name']));
 if (!move_uploaded_file($_FILES[$resultSlipInputName]['tmp_name'], $resultSlip)) {
     die("Failed to upload academic record attachment");
+}
+
+// 2.B Process Senior Six (S6) Report Card Upload
+$s6ReportFile = null;
+if ($class === 'S6') {
+    if (!isset($_FILES['s6_report_file']) || $_FILES['s6_report_file']['error'] !== UPLOAD_ERR_OK) {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Missing S5 Report)', "S5 report card missing for {$studentName}");
+        die("Official Senior Five (S5) report card / academic transcript is required for Senior Six transfer applications.");
+    }
+    $allowedRepExts = ['pdf', 'png', 'jpg', 'jpeg'];
+    $repExt = strtolower(pathinfo($_FILES['s6_report_file']['name'], PATHINFO_EXTENSION));
+    if (!in_array($repExt, $allowedRepExts)) {
+        die("Invalid file format for Senior Five report card. Allowed formats: PDF, PNG, JPG, JPEG.");
+    }
+    $s6ReportFile = 'uploads/results/' . time() . '_s6report_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '', basename($_FILES['s6_report_file']['name']));
+    if (!move_uploaded_file($_FILES['s6_report_file']['tmp_name'], $s6ReportFile)) {
+        die("Failed to upload Senior Five report card");
+    }
+}
+
+// 3. Process Parent / Guardian National ID Document Upload (PDF, PNG, JPG, JPEG)
+if (!isset($_FILES['parent_id_file']) || $_FILES['parent_id_file']['error'] !== UPLOAD_ERR_OK) {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Missing Parent ID)', "Parent ID upload missing for {$studentName}");
+    die("Parent/Guardian National ID document upload is required");
+}
+$allowedIdExts = ['pdf', 'png', 'jpg', 'jpeg'];
+$idFileExt = strtolower(pathinfo($_FILES['parent_id_file']['name'], PATHINFO_EXTENSION));
+if (!in_array($idFileExt, $allowedIdExts)) {
+    die("Invalid file format for Parent National ID. Allowed formats: PDF, PNG, JPG, JPEG.");
+}
+$parentIdFile = 'uploads/parent_ids/' . time() . '_' . basename($_FILES['parent_id_file']['name']);
+if (!move_uploaded_file($_FILES['parent_id_file']['tmp_name'], $parentIdFile)) {
+    die("Failed to upload parent National ID document");
 }
 
 // Calculate age from Date of Birth
@@ -52,50 +169,224 @@ $age = 0;
 if (!empty($dob)) {
     $age = date_diff(date_create($dob), date_create('today'))->y;
 }
+if ($age < 9) {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Age Ineligible)', "Applicant {$studentName} age ({$age}) is below minimum 9 years");
+    die("Ineligible Application: Applicant must be at least 9 years of age to apply. Calculated age is {$age} years.");
+}
 
 // Define variables based on class of entry
-$formerSchool   = '';
-$indexNumber    = null;
-$english        = null;
-$mathematics    = null;
-$sst            = null;
-$science        = null;
-$aggregates     = null;
-$division       = null;
-$combination    = null;
-$transferReason = null;
+$formerSchool    = '';
+$indexNumber     = null;
+$english         = null;
+$mathematics     = null;
+$sst             = null;
+$science         = null;
+$aggregates      = null;
+$division        = null;
+$combination     = null;
+$transferReason  = null;
+$uceProjectWork  = null;
+$uceSubjectsJson = null;
+$s6FormerSchool  = null;
+$competencyScore = 0;
 
 if ($class === 'S1') {
     $formerSchool = $_POST['former_school_s1'] ?? '';
-    $indexNumber  = $_POST['index_number_s1'] ?? '';
+    $indexNumber  = trim($_POST['index_number_s1'] ?? '');
     $english      = $_POST['english'] ?? '';
     $mathematics  = $_POST['mathematics'] ?? '';
     $sst          = $_POST['sst'] ?? '';
     $science      = $_POST['science'] ?? '';
     $aggregates   = isset($_POST['aggregates_s1']) ? (int)$_POST['aggregates_s1'] : 0;
-    $division     = ($aggregates <= 12) ? 'Div 1' : 'Div 2';
-} elseif ($class === 'S5') {
-    $formerSchool = $_POST['former_school_s5'] ?? '';
-    $indexNumber  = $_POST['index_number_s5'] ?? '';
-    $aggregates   = isset($_POST['aggregates_s5']) ? (int)$_POST['aggregates_s5'] : 0;
-    $division     = $_POST['division_s5'] ?? '';
-    $combination  = $_POST['combination_s5'] ?? '';
+    
+    // Capture PLE Class Division
+    $divisionRaw  = trim($_POST['division_s1'] ?? '');
+    if (!empty($divisionRaw)) {
+        if (preg_match('/(?:div(?:ision)?\s*)?([1-4u])/i', $divisionRaw, $dm)) {
+            $division = 'Division ' . strtoupper($dm[1]);
+        } else {
+            $division = $divisionRaw;
+        }
+    } else {
+        $division = ($aggregates <= 12) ? 'Division 1' : (($aggregates <= 23) ? 'Division 2' : (($aggregates <= 29) ? 'Division 3' : (($aggregates <= 34) ? 'Division 4' : 'Division U')));
+    }
+
+    // Server-side Passmark Cutoff Enforcement for S1
+    $passmarkS1 = getPassMark($pdo, 'S1');
+    if ($passmarkS1 === null || $passmarkS1 === '') {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Pass Mark Not Set)', "Admissions for S1 on hold - cutoff unconfigured");
+        die("Admissions for Senior One (S1) are currently on hold because the cutoff pass mark has not been configured by administration.");
+    }
+    if ($aggregates > (int)$passmarkS1) {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Cutoff Exceeded)', "Candidate {$studentName} aggregates ({$aggregates}) exceeded cutoff ({$passmarkS1}) for S1");
+        die("Application Ineligible: Your PLE aggregates ({$aggregates}) exceed the school's maximum admission pass mark of {$passmarkS1} aggregates for Senior One.");
+    }
+} elseif ($class === 'S5' || $class === 'S6') {
+    $formerSchool   = trim($_POST['former_school_s5'] ?? '');
+    $indexNumber    = strtoupper(trim($_POST['index_number_s5'] ?? ''));
+    $division       = trim($_POST['division_s5'] ?? ''); // e.g. "Result 1"
+    $uceProjectWork = strtoupper(trim($_POST['uce_project_work'] ?? '')); // e.g. "C"
+    $combination    = trim($_POST['combination_s5'] ?? '');
+
+    // Descriptors and Point Mappings according to UNEB NLSC Gazette
+    $descriptors = [
+        'A' => 'Exceptional',
+        'B' => 'Outstanding',
+        'C' => 'Satisfactory',
+        'D' => 'Basic',
+        'E' => 'Elementary'
+    ];
+    $pointsMap = ['A' => 5, 'B' => 4, 'C' => 3, 'D' => 2, 'E' => 1];
+    $equivMap  = ['A' => 1, 'B' => 2, 'C' => 3, 'D' => 4, 'E' => 5];
+
+    $subjects = [
+        'ENG' => ['name' => 'English Language', 'grade' => strtoupper(trim($_POST['uce_eng'] ?? ''))],
+        'MAT' => ['name' => 'Mathematics', 'grade' => strtoupper(trim($_POST['uce_mat'] ?? ''))],
+        'PHY' => ['name' => 'Physics', 'grade' => strtoupper(trim($_POST['uce_phy'] ?? ''))],
+        'CHE' => ['name' => 'Chemistry', 'grade' => strtoupper(trim($_POST['uce_che'] ?? ''))],
+        'BIO' => ['name' => 'Biology', 'grade' => strtoupper(trim($_POST['uce_bio'] ?? ''))],
+        'HIS' => ['name' => 'History & Political Educ.', 'grade' => strtoupper(trim($_POST['uce_his'] ?? ''))],
+        'GEO' => ['name' => 'Geography', 'grade' => strtoupper(trim($_POST['uce_geo'] ?? ''))],
+        'CRE_IRE' => ['name' => 'Religious Education (CRE/IRE)', 'grade' => strtoupper(trim($_POST['uce_cre_ire'] ?? ''))],
+    ];
+
+    if (!empty($_POST['uce_elec1_name']) && !empty($_POST['uce_elec1_grade'])) {
+        $subjects['ELEC1'] = [
+            'name' => trim($_POST['uce_elec1_name']),
+            'grade' => strtoupper(trim($_POST['uce_elec1_grade']))
+        ];
+    }
+    if (!empty($_POST['uce_elec2_name']) && !empty($_POST['uce_elec2_grade'])) {
+        $subjects['ELEC2'] = [
+            'name' => trim($_POST['uce_elec2_name']),
+            'grade' => strtoupper(trim($_POST['uce_elec2_grade']))
+        ];
+    }
+
+    $counts = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'E' => 0];
+    $equivList = [];
+
+    foreach ($subjects as $k => &$subj) {
+        $g = $subj['grade'];
+        if (isset($pointsMap[$g])) {
+            $counts[$g]++;
+            $competencyScore += $pointsMap[$g];
+            $equivList[] = $equivMap[$g];
+            $subj['level'] = $descriptors[$g] ?? '';
+        }
+    }
+    unset($subj);
+
+    // Compute best 8 equivalent aggregate (A=1, B=2, C=3, D=4, E=5)
+    sort($equivList);
+    $best8Equiv = array_sum(array_slice($equivList, 0, 8));
+    $aggregates = $best8Equiv > 0 ? $best8Equiv : (isset($_POST['aggregates_s5']) ? (int)$_POST['aggregates_s5'] : 0);
+
+    // S6 Transfer Specifics
+    if ($class === 'S6') {
+        $s6FormerSchool = trim($_POST['s6_former_school'] ?? '');
+        $s6Passes       = trim($_POST['s6_principal_passes'] ?? '');
+        $s6Reason       = trim($_POST['s6_transfer_reason'] ?? '');
+        $transferReason = "S5 Passes: {$s6Passes} | Transfer Reason: {$s6Reason}";
+        if (!empty($_POST['division_s6'])) {
+            $division = trim($_POST['division_s6']);
+        }
+        if (isset($_POST['aggregates_s6']) && $_POST['aggregates_s6'] !== '') {
+            $aggregates = (int)$_POST['aggregates_s6'];
+        }
+    }
+
+    // Build JSON payload
+    $payload = [
+        'curriculum'        => 'NLSC',
+        'result_level'      => $division,
+        'project_work'      => $uceProjectWork,
+        'competency_score'  => $competencyScore,
+        'counts'            => $counts,
+        'subjects'          => $subjects
+    ];
+    if ($class === 'S6') {
+        $payload['s6_transfer'] = [
+            'former_s5_school'    => $s6FormerSchool,
+            's5_principal_passes' => $_POST['s6_principal_passes'] ?? '',
+            'transfer_reason'     => $_POST['s6_transfer_reason'] ?? '',
+            'report_file'         => $s6ReportFile
+        ];
+    }
+    $uceSubjectsJson = json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+    // Server-side Cutoff Enforcement for S5 only (Transfers do NOT have cutoff)
+    if ($class === 'S5') {
+        $passmarkS5 = getPassMark($pdo, 'S5');
+        if ($passmarkS5 === null || $passmarkS5 === '') {
+            logActivity($pdo, 'Public Portal', 'Submission Blocked (Pass Mark Not Set)', "Admissions for S5 on hold - cutoff unconfigured");
+            die("Admissions for Senior Five (S5) are currently on hold because the cutoff pass mark has not been configured by administration.");
+        }
+        if ($aggregates > (int)$passmarkS5) {
+            logActivity($pdo, 'Public Portal', 'Submission Blocked (Cutoff Exceeded)', "Candidate {$studentName} aggregates ({$aggregates}) exceeded cutoff ({$passmarkS5}) for S5");
+            die("Application Ineligible: Your calculated UCE aggregates ({$aggregates}) exceed the school's maximum admission pass mark of {$passmarkS5} aggregates for Senior Five.");
+        }
+    }
 } else {
-    // S2, S3, S4, S6
+    // S2, S3, S4 (O-Level Transfers do NOT have cutoff points of admissions)
     $formerSchool   = $_POST['former_school_transfer'] ?? '';
-    $division       = $_POST['last_class_attended'] ?? ''; // Store last class attended in division column
+    $division       = trim($_POST['division_transfer'] ?? ($_POST['last_class_attended'] ?? ''));
+    $aggregates     = (isset($_POST['aggregates_transfer']) && $_POST['aggregates_transfer'] !== '') ? (int)$_POST['aggregates_transfer'] : null;
     $transferReason = $_POST['transfer_reason'] ?? '';
+}
+
+// Dynamic Academic Year & Learner Identification Number (LIN)
+$academic_year = getSetting($pdo, 'academic_year', date('Y'));
+$lin = strtoupper(trim($_POST['lin'] ?? '')) ?: null;
+
+// Strict Duplicate Applicant Prevention (Blocks duplicate index number system-wide for the academic year; allows same parent for multiple children)
+if (!empty($indexNumber)) {
+    $dupCheck = $pdo->prepare("SELECT COUNT(*) FROM applications WHERE index_number = ? AND (academic_year = ? OR academic_year IS NULL)");
+    $dupCheck->execute([$indexNumber, $academic_year]);
+    if ($dupCheck->fetchColumn() > 0) {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Duplicate Index Detected)', "Duplicate index '{$indexNumber}' for {$studentName} ({$academic_year})");
+        die("Duplicate Application Detected: An application with UNEB Index Number '" . htmlspecialchars($indexNumber) . "' has already been registered in the system for the " . htmlspecialchars($academic_year) . " Academic Year.");
+    }
+}
+
+if (!empty($lin)) {
+    $dupLin = $pdo->prepare("SELECT COUNT(*) FROM applications WHERE academic_year = ? AND lin = ?");
+    $dupLin->execute([$academic_year, $lin]);
+    if ($dupLin->fetchColumn() > 0) {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Duplicate LIN)', "Duplicate LIN '{$lin}' for {$studentName} ({$academic_year})");
+        die("Duplicate Application Detected: An application with Learner Identification Number (LIN) '" . htmlspecialchars($lin) . "' has already been registered for the " . htmlspecialchars($academic_year) . " Academic Year.");
+    }
+}
+
+// Duplicate child check based on candidate name and DOB (one parent email/phone is explicitly permitted to submit for multiple children)
+$dupNameCheck = $pdo->prepare("SELECT COUNT(*) FROM applications WHERE class_of_entry = ? AND LOWER(TRIM(surname)) = LOWER(TRIM(?)) AND LOWER(TRIM(firstname)) = LOWER(TRIM(?)) AND dob = ? AND academic_year = ?");
+$dupNameCheck->execute([$class, $_POST['surname'], $_POST['firstname'], $dob, $academic_year]);
+if ($dupNameCheck->fetchColumn() > 0) {
+    logActivity($pdo, 'Public Portal', 'Submission Blocked (Duplicate Detected)', "Duplicate student '{$studentName}' (DOB {$dob}) in {$class} ({$academic_year})");
+    die("Duplicate Application Detected: An application for candidate '" . htmlspecialchars($studentName) . "' with date of birth " . htmlspecialchars($dob) . " has already been registered in the system.");
+}
+
+// Residential Address Fields
+$parent_village   = trim($_POST['parent_village'] ?? '');
+$parent_parish    = trim($_POST['parent_parish'] ?? '');
+$parent_subcounty = trim($_POST['parent_subcounty'] ?? '');
+$parent_district  = trim($_POST['parent_district'] ?? '');
+$parent_address   = trim($_POST['parent_address'] ?? '');
+if (empty($parent_address)) {
+    $parent_address = implode(', ', array_filter([$parent_village, $parent_parish, $parent_subcounty, $parent_district]));
 }
 
 // Insert Application Record
 $stmt = $pdo->prepare("
 INSERT INTO applications (
-    surname, firstname, othernames, sex, dob, age, religion, class_of_entry, passport_photo,
+    surname, firstname, othernames, sex, dob, age, religion, class_of_entry, academic_year, lin, passport_photo,
     former_school, index_number, english, mathematics, sst, science,
     aggregates, division, combination, transfer_reason, result_slip,
-    parent_name, parent_nin, parent_phone, parent_address, parent_email
+    parent_name, parent_nin, parent_phone, parent_address, parent_email,
+    parent_village, parent_parish, parent_subcounty, parent_district, parent_id_file,
+    uce_project_work, uce_subjects_json, s6_former_school, s6_report_file
 ) VALUES (
-    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
 )
 ");
 
@@ -103,11 +394,13 @@ $stmt->execute([
     $_POST['surname'],
     $_POST['firstname'],
     $_POST['othernames'] ?? '',
-    $_POST['sex'],
+    $applicantSex,
     $dob,
     $age,
     $_POST['religion'] ?? '',
     $class,
+    $academic_year,
+    $lin,
     $passport,
     $formerSchool,
     $indexNumber,
@@ -121,36 +414,87 @@ $stmt->execute([
     $transferReason,
     $resultSlip,
     $_POST['parent_name'],
-    $_POST['parent_nin'],
-    $_POST['parent_phone'],
-    $_POST['parent_address'],
-    $_POST['parent_email']
+    $parent_nin,
+    $parent_phone,
+    $parent_address,
+    $_POST['parent_email'],
+    $parent_village,
+    $parent_parish,
+    $parent_subcounty,
+    $parent_district,
+    $parentIdFile,
+    $uceProjectWork,
+    $uceSubjectsJson,
+    $s6FormerSchool,
+    $s6ReportFile
 ]);
+
+$newAppId = (int)$pdo->lastInsertId();
+
+// AI Smart Auto-Evaluation & Auto-Admission Engine
+$aiAdmissionResult = null;
+if (function_exists('evaluateApplicantAdmissionAI')) {
+    $aiAdmissionResult = evaluateApplicantAdmissionAI($pdo, $newAppId);
+}
+
+// Log Successful Application in Activity Logs
+$studentLogName = trim($_POST['firstname'] . ' ' . $_POST['surname']);
+logActivity($pdo, 'Public Portal', 'Application Submitted', "New application submitted for {$studentLogName} ({$class}) - UNEB Index: " . ($indexNumber ?: 'N/A') . ", Aggregates: " . ($aggregates ?: 'N/A'));
 
 // -----------------------------
 // SEND EMAIL TO APPLICANT (Elegant Template)
 // -----------------------------
+$school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+$school_email      = getSetting($pdo, 'school_email', 'info@ncedges.com');
+$school_phone      = getSetting($pdo, 'school_phone', '+256 790 001 631');
+$admin_email       = getSetting($pdo, 'admin_email', 'info@ncedges.com');
+$primary_color     = getPrimaryColor($pdo);
+$accent_color      = getAccentColor($pdo);
+
+$logo_source = getSchoolLogoSrc($pdo);
+if (strpos($logo_source, 'http') === false) {
+    $logo_source = getBaseUrl($pdo) . '/' . ltrim($logo_source, '/');
+}
+
+$adminDashboardUrl = getBaseUrl($pdo) . '/admin/dashboard.php';
+
 $studentName = htmlspecialchars($_POST['firstname'] . ' ' . $_POST['surname']);
 $parentName = htmlspecialchars($_POST['parent_name']);
 $submissionDate = date('d-m-Y H:i:s');
 $classEntry = "Senior " . substr($class, 1) . " (" . $class . ")";
 
 $parentMessage = "
-<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 30px; font-size: 14px; line-height: 1.6; color: #1e293b;'>
-    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;'>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<link rel='preconnect' href='https://fonts.googleapis.com'>
+<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+<link href='https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap' rel='stylesheet'>
+<style>
+body, div, p, span, h1, h2, h3, h4, th, td, a {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}
+</style>
+</head>
+<body style='margin: 0; padding: 0; background-color: #f8fafc;'>
+<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; font-size: 14px; line-height: 1.6; color: #1e293b;\">
+    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div style='background-color: #0c4a24; padding: 25px; text-align: center; border-bottom: 3px solid #b58d2f;'>
-            <img src='https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png' alt='Logo' style='width: 70px; height: 70px; margin-bottom: 10px; background-color: white; border-radius: 50%; padding: 4px;'>
-            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>ST. PAUL'S MUTOLERE SECONDARY SCHOOL</h2>
-            <p style='color: #d4af37; margin: 5px 0 0 0; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;'>Online Admissions Portal</p>
+        <div style='background-color: {$primary_color}; padding: 25px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+            <img src='cid:school_logo' alt='School Logo' style='max-height: 65px; max-width: 140px; margin-bottom: 10px; object-fit: contain;' onerror=\"this.onerror=null;this.src='{$logo_source}';\">
+            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
+            <p style='color: {$accent_color}; margin: 4px 0 0 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Online Admissions Portal</p>
         </div>
         <!-- Body -->
         <div style='padding: 30px;'>
-            <p style='margin-top: 0; font-weight: bold; color: #0c4a24; font-size: 15px;'>Dear Parent / Guardian ($parentName),</p>
-            <p>Thank you for submitting your child\'s application to St. Paul\'s Mutolere Secondary School. We are pleased to confirm that the application has been successfully received and is currently under review by our admissions committee.</p>
+            <p style='margin-top: 0; font-weight: bold; color: {$primary_color}; font-size: 15px;'>Dear Parent / Guardian ($parentName),</p>
+            <p>Thank you for submitting your child's application to <strong>{$school_name}</strong>. We are pleased to confirm that the application has been successfully received and is currently under review by our admissions committee.</p>
             
-            <div style='background-color: #f8fafc; border-left: 4px solid #0c4a24; padding: 20px; border-radius: 8px; margin: 25px 0;'>
-                <h4 style='margin-top: 0; color: #0c4a24; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Application Details Summary</h4>
+            <div style='background-color: #f8fafc; border-left: 4px solid {$primary_color}; padding: 20px; border-radius: 8px; margin: 25px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Application Details Summary</h4>
                 <table style='width: 100%; font-size: 13px; border-collapse: collapse;'>
                     <tr>
                         <td style='padding: 6px 0; color: #64748b; font-weight: bold; width: 140px; vertical-align: top;'>Student Name:</td>
@@ -161,11 +505,23 @@ $parentMessage = "
                         <td style='padding: 6px 0; color: #1e293b;'>{$classEntry}</td>
                     </tr>";
 
-if ($class === 'S1' || $class === 'S5') {
+if ($class === 'S1' || $class === 'S5' || $class === 'S6') {
     $parentMessage .= "
                     <tr>
                         <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Index Number:</td>
                         <td style='padding: 6px 0; color: #1e293b; font-family: monospace;'>{$indexNumber}</td>
+                    </tr>";
+}
+
+if ($class === 'S5' || $class === 'S6') {
+    $parentMessage .= "
+                    <tr>
+                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>UCE NLSC Result:</td>
+                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$division} (Project Work: Grade {$uceProjectWork})</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>A-Level Combination:</td>
+                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$combination}</td>
                     </tr>";
 }
 
@@ -178,48 +534,51 @@ $parentMessage .= "
             </div>
 
             <p>No further action is required from you at this time. Once the admissions committee completes the evaluation, a formal notification letter detailing the final decision will be sent to this email address.</p>
-            <p>For any inquiries regarding your application, please reach out to the admissions office at <strong>info@ncedges.com</strong> or call <strong>+256 790 001 631</strong>.</p>
+            <p>For any inquiries regarding your application, please reach out to the admissions office at <strong>{$school_email}</strong> or call <strong>{$school_phone}</strong>.</p>
             
             <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;'>
             
             <p style='margin-bottom: 0;'>Yours faithfully,</p>
-            <p style='margin-top: 5px; font-weight: bold; color: #0c4a24;'>Office of Admissions<br><span style='color: #64748b; font-size: 12px; font-weight: normal;'>St. Paul's Mutolere Secondary School</span></p>
+            <p style='margin-top: 5px; font-weight: bold; color: {$primary_color};'>Office of Admissions Registry<br><span style='color: #64748b; font-size: 12px; font-weight: normal;'>{$school_name}</span></p>
         </div>
         <!-- Footer -->
         <div style='background-color: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
             <p style='margin: 0; font-size: 11px; color: #94a3b8;'>This is an automated notification. Please do not reply directly to this email.</p>
-            <p style='margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;'>&copy; " . date('Y') . " St. Paul's Mutolere Secondary School. All rights reserved.</p>
+            <p style='margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
         </div>
     </div>
 </div>
 ";
 
-sendEmail(
-    $_POST['parent_email'],
-    "Application Received: St. Paul's Mutolere SS",
-    $parentMessage
-);
+// Only send standard pending confirmation if applicant was not already auto-admitted with official offer
+if (empty($aiAdmissionResult['admitted'])) {
+    sendEmail(
+        $_POST['parent_email'],
+        "Application Received - {$school_short_name}",
+        $parentMessage
+    );
+}
 
 // -----------------------------
 // SEND ALERT EMAIL TO ADMINS (Elegant HTML)
 // -----------------------------
-$adminSubject = "New admissions request: " . $studentName . " (" . $class . ")";
+$adminSubject = "New Application Alert: {$studentName} ({$class}) - {$school_short_name}";
 $adminMessage = "
-<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 30px; font-size: 14px; line-height: 1.6; color: #1e293b;'>
+<div style='font-family: Outfit, Arial, sans-serif; background-color: #f8fafc; padding: 30px; font-size: 14px; line-height: 1.6; color: #1e293b;'>
     <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div style='background-color: #0c4a24; padding: 25px; text-align: center; border-bottom: 3px solid #b58d2f;'>
-            <img src='https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png' alt='Logo' style='width: 70px; height: 70px; margin-bottom: 10px; background-color: white; border-radius: 50%; padding: 4px;'>
-            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>ST. PAUL'S MUTOLERE SECONDARY SCHOOL</h2>
-            <p style='color: #d4af37; margin: 5px 0 0 0; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;'>Admissions Control Center</p>
+        <div style='background-color: {$primary_color}; padding: 25px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+            <img src='cid:school_logo' alt='School Logo' style='max-height: 65px; max-width: 140px; margin-bottom: 10px; object-fit: contain;' onerror=\"this.onerror=null;this.src='{$logo_source}';\">
+            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
+            <p style='color: {$accent_color}; margin: 4px 0 0 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Admissions Control Center</p>
         </div>
         <!-- Body -->
         <div style='padding: 30px;'>
-            <p style='margin-top: 0; font-weight: bold; color: #0c4a24; font-size: 15px;'>Alert: New Admission Application Submitted</p>
-            <p>A new application has been successfully submitted via the online admissions portal. Below is a summary of the applicant\'s details:</p>
+            <p style='margin-top: 0; font-weight: bold; color: {$primary_color}; font-size: 15px;'>Alert: New Admission Application Submitted</p>
+            <p>A new application has been successfully submitted via the online admissions portal. Below is a summary of the applicant's details:</p>
             
-            <div style='background-color: #f8fafc; border-left: 4px solid #b58d2f; padding: 20px; border-radius: 8px; margin: 25px 0;'>
-                <h4 style='margin-top: 0; color: #0c4a24; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Student Credentials</h4>
+            <div style='background-color: #f8fafc; border-left: 4px solid {$accent_color}; padding: 20px; border-radius: 8px; margin: 25px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Student Credentials</h4>
                 <table style='width: 100%; font-size: 13px; border-collapse: collapse;'>
                     <tr>
                         <td style='padding: 6px 0; color: #64748b; font-weight: bold; width: 140px; vertical-align: top;'>Student Name:</td>
@@ -234,8 +593,8 @@ $adminMessage = "
                         <td style='padding: 6px 0; color: #1e293b;'>{$classEntry}</td>
                     </tr>";
 
-if ($class === 'S1' || $class === 'S5') {
-    $parentMessage .= "
+if ($class === 'S1' || $class === 'S5' || $class === 'S6') {
+    $adminMessage .= "
                     <tr>
                         <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Index Number:</td>
                         <td style='padding: 6px 0; color: #1e293b; font-family: monospace;'>{$indexNumber}</td>
@@ -248,16 +607,27 @@ if ($class === 'S1') {
                         <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>PLE Aggregates:</td>
                         <td style='padding: 6px 0; color: #1e293b;'>{$aggregates} ({$division})</td>
                     </tr>";
-} elseif ($class === 'S5') {
+} elseif ($class === 'S5' || $class === 'S6') {
     $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>UCE Aggregates:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$aggregates} ({$division})</td>
+                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>UCE NLSC Result:</td>
+                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$division} (Project: Grade {$uceProjectWork})</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Competency Score:</td>
+                        <td style='padding: 6px 0; color: #1e293b;'>{$competencyScore} Points (Agg Equiv: {$aggregates})</td>
                     </tr>
                     <tr>
                         <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Combination:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$combination}</td>
+                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$combination}</td>
                     </tr>";
+    if ($class === 'S6' && !empty($s6FormerSchool)) {
+        $adminMessage .= "
+                    <tr>
+                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Former S5 School:</td>
+                        <td style='padding: 6px 0; color: #1e293b;'>{$s6FormerSchool}</td>
+                    </tr>";
+    }
 } else {
     $adminMessage .= "
                     <tr>
@@ -283,7 +653,7 @@ $adminMessage .= "
             </div>
 
             <div style='text-align: center; margin: 30px 0;'>
-                <a href='https://apply.mutolere.sc.ug/admin/dashboard.php' style='background-color: #0c4a24; color: #ffffff; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(12,74,36,0.15);'>
+                <a href='{$adminDashboardUrl}' style='background-color: {$primary_color}; color: #ffffff; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.15);'>
                     Access Admissions Admin Panel
                 </a>
             </div>
@@ -295,16 +665,18 @@ $adminMessage .= "
 </div>
 ";
 
-$adminSettingsEmail = getSetting($pdo, 'admin_email', 'info@ncedges.com');
-$adminEmails = array_filter(array_map('trim', explode(',', $adminSettingsEmail)));
+$notifyRecipientsRaw = getSetting($pdo, 'application_notification_emails', $admin_email);
+$adminEmails = array_filter(array_map('trim', explode(',', $notifyRecipientsRaw)));
 foreach ($adminEmails as $admin) {
     sendEmail(
         $admin,
-        "New Application Alert: {$studentName} ({$class})",
+        "New Application Alert: {$studentName} ({$class}) - {$school_short_name}",
         $adminMessage
     );
 }
 
-// Redirect on success
-header("Location: success.php?name=" . urlencode($studentName));
+// Redirect on success with auto-admit flags
+$admittedParam = !empty($aiAdmissionResult['admitted']) ? '&admitted=1' : '';
+$combParam = !empty($aiAdmissionResult['combination']) ? '&comb=' . urlencode($aiAdmissionResult['combination']) : '';
+header("Location: success.php?name=" . urlencode($studentName) . "&id=" . $newAppId . $admittedParam . $combParam);
 exit;

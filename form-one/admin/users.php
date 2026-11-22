@@ -3,6 +3,10 @@ session_start();
 require 'auth.php';
 require '../config/db.php';
 
+$school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+$logo_source       = getSchoolLogoSrc($pdo, '../../');
+$academic_year     = getAcademicYear($pdo);
+
 // Secretary role cannot access user management
 if ($_SESSION['admin_role'] === 'secretary') {
     header("Location: dashboard.php");
@@ -141,7 +145,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User Management – S1 Admissions</title>
+<title>User Management (S1) | <?= htmlspecialchars($school_short_name) ?></title>
 <!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Font Awesome & Google Fonts -->
@@ -149,31 +153,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Outfit', 'sans-serif'],
-            },
-            colors: {
-                brand: {
-                    50: '#edf5ef',
-                    100: '#dbeade',
-                    200: '#b7d5be',
-                    700: '#0c4a24',
-                    800: '#062f14',
-                    900: '#031b0b',
-                },
-                gold: {
-                    500: '#b58d2f',
-                    600: '#8a661c',
-                }
-            }
-        }
-    }
-}
-</script>
+<?= renderThemeConfig($pdo) ?>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-height-screen flex">
 
@@ -181,9 +161,9 @@ tailwind.config = {
     <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0 min-h-screen">
         <!-- Brand Header -->
         <div class="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
-            <img src="https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500">
+            <img src="<?= htmlspecialchars($logo_source) ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
             <div>
-                <span class="block text-sm font-bold text-white tracking-tight leading-tight">MUTOLERE SS</span>
+                <span class="block text-sm font-bold text-white tracking-tight leading-tight uppercase"><?= htmlspecialchars($school_short_name) ?></span>
                 <span class="block text-xs font-semibold text-gold-500 uppercase tracking-widest">S1 Admin Portal</span>
             </div>
         </div>
@@ -207,6 +187,11 @@ tailwind.config = {
                 <i class="fa-solid fa-list-check text-lg"></i> Activity Logs
             </a>
             <?php endif; ?>
+            <?php if ($_SESSION['admin_role'] === 'super_admin'): ?>
+            <a href="../../admin/settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+                <i class="fa-solid fa-gear text-lg text-gold-500"></i> System Settings
+            </a>
+            <?php endif; ?>
             <div class="pt-6 border-t border-slate-800 my-4"></div>
             <a href="../../form-five/admin/dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
                 <i class="fa-solid fa-right-left text-lg text-gold-500"></i> Go to S5 Portal
@@ -215,7 +200,7 @@ tailwind.config = {
 
         <!-- Footer Note -->
         <div class="px-6 py-4 border-t border-slate-800 text-xs text-slate-500 text-center">
-            Admissions Office · 2026
+            Admissions Office · <?= htmlspecialchars($academic_year) ?>
         </div>
     </aside>
 
@@ -399,7 +384,7 @@ tailwind.config = {
 
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email Address</label>
-                                    <input type="email" name="email" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700" placeholder="jdoe@mutolere.sc.ug">
+                                    <input type="email" name="email" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700" placeholder="user@school.ac.ug">
                                 </div>
 
                                 <div>

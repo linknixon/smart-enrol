@@ -3,6 +3,20 @@ session_start();
 require 'auth.php';
 require __DIR__ . '/../../form-five/config/db.php';
 
+// Fetch dynamic configurations
+$school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$school_short_name  = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+$school_address     = getSetting($pdo, 'school_address', 'P.O. Box 12, Kisoro - Uganda');
+$school_phone       = getSetting($pdo, 'school_phone', '+256 790 001 631');
+$academic_year      = getAcademicYear($pdo, 'S5');
+$year               = getAcademicYearShort($pdo, 'S5');
+$school_code        = getSetting($pdo, 'school_code', '011');
+$head_teacher_name  = getSetting($pdo, 'head_teacher_name', 'MR. MBONYE CHARLES');
+$head_teacher_title = getSetting($pdo, 'head_teacher_title', 'Head Teacher');
+
+$logo_source = getSchoolLogoSrc($pdo, '../../');
+$school_logo = $logo_source;
+
 /* Fetch ONLY admitted students */
 $stmt = $pdo->prepare("
     SELECT * FROM s5_applications
@@ -13,9 +27,7 @@ $stmt->execute();
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* Student number settings */
-$year        = '26';
-$class       = '05';
-$school_code = '011';
+$class = '05';
 
 /* ================= CSV EXPORT ================= */
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
@@ -51,7 +63,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Senior Five Admitted Register – Mutolere SS</title>
+<title>Senior Five Admitted Register - <?= htmlspecialchars($school_short_name) ?></title>
 <!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Font Awesome & Google Fonts -->
@@ -59,31 +71,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Outfit', 'sans-serif'],
-            },
-            colors: {
-                brand: {
-                    50: '#edf5ef',
-                    100: '#dbeade',
-                    200: '#b7d5be',
-                    700: '#0c4a24',
-                    800: '#062f14',
-                    900: '#031b0b',
-                },
-                gold: {
-                    500: '#b58d2f',
-                    600: '#8a661c',
-                }
-            }
-        }
-    }
-}
-</script>
+<?= renderThemeConfig($pdo) ?>
 <style>
 @media print {
     .no-print {
@@ -92,7 +80,6 @@ tailwind.config = {
     body {
         background-color: white !important;
         color: black !important;
-        font-size: 11px;
     }
     .print-container {
         width: 100% !important;
@@ -117,10 +104,10 @@ tailwind.config = {
     <!-- Sidebar (Hidden on print) -->
     <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0 min-h-screen no-print">
         <div class="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
-            <img src="https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500">
-            <div>
-                <span class="block text-sm font-bold text-white tracking-tight leading-tight">MUTOLERE SS</span>
-                <span class="block text-xs font-semibold text-gold-500 uppercase tracking-widest">S5 Admin Portal</span>
+            <img src="<?= $logo_source ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+            <div class="min-w-0">
+                <span class="block text-sm font-bold text-white tracking-tight leading-tight truncate uppercase" title="<?= htmlspecialchars($school_name) ?>"><?= htmlspecialchars($school_short_name) ?></span>
+                <span class="block text-xs font-semibold text-gold-500 uppercase tracking-widest text-[10px]">S5 Admin Portal</span>
             </div>
         </div>
 
@@ -142,6 +129,11 @@ tailwind.config = {
                 <i class="fa-solid fa-list-check text-lg"></i> Activity Logs
             </a>
             <?php endif; ?>
+            <?php if ($_SESSION['admin_role'] === 'super_admin'): ?>
+            <a href="../../admin/settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+                <i class="fa-solid fa-gears text-lg text-gold-500"></i> System Settings
+            </a>
+            <?php endif; ?>
             <div class="pt-6 border-t border-slate-800 my-4"></div>
             <a href="../../form-one/admin/dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
                 <i class="fa-solid fa-right-left text-lg text-gold-500"></i> Go to S1 Portal
@@ -149,7 +141,7 @@ tailwind.config = {
         </nav>
 
         <div class="px-6 py-4 border-t border-slate-800 text-xs text-slate-500 text-center">
-            Admissions Office · 2026
+            Admissions Office · <?= htmlspecialchars($academic_year) ?>
         </div>
     </aside>
 
@@ -174,11 +166,11 @@ tailwind.config = {
             <!-- Print Header Banner (Only on print) -->
             <div class="hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6">
                 <div class="flex justify-center items-center gap-4">
-                    <img src="https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png" alt="Logo" class="w-16 h-16">
+                    <img src="<?= $logo_source ?>" alt="Logo" class="w-16 h-16 object-contain">
                     <div class="text-left">
-                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">ST. PAUL'S MUTOLERE SECONDARY SCHOOL</h1>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">P.O. BOX 152, Kisoro, Uganda | Tel: +256 790 001 631</p>
-                        <p class="text-sm font-extrabold text-brand-700 mt-1 uppercase">Official Senior Five Admission Register – 2026 Entry</p>
+                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight uppercase"><?= htmlspecialchars($school_name) ?></h1>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest"><?= htmlspecialchars($school_address) ?> | Tel: <?= htmlspecialchars($school_phone) ?></p>
+                        <p class="text-sm font-extrabold text-brand-700 mt-1 uppercase">Official Senior Five Admission Register - <?= htmlspecialchars($academic_year) ?> Entry</p>
                     </div>
                 </div>
                 <div class="mt-4 flex justify-between text-xs font-bold text-slate-600 border-t border-slate-200 pt-2">
@@ -192,7 +184,7 @@ tailwind.config = {
             <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4 items-center no-print">
                 <div class="w-full md:w-1/3">
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Search Admitted Students</label>
-                    <input type="text" id="searchInput" onkeyup="filterTable()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700" placeholder="Search by name, index, combination...">
+                    <input type="text" id="searchInput" onkeyup="filterTable()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-700" placeholder="Search by name, index, comb...">
                 </div>
 
                 <div class="flex gap-2 w-full md:w-auto">
@@ -220,10 +212,10 @@ tailwind.config = {
                                 <th class="px-6 py-3.5 text-center">Student Number</th>
                                 <th class="px-6 py-3.5">Student Full Name</th>
                                 <th class="px-6 py-3.5 text-center">Gender</th>
-                                <th class="px-6 py-3.5 text-center">UCE Index No</th>
+                                <th class="px-6 py-3.5 text-center">UCE Index</th>
                                 <th class="px-6 py-3.5 text-center">Combination</th>
-                                <th class="px-6 py-3.5 text-center">Aggregates</th>
-                                <th class="px-6 py-3.5 text-center">Division</th>
+                                <th class="px-6 py-3.5 text-center">Aggs</th>
+                                <th class="px-6 py-3.5 text-center">Div</th>
                                 <th class="px-6 py-3.5">Parent Details</th>
                                 <th class="px-6 py-3.5 text-center no-print">Letter</th>
                             </tr>
@@ -238,23 +230,23 @@ tailwind.config = {
                                 <td class="px-6 py-4 text-center font-bold text-slate-400 print:text-black"><?= $idx ?></td>
                                 <td class="px-6 py-4 text-center font-mono font-bold text-slate-700 print:text-black"><?= $student_number ?></td>
                                 <td class="px-6 py-4 font-bold text-slate-800 print:text-black leading-tight"><?= htmlspecialchars($s['surname'].' '.$s['firstname'].' '.$s['othernames']) ?></td>
-                                <td class="px-6 py-4 text-center capitalize text-slate-600 print:text-black"><?= htmlspecialchars($s['sex']) ?></td>
+                                <td class="px-6 py-4 text-center text-slate-600 print:text-black"><?= ucfirst(htmlspecialchars($s['sex'])) ?></td>
                                 <td class="px-6 py-4 text-center font-mono text-slate-600 print:text-black"><?= htmlspecialchars($s['uce_index']) ?></td>
                                 <td class="px-6 py-4 text-center font-bold text-gold-600 print:text-black"><?= htmlspecialchars($s['combination']) ?></td>
                                 <td class="px-6 py-4 text-center font-bold text-brand-700 print:text-black"><?= htmlspecialchars($s['aggregates']) ?></td>
-                                <td class="px-6 py-4 text-center text-slate-600 print:text-black"><?= htmlspecialchars($s['division']) ?></td>
+                                <td class="px-6 py-4 text-center font-bold text-slate-600 print:text-black"><?= htmlspecialchars($s['division']) ?></td>
                                 <td class="px-6 py-4 text-slate-600 print:text-black">
                                     <span class="block font-bold text-xs"><?= htmlspecialchars($s['parent_name']) ?></span>
                                     <span class="block text-xs"><?= htmlspecialchars($s['parent_phone']) ?></span>
                                 </td>
                                 <td class="px-6 py-4 text-center no-print">
-                                    <a href="s5_admission_offer.php?id=<?= $s['id'] ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 rounded-lg transition duration-150 shadow-sm">
-                                        <i class="fa-solid fa-file-pdf"></i> View Letter
+                                    <a href="s5_admission_offer.php?id=<?= $s['id'] ?>" target="_blank" class="px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded border border-brand-200 text-xs font-bold inline-flex items-center gap-1 transition">
+                                        <i class="fa-solid fa-file-pdf"></i> PDF Offer
                                     </a>
                                 </td>
                             </tr>
                             <?php 
-                            $idx++;
+                                $idx++;
                             endforeach; 
                             ?>
 
@@ -275,7 +267,7 @@ tailwind.config = {
             <div class="hidden print:flex justify-between items-end mt-16 text-xs pt-12 border-t border-dashed border-slate-300">
                 <div>
                     <span class="block font-bold text-slate-700">Official Admissions Register Approved By:</span>
-                    <span class="block mt-12 border-t border-black w-48 text-center pt-1 font-semibold">Head Teacher Signature</span>
+                    <span class="block mt-12 border-t border-black w-48 text-center pt-1 font-semibold"><?= htmlspecialchars($head_teacher_name) ?> (<?= htmlspecialchars($head_teacher_title) ?>)</span>
                 </div>
                 <div class="text-right">
                     <span class="block font-bold text-slate-700">Compiled By:</span>
