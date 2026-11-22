@@ -48,29 +48,47 @@ output("Starting Smart-Enrol Database Auto-Seeder...");
 output("Target Database: {$db} on host: {$host}");
 
 // Attempt connections to MySQL server
+$commonSockets = ['/var/run/mysqld/mysqld.sock', '/tmp/mysql.sock', '/run/mysqld/mysqld.sock', '/Applications/MAMP/tmp/mysql/mysql.sock'];
 $rootCandidates = [
-    ['host' => $host, 'port' => null, 'user' => $user, 'pass' => $pass],
-    ['host' => '127.0.0.1', 'port' => 3306, 'user' => 'root', 'pass' => ''],
-    ['host' => '127.0.0.1', 'port' => 3306, 'user' => 'root', 'pass' => 'root'],
-    ['host' => 'localhost', 'port' => null, 'user' => 'root', 'pass' => ''],
-    ['host' => '127.0.0.1', 'port' => 8889, 'user' => 'root', 'pass' => 'root'],
-    ['host' => '127.0.0.1', 'port' => 8889, 'user' => $user, 'pass' => $pass],
+    // 1. Configured user
+    ['host' => $host, 'port' => null, 'socket' => null, 'user' => $user, 'pass' => $pass],
+    // 2. Standard 3306 root with empty or standard password
+    ['host' => '127.0.0.1', 'port' => 3306, 'socket' => null, 'user' => 'root', 'pass' => ''],
+    ['host' => '127.0.0.1', 'port' => 3306, 'socket' => null, 'user' => 'root', 'pass' => 'root'],
+    ['host' => 'localhost', 'port' => null, 'socket' => null, 'user' => 'root', 'pass' => ''],
+    ['host' => 'localhost', 'port' => null, 'socket' => null, 'user' => 'root', 'pass' => 'root'],
+    // 3. MAMP Ports
+    ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => 'root', 'pass' => 'root'],
+    ['host' => '127.0.0.1', 'port' => 8889, 'socket' => null, 'user' => $user, 'pass' => $pass],
 ];
+
+// Add Linux root socket connections
+foreach ($commonSockets as $sock) {
+    if (file_exists($sock)) {
+        array_unshift($rootCandidates, ['host' => null, 'port' => null, 'socket' => $sock, 'user' => 'root', 'pass' => '']);
+        array_unshift($rootCandidates, ['host' => null, 'port' => null, 'socket' => $sock, 'user' => $user, 'pass' => $pass]);
+    }
+}
 
 $pdo = null;
 $connectedCandidate = null;
 
 foreach ($rootCandidates as $candidate) {
     try {
-        $dsn = !empty($candidate['port'])
-            ? "mysql:host={$candidate['host']};port={$candidate['port']};charset={$charset}"
-            : "mysql:host={$candidate['host']};charset={$charset}";
+        if (!empty($candidate['socket'])) {
+            $dsn = "mysql:unix_socket={$candidate['socket']};charset={$charset}";
+        } elseif (!empty($candidate['port'])) {
+            $dsn = "mysql:host={$candidate['host']};port={$candidate['port']};charset={$charset}";
+        } else {
+            $dsn = "mysql:host={$candidate['host']};charset={$charset}";
+        }
         $tmpPdo = new PDO($dsn, $candidate['user'], $candidate['pass'], [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
         $pdo = $tmpPdo;
         $connectedCandidate = $candidate;
-        output("Connected to MySQL server using user '{$candidate['user']}' on host '{$candidate['host']}'", "success");
+        $loc = !empty($candidate['socket']) ? $candidate['socket'] : ($candidate['host'] . (!empty($candidate['port']) ? ':' . $candidate['port'] : ''));
+        output("Connected to MySQL server using user '{$candidate['user']}' at {$loc}", "success");
         break;
     } catch (PDOException $e) {
         // Try next candidate
