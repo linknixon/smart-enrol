@@ -210,8 +210,8 @@ CREATE TABLE IF NOT EXISTS `s5_applications` (
 -- Password: User@2026@
 -- --------------------------------------------------------
 INSERT INTO `admin_users` (`firstname`, `lastname`, `email`, `username`, `password`, `role`, `must_change_password`) VALUES
-('System', 'Administrator', 'admin@mutolere.sc.ug', 'admin', '$2y$10$tZ2y54p2z1L3o4k6m7Q9Nu2rU8G4m0ZzZ.x3k8fB6E6.7sLDeh/O', 'super_admin', 0)
-ON DUPLICATE KEY UPDATE `username`=`username`;
+('System', 'Administrator', 'admin@mutolere.sc.ug', 'admin', '$2y$10$46pkijfP8tMVuD95zZZ90unzMys3ZpeBivqh/V1gCJh2GpxfgOy7C', 'super_admin', 0)
+ON DUPLICATE KEY UPDATE `password`=VALUES(`password`), `role`='super_admin';
 
 -- --------------------------------------------------------
 -- Seed system roles (CRUDAS Matrix)

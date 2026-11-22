@@ -337,7 +337,7 @@ try {
     // 4. Seed default super_admin account if empty
     $checkUsers = $pdo->query("SELECT COUNT(*) FROM admin_users");
     if ($checkUsers->fetchColumn() == 0) {
-        $hashed = password_hash('admin', PASSWORD_DEFAULT);
+        $hashed = password_hash('User@2026@', PASSWORD_DEFAULT);
         $pdo->prepare("INSERT INTO admin_users (firstname, lastname, email, username, password, role) VALUES (?, ?, ?, ?, ?, ?)")
             ->execute(['System', 'Administrator', 'admin@mutolere.sc.ug', 'admin', $hashed, 'super_admin']);
     }
