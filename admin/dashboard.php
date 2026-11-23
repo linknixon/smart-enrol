@@ -1001,6 +1001,11 @@ $msg = $_GET['msg'] ?? '';
                                         <?php endif; ?>
                                     <?php else: ?>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Pending</span>
+                                        <?php if(($app['auto_admit_review_status'] ?? '') === 'manual_verification_required'): ?>
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-300 text-[8.5px] font-black uppercase tracking-wider mt-0.5 block whitespace-nowrap" title="Academic document held: Manual verification required by admissions committee">
+                                                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Manual Verif.
+                                            </span>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-2 py-2 text-center whitespace-nowrap">

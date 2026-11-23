@@ -80,22 +80,16 @@ function sendEmail($to, $subject, $body) {
 
         $mail->addAddress($to);
 
-        // Embed official school logo from settings so it displays reliably in all email clients
-        if ($pdo) {
-            $logoPath = getSchoolLogoFilePath($pdo, realpath(__DIR__ . '/../..'));
-            if ($logoPath && file_exists($logoPath)) {
-                try {
-                    $mail->addEmbeddedImage($logoPath, 'school_logo', basename($logoPath));
-                } catch (Exception $e) {}
-            }
-        }
-
         $cleanSubject = str_replace(["\xe2\x80\x93", "–", "â€“"], "-", $subject);
         $cleanBody    = str_replace(["\xe2\x80\x93", "–", "â€“"], "-", $body);
 
-        // If cid:school_logo was used but no embedded image exists, fallback to public web URL
-        if ($pdo && strpos($cleanBody, 'cid:school_logo') !== false && empty($mail->getAttachments())) {
+        // Render official school logo directly on the template via public absolute URL
+        // (Avoids attaching the logo as a downloadable MIME file attachment in Gmail, Apple Mail, Outlook, etc.)
+        if ($pdo && strpos($cleanBody, 'cid:school_logo') !== false) {
             $webLogo = getSchoolLogoSrc($pdo);
+            if (strpos($webLogo, 'http') === false) {
+                $webLogo = getBaseUrl($pdo) . '/' . ltrim($webLogo, '/');
+            }
             $cleanBody = str_replace('cid:school_logo', $webLogo, $cleanBody);
         }
 

@@ -96,6 +96,27 @@ if (!empty($configuredCombsJson)) {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <?= renderThemeConfig($pdo) ?>
 <style>
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+    position: relative;
+}
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+.field-error-highlight {
+    border-color: #f43f5e !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25) !important;
+    background-color: #fff1f2 !important;
+    animation: fieldShake 0.35s ease-in-out;
+}
+@keyframes fieldShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
 .step-item.active .step-circle {
     background-color: var(--primary-color) !important;
     color: #ffffff !important;
@@ -161,22 +182,40 @@ if (!empty($configuredCombsJson)) {
                 <span class="text-xs font-bold text-slate-500 uppercase px-2 tracking-wider flex items-center gap-1.5">
                     <i class="fa-solid fa-layer-group text-brand-700"></i> Admission Category:
                 </span>
-                <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto">
-                    <button type="button" id="tabS1" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center whitespace-nowrap shrink-0" onclick="selectClassCategory('S1')">
-                        Senior One (S1) <?= !$statusS1['is_open'] ? '<span class="ml-1 text-[10px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
+                <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto max-w-full">
+                    <button type="button" id="tabS1" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('S1')">
+                        Senior One (S1) <?= !$statusS1['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
-                    <button type="button" id="tabS5" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center whitespace-nowrap shrink-0" onclick="selectClassCategory('S5')">
-                        Senior Five (S5) <?= !$statusS5['is_open'] ? '<span class="ml-1 text-[10px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
+                    <button type="button" id="tabS5" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('S5')">
+                        Senior Five (S5) <?= !$statusS5['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
-                    <button type="button" id="tabTransfers" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center whitespace-nowrap shrink-0" onclick="selectClassCategory('OTHER')">
-                        Transfers (S2-S6) <?= !$statusTrans['is_open'] ? '<span class="ml-1 text-[10px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
+                    <button type="button" id="tabTransfers" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('OTHER')">
+                        Transfers (S2-S6) <?= !$statusTrans['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Wizard Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-8 max-w-full overflow-x-hidden">
+
+            <!-- Dynamic JavaScript Field Warning Alert Banner -->
+            <div id="fieldValidationWarningBanner" class="hidden mb-6 p-4 rounded-xl bg-rose-50 border-2 border-rose-300 text-rose-900 shadow-sm flex items-start justify-between gap-3 transition-all">
+                <div class="flex items-start gap-3">
+                    <span class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 text-sm shadow-xs">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </span>
+                    <div>
+                        <h4 class="text-xs font-black uppercase tracking-wider text-rose-800" id="fieldWarningTitle">Required Information Missing</h4>
+                        <p class="text-xs sm:text-sm font-bold text-rose-950 mt-0.5 leading-relaxed" id="fieldWarningMessage">
+                            Please check the highlighted field.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" class="text-rose-400 hover:text-rose-700 text-base font-bold shrink-0 p-1" onclick="dismissFieldWarning()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
 
             <!-- Step Progress Indicator -->
             <div id="wizardProgress" class="mb-8">
@@ -510,9 +549,9 @@ if (!empty($configuredCombsJson)) {
                                     <span class="text-[10px] font-mono text-slate-300 self-start sm:self-auto bg-white/10 px-2 py-0.5 rounded uppercase">Official Standard</span>
                                 </div>
 
-                                <!-- Official UNEB Standard Matrix Table -->
-                                <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
-                                    <table class="w-full text-left border-collapse min-w-[540px]">
+                                <!-- Responsive UNEB NLSC Matrix (Desktop Table & Mobile Clean Cards - Zero Horizontal Scroll) -->
+                                <div class="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
+                                    <table class="w-full text-left border-collapse">
                                         <thead>
                                             <tr class="bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider">
                                                 <th class="py-2.5 px-4 w-28 text-center border-r border-slate-800">Grade</th>
@@ -588,6 +627,50 @@ if (!empty($configuredCombsJson)) {
                                             </tr>
                                         </tbody>
                                     </table>
+                                </div>
+
+                                <!-- Mobile Native Stacked Cards (Visible only on small phones, 0 horizontal scroll) -->
+                                <div class="block sm:hidden space-y-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                    <div class="p-2.5 rounded-lg bg-white border border-emerald-200 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#0f8b54] text-white">Grade A</span>
+                                            <span class="font-bold text-slate-900 text-xs">Exceptional</span>
+                                            <span class="text-[10px] font-mono text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded font-bold">5 Pts (Max)</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600 leading-tight">Extraordinary competency; applies innovative & creative skills in real life.</p>
+                                    </div>
+                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#8c232c] text-white">Grade B</span>
+                                            <span class="font-bold text-slate-900 text-xs">Outstanding</span>
+                                            <span class="text-[10px] font-mono text-sky-800 bg-sky-100 px-1.5 py-0.2 rounded font-bold">4 Pts</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600 leading-tight">High level of competency; applies acquired knowledge in real life.</p>
+                                    </div>
+                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#0f8b54] text-white">Grade C</span>
+                                            <span class="font-bold text-slate-900 text-xs">Satisfactory</span>
+                                            <span class="text-[10px] font-mono text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded font-bold">3 Pts</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600 leading-tight">Adequate competency in applying acquired knowledge in real life.</p>
+                                    </div>
+                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#8c232c] text-white">Grade D</span>
+                                            <span class="font-bold text-slate-900 text-xs">Basic</span>
+                                            <span class="text-[10px] font-mono text-orange-800 bg-orange-100 px-1.5 py-0.2 rounded font-bold">2 Pts</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600 leading-tight">Minimum level of competency in applying knowledge in real life.</p>
+                                    </div>
+                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#0c663e] text-white">Grade E</span>
+                                            <span class="font-bold text-slate-900 text-xs">Elementary</span>
+                                            <span class="text-[10px] font-mono text-rose-800 bg-rose-100 px-1.5 py-0.2 rounded font-bold">1 Pt</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600 leading-tight">Below basic competency in applying acquired knowledge in real life.</p>
+                                    </div>
                                 </div>
                                 <p class="text-[10px] text-slate-400 italic text-right">Reference: UNEB NLSC Assessment Framework · 35 Martyrs' Way Ntinda, P.O Box 7066, Kampala Uganda</p>
                             </div>
@@ -740,9 +823,9 @@ if (!empty($configuredCombsJson)) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Religious Educ. (CRE/IRE) <span class="text-rose-500 font-bold">*</span></label>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Religious Educ. (CRE/IRE) <span class="text-[10px] text-slate-400 font-normal ml-1">(Elective)</span></label>
                                         <select name="uce_cre_ire" id="uce_cre_ire" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
+                                            <option value="">No Grade / Optional</option>
                                             <option value="A">Grade A (Exceptional)</option>
                                             <option value="B">Grade B (Outstanding)</option>
                                             <option value="C">Grade C (Satisfactory)</option>
@@ -826,22 +909,60 @@ if (!empty($configuredCombsJson)) {
                             <input type="hidden" name="aggregates_s5" id="aggregatesS5" value="0">
                         </div>
 
-                        <!-- Desired A-Level Combination & Real-Time Prerequisite Advisor -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">A-Level Subject Combination <span class="text-rose-500 font-bold">*</span></label>
-                            <select name="combination_s5" id="combinationS5" class="w-full px-3.5 py-2.5 border-2 border-brand-700/50 rounded-xl text-sm font-bold text-brand-900 focus:outline-none focus:border-brand-700 transition bg-white">
-                                <option value="">Select Desired Subject Combination</option>
-                                <?php foreach ($aLevelCombinations as $group => $items): ?>
-                                    <optgroup label="<?= htmlspecialchars($group) ?>">
-                                        <?php foreach ($items as $val => $label): ?>
-                                            <option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
-                                <?php endforeach; ?>
-                            </select>
+                        <!-- Auto-Detected A-Level Subject Combination (Automatically calculated from Performance) -->
+                        <div class="space-y-2.5 p-4 rounded-2xl bg-gradient-to-r from-emerald-50/70 via-teal-50/50 to-slate-50 border border-emerald-200/90 shadow-2xs">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <label class="text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500 text-sm"></i>
+                                    <span>A-Level Subject Combination</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        Auto-Detected
+                                    </span>
+                                </label>
+                                <button type="button" id="toggleCombinationOverrideBtn" class="text-[11px] font-bold text-brand-700 hover:text-brand-900 underline transition inline-flex items-center gap-1" onclick="toggleCombinationOverride()">
+                                    <i class="fa-solid fa-sliders"></i>
+                                    <span>Change / Select Manually</span>
+                                </button>
+                            </div>
 
-                            <!-- Real-time Combination Advisory Badge -->
-                            <div id="combinationAdvisory" class="hidden p-3 rounded-xl text-xs transition-all"></div>
+                            <!-- Live Auto-Detection Visual Badge Card -->
+                            <div id="autoCombinationCard" class="p-3.5 rounded-xl bg-white border-2 border-emerald-500/50 shadow-xs flex items-start gap-3 transition-all">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs text-base">
+                                    <i class="fa-solid fa-check-double"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span id="autoCombGroupBadge" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-200">
+                                            Sciences Track
+                                        </span>
+                                        <span class="text-[11px] text-slate-500 font-semibold">Matched to Performance</span>
+                                    </div>
+                                    <h4 id="autoCombTitle" class="text-base sm:text-lg font-black text-slate-900 tracking-tight mt-0.5 leading-snug">
+                                        PCM/ICT (Physics, Chemistry, Mathematics & ICT)
+                                    </h4>
+                                    <p id="autoCombDesc" class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                        Auto-detected from your UCE subject competencies. Update grades above to re-calculate.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Hidden / Form-Bound input holding the active combination value -->
+                            <input type="hidden" name="combination_s5" id="combinationS5" value="PCM/ICT">
+
+                            <!-- Optional Manual Override Select (Hidden by default, opened only when requested) -->
+                            <div id="combinationOverrideSection" class="hidden pt-2 border-t border-slate-200 space-y-1.5">
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase">Select Alternative Combination:</label>
+                                <select id="combinationOverrideSelect" class="w-full px-3.5 py-2.5 border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-800 bg-white focus:outline-none focus:border-brand-700 transition" onchange="applyManualCombination(this.value)">
+                                    <option value="">-- Choose from Available Combinations --</option>
+                                    <?php foreach ($aLevelCombinations as $group => $items): ?>
+                                        <optgroup label="<?= htmlspecialchars($group) ?>">
+                                            <?php foreach ($items as $val => $label): ?>
+                                                <option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option>
+                                            <?php endforeach; ?>
+                                        </optgroup>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- S6 Transfer Specific Fields (Only displayed when S6 is selected) -->
@@ -1240,13 +1361,17 @@ if (!empty($configuredCombsJson)) {
             if (s6TransferFields) s6TransferFields.classList.add('hidden');
             academicBadge.textContent = "Senior Five (UCE NLSC)";
 
-            // Mandatory fields for S5
-            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'uce_elec1_name', 'combinationS5', 'resultSlipS5'].forEach(id => {
+            // Mandatory fields for S5 (Religious Educ CRE/IRE is an Elective, not compulsory)
+            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'uce_elec1_name', 'resultSlipS5'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.setAttribute('required', 'required');
             });
             document.querySelectorAll('#uceContainer .nlsc-grade-select').forEach(el => {
-                if (el.id !== 'uce_elec2_grade') el.setAttribute('required', 'required');
+                if (el.id !== 'uce_elec2_grade' && el.id !== 'uce_cre_ire') {
+                    el.setAttribute('required', 'required');
+                } else {
+                    el.removeAttribute('required');
+                }
             });
         } else if (val === 'S6') {
             uceContainer.classList.remove('hidden');
@@ -1256,12 +1381,16 @@ if (!empty($configuredCombsJson)) {
             academicBadge.textContent = "Senior Six (A-Level Transfer & UCE NLSC)";
 
             // Mandatory fields for S6 (Foundational UCE NLSC + S5 Transfer credentials)
-            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'uce_elec1_name', 'combinationS5', 'resultSlipS5', 's6FormerSchool', 's6PrincipalPasses', 's6TransferReason', 's6ReportFile'].forEach(id => {
+            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'uce_elec1_name', 'resultSlipS5', 's6FormerSchool', 's6PrincipalPasses', 's6TransferReason', 's6ReportFile'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.setAttribute('required', 'required');
             });
             document.querySelectorAll('#uceContainer .nlsc-grade-select').forEach(el => {
-                if (el.id !== 'uce_elec2_grade') el.setAttribute('required', 'required');
+                if (el.id !== 'uce_elec2_grade' && el.id !== 'uce_cre_ire') {
+                    el.setAttribute('required', 'required');
+                } else {
+                    el.removeAttribute('required');
+                }
             });
         } else {
             // S2, S3, S4
@@ -1289,6 +1418,190 @@ if (!empty($configuredCombsJson)) {
             if (icon) icon.style.transform = 'rotate(0deg)';
             if (text) text.textContent = 'View Achievement Descriptors';
         }
+    }
+
+    // Dynamic Field Validation & Warning Notification System
+    function showFieldWarning(inputElem, message) {
+        const banner = document.getElementById('fieldValidationWarningBanner');
+        const msgEl = document.getElementById('fieldWarningMessage');
+        const titleEl = document.getElementById('fieldWarningTitle');
+        
+        if (banner && msgEl) {
+            msgEl.innerHTML = '<i class="fa-solid fa-hand-point-right mr-1.5 text-rose-600"></i> ' + message;
+            if (titleEl) titleEl.textContent = "Required Action Needed";
+            banner.classList.remove('hidden');
+        }
+
+        // Highlight element
+        if (inputElem) {
+            document.querySelectorAll('.field-error-highlight').forEach(el => el.classList.remove('field-error-highlight'));
+            inputElem.classList.add('field-error-highlight');
+            inputElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { inputElem.focus(); } catch(e) {}
+            
+            const clearFn = function() {
+                inputElem.classList.remove('field-error-highlight');
+                if (banner) banner.classList.add('hidden');
+                inputElem.removeEventListener('input', clearFn);
+                inputElem.removeEventListener('change', clearFn);
+            };
+            inputElem.addEventListener('input', clearFn);
+            inputElem.addEventListener('change', clearFn);
+        }
+    }
+
+    function dismissFieldWarning() {
+        const banner = document.getElementById('fieldValidationWarningBanner');
+        if (banner) banner.classList.add('hidden');
+        document.querySelectorAll('.field-error-highlight').forEach(el => el.classList.remove('field-error-highlight'));
+    }
+
+    // Real-Time A-Level Subject Combination Auto-Detection Engine
+    window.combinationIsManualOverride = false;
+
+    function autoDetectS5Combination() {
+        if (window.combinationIsManualOverride) return;
+
+        const getG = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        };
+
+        const mat = getG('uce_mat');
+        const phy = getG('uce_phy');
+        const che = getG('uce_che');
+        const bio = getG('uce_bio');
+        const his = getG('uce_his');
+        const geo = getG('uce_geo');
+        const eng = getG('uce_eng');
+        const cre = getG('uce_cre_ire');
+        const elec1Grade = getG('uce_elec1_grade');
+
+        const points = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1 };
+        const matPts = points[mat] || 0;
+        const phyPts = points[phy] || 0;
+        const chePts = points[che] || 0;
+        const bioPts = points[bio] || 0;
+        const hisPts = points[his] || 0;
+        const geoPts = points[geo] || 0;
+        const engPts = points[eng] || 0;
+        const crePts = points[cre] || 0;
+        const el1Pts = points[elec1Grade] || 0;
+
+        // Science Combination Scores
+        const pcmScore = (matPts >= 3 && phyPts >= 3 && chePts >= 3) ? (matPts + phyPts + chePts) : (matPts >= 2 && phyPts >= 2 ? matPts + phyPts : 0);
+        const bcmScore = (bioPts >= 3 && chePts >= 3 && matPts >= 3) ? (bioPts + chePts + matPts) : 0;
+        const pcbScore = (bioPts >= 3 && chePts >= 3 && phyPts >= 3) ? (bioPts + chePts + phyPts) : 0;
+        const pemScore = (matPts >= 3 && phyPts >= 3 && (geoPts >= 3 || el1Pts >= 3)) ? (matPts + phyPts + Math.max(geoPts, el1Pts)) : 0;
+
+        // Economics & Business Scores
+        const megScore = (matPts >= 3 && geoPts >= 3) ? (matPts + geoPts + Math.max(hisPts, el1Pts)) : 0;
+
+        // Arts & Humanities Scores
+        const hegScore = (hisPts >= 3 && geoPts >= 3) ? (hisPts + geoPts + Math.max(matPts, el1Pts, crePts)) : 0;
+        const helScore = (hisPts >= 3 && engPts >= 3) ? (hisPts + engPts + Math.max(geoPts, crePts)) : 0;
+        const hldScore = (hisPts >= 3 && crePts >= 3) ? (hisPts + crePts + Math.max(geoPts, engPts)) : 0;
+
+        let detectedCode = 'PCM/ICT';
+        let detectedGroup = 'Sciences Track';
+        let detectedFullName = 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)';
+        let detectedReason = '';
+
+        const bestScience = Math.max(pcmScore, bcmScore, pcbScore, pemScore);
+        const bestArts = Math.max(hegScore, helScore, hldScore);
+        const bestEcon = megScore;
+
+        if (bestScience >= 9 && bestScience >= bestArts && bestScience >= bestEcon) {
+            if (pcmScore >= bcmScore && pcmScore >= pcbScore) {
+                detectedCode = 'PCM/ICT';
+                detectedFullName = 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)';
+                detectedReason = 'Auto-detected from your Exceptional / Outstanding performance in Mathematics (' + (mat || 'N/A') + '), Physics (' + (phy || 'N/A') + '), and Chemistry (' + (che || 'N/A') + ').';
+            } else if (bcmScore >= pcbScore) {
+                detectedCode = 'BCM/ICT';
+                detectedFullName = 'BCM/ICT (Biology, Chemistry, Mathematics & ICT)';
+                detectedReason = 'Auto-detected from your high performance in Biology (' + (bio || 'N/A') + '), Chemistry (' + (che || 'N/A') + '), and Mathematics (' + (mat || 'N/A') + ').';
+            } else {
+                detectedCode = 'PCB/ICT';
+                detectedFullName = 'PCB/ICT (Physics, Chemistry, Biology & ICT)';
+                detectedReason = 'Auto-detected from your strong foundation in Biology (' + (bio || 'N/A') + '), Chemistry (' + (che || 'N/A') + '), and Physics (' + (phy || 'N/A') + ').';
+            }
+            detectedGroup = 'Sciences Track';
+        } else if (bestEcon >= 9 && bestEcon >= bestArts) {
+            detectedCode = 'MEG/ICT';
+            detectedGroup = 'Economics & Business Track';
+            detectedFullName = 'MEG/ICT (Mathematics, Economics, Geography & ICT)';
+            detectedReason = 'Auto-detected from your strong aptitude in Mathematics (' + (mat || 'N/A') + ') and Geography (' + (geo || 'N/A') + ').';
+        } else if (bestArts >= 8) {
+            if (helScore > hegScore) {
+                detectedCode = 'HEL/ICT';
+                detectedFullName = 'HEL/ICT (History, Economics, Literature & ICT)';
+                detectedReason = 'Auto-detected based on your high performance in History (' + (his || 'N/A') + ') and English Language (' + (eng || 'N/A') + ').';
+            } else if (hldScore > hegScore && crePts >= 3) {
+                detectedCode = 'HLD/ICT';
+                detectedFullName = 'HLD/ICT (History, Literature, Divinity & ICT)';
+                detectedReason = 'Auto-detected based on your high performance in History (' + (his || 'N/A') + ') and Religious Education (' + (cre || 'N/A') + ').';
+            } else {
+                detectedCode = 'HEG/ICT';
+                detectedFullName = 'HEG/ICT (History, Economics, Geography & ICT)';
+                detectedReason = 'Auto-detected based on your high performance in History (' + (his || 'N/A') + ') and Geography (' + (geo || 'N/A') + ').';
+            }
+            detectedGroup = 'Arts & Humanities Track';
+        } else {
+            if (matPts >= hisPts) {
+                detectedCode = 'PCM/ICT';
+                detectedFullName = 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)';
+                detectedGroup = 'Sciences Track';
+                detectedReason = 'Assigned optimal Science combination based on performance profile.';
+            } else {
+                detectedCode = 'HEG/ICT';
+                detectedFullName = 'HEG/ICT (History, Economics, Geography & ICT)';
+                detectedGroup = 'Arts & Humanities Track';
+                detectedReason = 'Assigned optimal Arts combination based on performance profile.';
+            }
+        }
+
+        const combInput = document.getElementById('combinationS5');
+        if (combInput) combInput.value = detectedCode;
+
+        const badgeEl = document.getElementById('autoCombGroupBadge');
+        if (badgeEl) badgeEl.textContent = detectedGroup;
+
+        const titleEl = document.getElementById('autoCombTitle');
+        if (titleEl) titleEl.textContent = detectedFullName;
+
+        const descEl = document.getElementById('autoCombDesc');
+        if (descEl) descEl.textContent = detectedReason;
+    }
+
+    function toggleCombinationOverride() {
+        const sec = document.getElementById('combinationOverrideSection');
+        const btn = document.getElementById('toggleCombinationOverrideBtn');
+        if (!sec) return;
+        if (sec.classList.contains('hidden')) {
+            sec.classList.remove('hidden');
+            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Switch to Auto-Detect</span>';
+        } else {
+            sec.classList.add('hidden');
+            btn.innerHTML = '<i class="fa-solid fa-sliders"></i> <span>Change / Select Manually</span>';
+            window.combinationIsManualOverride = false;
+            autoDetectS5Combination();
+        }
+    }
+
+    function applyManualCombination(val) {
+        if (!val) return;
+        window.combinationIsManualOverride = true;
+        const combInput = document.getElementById('combinationS5');
+        if (combInput) combInput.value = val;
+
+        const titleEl = document.getElementById('autoCombTitle');
+        if (titleEl) titleEl.textContent = val;
+
+        const badgeEl = document.getElementById('autoCombGroupBadge');
+        if (badgeEl) badgeEl.textContent = 'Manually Selected';
+
+        const descEl = document.getElementById('autoCombDesc');
+        if (descEl) descEl.textContent = 'Combination explicitly selected. Click "Switch to Auto-Detect" above to restore performance-based detection.';
     }
 
     // UNEB NLSC Real-Time Competency Calculation (Attachment 1 & 2)
@@ -1331,88 +1644,14 @@ if (!empty($configuredCombsJson)) {
         }
         if (aggS5) aggS5.value = best8Sum;
 
-        validateCombinationEligibility();
+        // Trigger Real-time Combination Auto-Detection
+        autoDetectS5Combination();
     }
 
     document.querySelectorAll('.nlsc-grade-select').forEach(sel => {
         sel.addEventListener('change', calcNLSCCompetency);
     });
-
-    const combinationSelect = document.getElementById('combinationS5');
-    if (combinationSelect) {
-        combinationSelect.addEventListener('change', validateCombinationEligibility);
-    }
-
-    // Dynamic Combination Eligibility Advisor (Prerequisite Validator)
-    function validateCombinationEligibility() {
-        const comb = combinationSelect ? combinationSelect.value : '';
-        const advBox = document.getElementById('combinationAdvisory');
-        if (!advBox) return;
-
-        if (!comb) {
-            advBox.className = 'hidden';
-            advBox.innerHTML = '';
-            return;
-        }
-
-        const getG = (id) => {
-            const el = document.getElementById(id);
-            return el ? el.value : '';
-        };
-
-        const mat = getG('uce_mat');
-        const phy = getG('uce_phy');
-        const che = getG('uce_che');
-        const bio = getG('uce_bio');
-        const his = getG('uce_his');
-        const geo = getG('uce_geo');
-        const eng = getG('uce_eng');
-
-        let reqs = [];
-        if (comb.startsWith('PCM')) {
-            reqs = [{ name: 'Mathematics', grade: mat }, { name: 'Physics', grade: phy }, { name: 'Chemistry', grade: che }];
-        } else if (comb.startsWith('PCB')) {
-            reqs = [{ name: 'Biology', grade: bio }, { name: 'Chemistry', grade: che }, { name: 'Physics', grade: phy }];
-        } else if (comb.startsWith('BCM')) {
-            reqs = [{ name: 'Biology', grade: bio }, { name: 'Chemistry', grade: che }, { name: 'Mathematics', grade: mat }];
-        } else if (comb.startsWith('PEM')) {
-            reqs = [{ name: 'Physics', grade: phy }, { name: 'Mathematics', grade: mat }];
-        } else if (comb.startsWith('MEG')) {
-            reqs = [{ name: 'Mathematics', grade: mat }, { name: 'Geography', grade: geo }];
-        } else if (comb.startsWith('HEG')) {
-            reqs = [{ name: 'History', grade: his }, { name: 'Geography', grade: geo }];
-        } else if (comb.startsWith('HEL')) {
-            reqs = [{ name: 'History', grade: his }, { name: 'English', grade: eng }];
-        } else if (comb.startsWith('HLD') || comb.startsWith('HED')) {
-            reqs = [{ name: 'History', grade: his }];
-        } else if (comb.startsWith('MAG')) {
-            reqs = [{ name: 'Mathematics', grade: mat }, { name: 'Geography', grade: geo }];
-        } else {
-            reqs = [{ name: 'English', grade: eng }];
-        }
-
-        const missing = reqs.filter(r => !r.grade);
-        if (missing.length > 0) {
-            advBox.className = 'p-3 rounded-xl text-xs bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-2';
-            advBox.innerHTML = '<i class="fa-solid fa-circle-info text-slate-500"></i> Select grades for <strong>' + reqs.map(r => r.name).join(', ') + '</strong> to verify combination standing.';
-            return;
-        }
-
-        const badGrades = reqs.filter(r => ['D', 'E'].includes(r.grade));
-        const okGrades = reqs.filter(r => r.grade === 'C');
-        const topGrades = reqs.filter(r => ['A', 'B'].includes(r.grade));
-
-        if (badGrades.length > 0) {
-            advBox.className = 'p-3 rounded-xl text-xs bg-amber-50 text-amber-900 border border-amber-300 flex items-start gap-2.5';
-            advBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm"></i><div><strong>Combination Prerequisite Advisory:</strong> ' + comb + ' recommends high competency in ' + badGrades.map(r => r.name + ' (' + r.grade + ')').join(', ') + '. Admissions committee will evaluate your full profile.</div>';
-        } else if (topGrades.length === reqs.length) {
-            advBox.className = 'p-3 rounded-xl text-xs bg-emerald-50 text-emerald-900 border border-emerald-300 flex items-start gap-2.5';
-            advBox.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mt-0.5 text-sm"></i><div><strong>Qualified & Highly Recommended:</strong> Outstanding foundation for ' + comb + '! Key prerequisites: ' + reqs.map(r => r.name + ' (' + r.grade + ')').join(', ') + '.</div>';
-        } else {
-            advBox.className = 'p-3 rounded-xl text-xs bg-sky-50 text-sky-900 border border-sky-300 flex items-start gap-2.5';
-            advBox.innerHTML = '<i class="fa-solid fa-circle-info text-sky-600 mt-0.5 text-sm"></i><div><strong>Eligible for ' + comb + ':</strong> Satisfactory prerequisite standing in ' + reqs.map(r => r.name + ' (' + r.grade + ')').join(', ') + '.</div>';
-        }
-    }
+    calcNLSCCompetency();
 
     // Auto calculate PLE aggregates
     const gradeValues = { "D1":1,"D2":2,"C3":3,"C4":4,"C5":5,"C6":6,"P7":7,"P8":8,"F9":9 };
@@ -1443,6 +1682,8 @@ if (!empty($configuredCombsJson)) {
             if (!validateStep(currentStep)) return;
         }
 
+        dismissFieldWarning();
+
         // Hide all steps
         document.getElementById('step1').classList.add('hidden');
         document.getElementById('step2').classList.add('hidden');
@@ -1470,243 +1711,311 @@ if (!empty($configuredCombsJson)) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Step Validation
+    // Comprehensive Step Validation with explicit field warnings
     function validateStep(step) {
-        const stepContainer = document.getElementById('step' + step);
-        const inputs = stepContainer.querySelectorAll("input, select, textarea");
+        dismissFieldWarning();
 
+        // STEP 1 VALIDATIONS: Student Bio Data
         if (step === 1) {
-            const dobInp = document.getElementById('dobInput');
-            if (dobInp && dobInp.value) {
-                const bDate = new Date(dobInp.value);
-                const now = new Date();
-                let candidateAge = now.getFullYear() - bDate.getFullYear();
-                const m = now.getMonth() - bDate.getMonth();
-                if (m < 0 || (m === 0 && now.getDate() < bDate.getDate())) {
-                    candidateAge--;
-                }
-                if (candidateAge < 9) {
-                    dobInp.setCustomValidity("Applicant must be at least 9 years of age to apply. Current calculated age is " + candidateAge + " years.");
-                    dobInp.reportValidity();
-                    return false;
-                }
-            }
-        }
-
-        for (let inp of inputs) {
-            // Ignore inputs inside hidden containers
-            if (inp.offsetParent === null) continue;
-
-            inp.setCustomValidity("");
-            if (!inp.checkValidity()) {
-                inp.reportValidity();
+            const surname = document.querySelector("input[name='surname']");
+            if (!surname || surname.value.trim().length < 2) {
+                showFieldWarning(surname, "You have not entered the candidate's Surname (minimum 2 letters required).");
                 return false;
             }
 
-            // Name length check
-            if (['surname', 'firstname', 'parent_name'].includes(inp.name)) {
-                if (inp.value.trim().length < 2) {
-                    inp.setCustomValidity("Please enter a valid full name (at least 2 letters).");
-                    inp.reportValidity();
-                    return false;
-                }
+            const firstname = document.querySelector("input[name='firstname']");
+            if (!firstname || firstname.value.trim().length < 2) {
+                showFieldWarning(firstname, "You have not entered the candidate's First Name.");
+                return false;
             }
 
-            // Custom phone check (Uganda format)
-            if (inp.name === 'parent_phone') {
-                const phone = inp.value.trim();
-                const regex = /^(?:\+256|256|0)[37][0-9]{8}$/;
-                if (!regex.test(phone)) {
-                    inp.setCustomValidity("Please enter a valid Uganda phone number (e.g. 0772123456 or +256772123456).");
-                    inp.reportValidity();
-                    return false;
-                }
-            }
-
-            // Custom email check
-            if (inp.name === 'parent_email') {
-                const email = inp.value.trim();
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    inp.setCustomValidity("Please enter a valid email address (e.g. parent@example.com).");
-                    inp.reportValidity();
-                    return false;
-                }
-            }
-
-            // Custom NIN check (Uganda NIRA standard: 14 characters)
-            if (inp.name === 'parent_nin') {
-                inp.value = inp.value.trim().toUpperCase();
-                const nin = inp.value;
-                const regex = /^(CM|CF|RM|RF)[0-9A-Z]{12}$/;
-                if (!regex.test(nin)) {
-                    inp.setCustomValidity("Please enter a valid Ugandan 14-character NIN starting with CM, CF, RM, or RF.");
-                    inp.reportValidity();
-                    return false;
-                }
-            }
-        }
-
-        // STEP 1 VALIDATIONS: Passport & Age
-        if (step === 1) {
-            const passInp = document.getElementById('passportFile');
-            if (passInp && passInp.files && passInp.files.length > 0) {
-                const file = passInp.files[0];
-                const ext = file.name.split('.').pop().toLowerCase();
-                const allowedPass = ['png', 'jpg', 'jpeg', 'webp'];
-                if (!allowedPass.includes(ext)) {
-                    passInp.setCustomValidity("Please upload a valid student passport photograph (PNG, JPG, JPEG, or WEBP).");
-                    passInp.reportValidity();
-                    return false;
-                }
-                if (file.size > 5 * 1024 * 1024) {
-                    passInp.setCustomValidity("Passport photo size must be less than 5MB.");
-                    passInp.reportValidity();
-                    return false;
-                }
+            const sex = document.querySelector("select[name='sex']");
+            if (!sex || !sex.value) {
+                showFieldWarning(sex, "You have not selected the candidate's Sex / Gender.");
+                return false;
             }
 
             const dobInp = document.getElementById('dobInput');
-            if (dobInp && dobInp.value) {
-                const birthYear = new Date(dobInp.value).getFullYear();
-                const currentYear = new Date().getFullYear();
-                const age = currentYear - birthYear;
-                if (age < 9 || age > 26) {
-                    dobInp.setCustomValidity("Please enter a realistic date of birth (student age between 9 and 25 years).");
-                    dobInp.reportValidity();
-                    return false;
-                }
+            if (!dobInp || !dobInp.value) {
+                showFieldWarning(dobInp, "You have not selected the candidate's Date of Birth.");
+                return false;
+            }
+            const bDate = new Date(dobInp.value);
+            const now = new Date();
+            let candidateAge = now.getFullYear() - bDate.getFullYear();
+            const m = now.getMonth() - bDate.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < bDate.getDate())) {
+                candidateAge--;
+            }
+            if (candidateAge < 9) {
+                showFieldWarning(dobInp, "Candidate must be at least 9 years of age to apply. Current calculated age is " + candidateAge + " years.");
+                return false;
+            }
+            if (candidateAge > 26) {
+                showFieldWarning(dobInp, "Please enter a realistic date of birth (candidate age between 9 and 25 years).");
+                return false;
+            }
+
+            const religion = document.querySelector("select[name='religion']");
+            if (!religion || !religion.value) {
+                showFieldWarning(religion, "You have not selected the candidate's Religion.");
+                return false;
+            }
+
+            const passInp = document.getElementById('passportFile');
+            if (!passInp || !passInp.files || passInp.files.length === 0) {
+                showFieldWarning(passInp, "You have not uploaded the candidate's Passport Photograph.");
+                return false;
+            }
+            const passExt = passInp.files[0].name.split('.').pop().toLowerCase();
+            if (!['png', 'jpg', 'jpeg', 'webp'].includes(passExt)) {
+                showFieldWarning(passInp, "Invalid passport photo format. Please upload a PNG, JPG, JPEG, or WEBP image.");
+                return false;
+            }
+            if (passInp.files[0].size > 5 * 1024 * 1024) {
+                showFieldWarning(passInp, "Passport photo file size must not exceed 5MB.");
+                return false;
             }
         }
 
-        // STEP 2 VALIDATIONS: Academic Attachments & Passmark
+        // STEP 2 VALIDATIONS: Academic Credentials
         if (step === 2) {
             const classVal = classOfEntrySelect.value;
+
             if (classVal === 'S1') {
-                if (cutoffPassmarks['S1'] === null || cutoffPassmarks['S1'] === '') {
-                    alert("Admissions Notice: Submissions for Senior One (S1) are currently on hold because the admission cutoff pass mark has not been configured by administration.");
+                const fs = document.getElementById('formerSchoolS1');
+                if (!fs || !fs.value.trim()) {
+                    showFieldWarning(fs, "You have not entered the candidate's Former Primary School.");
                     return false;
                 }
-                const pleAgg = parseInt(document.getElementById('aggregatesS1').value, 10) || 0;
-                const cutoffS1 = parseInt(cutoffPassmarks['S1'], 10);
-                if (pleAgg > cutoffS1) {
-                    alert("Cutoff Aggregates Exceeded: Your PLE aggregates (" + pleAgg + ") exceed the school's maximum admission pass mark of " + cutoffS1 + " aggregates for Senior One.");
+
+                const idx = document.getElementById('indexNumberS1');
+                if (!idx || !idx.value.trim()) {
+                    showFieldWarning(idx, "You have not entered the candidate's PLE Index Number.");
                     return false;
+                }
+
+                const eng = document.getElementById('english');
+                if (!eng || !eng.value) {
+                    showFieldWarning(eng, "You have not selected a grade for English Language.");
+                    return false;
+                }
+
+                const mat = document.getElementById('mathematics');
+                if (!mat || !mat.value) {
+                    showFieldWarning(mat, "You have not selected a grade for Mathematics.");
+                    return false;
+                }
+
+                const sci = document.getElementById('science');
+                if (!sci || !sci.value) {
+                    showFieldWarning(sci, "You have not selected a grade for Science.");
+                    return false;
+                }
+
+                const sst = document.getElementById('sst');
+                if (!sst || !sst.value) {
+                    showFieldWarning(sst, "You have not selected a grade for Social Studies (SST).");
+                    return false;
+                }
+
+                const pleAgg = parseInt(document.getElementById('aggregatesS1').value, 10) || 0;
+                if (cutoffPassmarks['S1'] !== null && cutoffPassmarks['S1'] !== '') {
+                    const cutoffS1 = parseInt(cutoffPassmarks['S1'], 10);
+                    if (pleAgg > cutoffS1) {
+                        showFieldWarning(document.getElementById('aggregatesS1'), "Cutoff Aggregates Exceeded: Your PLE aggregates (" + pleAgg + ") exceed the school's maximum admission cutoff of " + cutoffS1 + " aggregates.");
+                        return false;
+                    }
                 }
 
                 const s1Slip = document.getElementById('resultSlipS1');
-                if (s1Slip && s1Slip.files && s1Slip.files.length > 0) {
-                    const ext = s1Slip.files[0].name.split('.').pop().toLowerCase();
-                    if (!['pdf', 'png', 'jpg', 'jpeg'].includes(ext)) {
-                        s1Slip.setCustomValidity("Please attach your PLE result slip in PDF, PNG, JPG, or JPEG format.");
-                        s1Slip.reportValidity();
-                        return false;
-                    }
-                    if (s1Slip.files[0].size > 10 * 1024 * 1024) {
-                        s1Slip.setCustomValidity("PLE result slip file size must not exceed 10MB.");
-                        s1Slip.reportValidity();
-                        return false;
-                    }
-                }
-            } else if (classVal === 'S5') {
-                if (cutoffPassmarks['S5'] === null || cutoffPassmarks['S5'] === '') {
-                    alert("Admissions Notice: Submissions for Senior Five (S5) are currently on hold because the admission cutoff pass mark has not been configured by administration.");
+                if (!s1Slip || !s1Slip.files || s1Slip.files.length === 0) {
+                    showFieldWarning(s1Slip, "You have not uploaded the candidate's official PLE Result Slip.");
                     return false;
                 }
-                const uceInp = document.getElementById('aggregatesS5');
-                const uceAgg = uceInp ? parseInt(uceInp.value, 10) : 0;
-                const cutoffS5 = parseInt(cutoffPassmarks['S5'], 10);
-                if (uceAgg > cutoffS5) {
-                    alert("Your calculated UCE aggregates (" + uceAgg + ") exceed the maximum admission pass mark of " + cutoffS5 + " aggregates for Senior Five.");
+                const s1Ext = s1Slip.files[0].name.split('.').pop().toLowerCase();
+                if (!['pdf', 'png', 'jpg', 'jpeg'].includes(s1Ext)) {
+                    showFieldWarning(s1Slip, "Please attach your PLE result slip in PDF, PNG, JPG, or JPEG format.");
+                    return false;
+                }
+            } else if (classVal === 'S5') {
+                const fs5 = document.getElementById('formerSchoolS5');
+                if (!fs5 || !fs5.value.trim()) {
+                    showFieldWarning(fs5, "You have not entered the Former O-Level Secondary School.");
+                    return false;
+                }
+
+                const idx5 = document.getElementById('indexNumberS5');
+                if (!idx5 || !idx5.value.trim()) {
+                    showFieldWarning(idx5, "You have not entered the candidate's UNEB UCE Index Number.");
+                    return false;
+                }
+
+                const pw = document.getElementById('uceProjectWork');
+                if (!pw || !pw.value) {
+                    showFieldWarning(pw, "You have not selected the UCE Project Work Achievement Grade.");
+                    return false;
+                }
+
+                // Check S5 Compulsory Subjects
+                const uceSubjects = [
+                    { id: 'uce_eng', name: 'English Language' },
+                    { id: 'uce_mat', name: 'Mathematics' },
+                    { id: 'uce_phy', name: 'Physics' },
+                    { id: 'uce_che', name: 'Chemistry' },
+                    { id: 'uce_bio', name: 'Biology' },
+                    { id: 'uce_his', name: 'History & Political Educ.' },
+                    { id: 'uce_geo', name: 'Geography' }
+                ];
+                for (let subj of uceSubjects) {
+                    const elem = document.getElementById(subj.id);
+                    if (!elem || !elem.value) {
+                        showFieldWarning(elem, "You have not selected a grade for " + subj.name + ".");
+                        return false;
+                    }
+                }
+
+                // Elective Subject 1 Check
+                const el1Grade = document.getElementById('uce_elec1_grade');
+                if (!el1Grade || !el1Grade.value) {
+                    showFieldWarning(el1Grade, "You have not selected a grade for Elective Subject 1.");
+                    return false;
+                }
+
+                // Cutoff verification
+                const uceAgg = parseInt(document.getElementById('aggregatesS5').value, 10) || 0;
+                if (cutoffPassmarks['S5'] !== null && cutoffPassmarks['S5'] !== '') {
+                    const cutoffS5 = parseInt(cutoffPassmarks['S5'], 10);
+                    if (uceAgg > cutoffS5) {
+                        showFieldWarning(document.getElementById('aggregatesS5'), "Your calculated UCE aggregates (" + uceAgg + ") exceed the maximum admission cutoff of " + cutoffS5 + " aggregates for Senior Five.");
+                        return false;
+                    }
+                }
+
+                const s5Slip = document.getElementById('resultSlipS5');
+                if (!s5Slip || !s5Slip.files || s5Slip.files.length === 0) {
+                    showFieldWarning(s5Slip, "You have not uploaded the official UNEB UCE Result Slip.");
+                    return false;
+                }
+                const s5Ext = s5Slip.files[0].name.split('.').pop().toLowerCase();
+                if (!['pdf', 'png', 'jpg', 'jpeg'].includes(s5Ext)) {
+                    showFieldWarning(s5Slip, "Please attach your UCE result slip in PDF, PNG, JPG, or JPEG format.");
+                    return false;
+                }
+            } else if (classVal === 'S6') {
+                const s6School = document.getElementById('s6FormerSchool');
+                if (!s6School || !s6School.value.trim()) {
+                    showFieldWarning(s6School, "You have not entered the Former Senior Five (S5) School.");
+                    return false;
+                }
+
+                const s6Passes = document.getElementById('s6PrincipalPasses');
+                if (!s6Passes || !s6Passes.value) {
+                    showFieldWarning(s6Passes, "You have not selected the S5 Principal Passes achieved.");
                     return false;
                 }
 
                 const s5Slip = document.getElementById('resultSlipS5');
-                if (s5Slip && s5Slip.files && s5Slip.files.length > 0) {
-                    const ext = s5Slip.files[0].name.split('.').pop().toLowerCase();
-                    if (!['pdf', 'png', 'jpg', 'jpeg'].includes(ext)) {
-                        s5Slip.setCustomValidity("Please attach your UCE result slip in PDF, PNG, JPG, or JPEG format.");
-                        s5Slip.reportValidity();
-                        return false;
-                    }
-                    if (s5Slip.files[0].size > 10 * 1024 * 1024) {
-                        s5Slip.setCustomValidity("UCE result slip file size must not exceed 10MB.");
-                        s5Slip.reportValidity();
-                        return false;
-                    }
-                }
-            } else if (classVal === 'S6') {
-                // S6 Advanced Transfer: Evaluated on merit - NO cutoff pass mark enforced
-                const s5Slip = document.getElementById('resultSlipS5');
-                if (s5Slip && s5Slip.files && s5Slip.files.length > 0) {
-                    const ext = s5Slip.files[0].name.split('.').pop().toLowerCase();
-                    if (!['pdf', 'png', 'jpg', 'jpeg'].includes(ext)) {
-                        s5Slip.setCustomValidity("Please attach your official UCE result slip in PDF, PNG, JPG, or JPEG format.");
-                        s5Slip.reportValidity();
-                        return false;
-                    }
-                    if (s5Slip.files[0].size > 10 * 1024 * 1024) {
-                        s5Slip.setCustomValidity("UCE result slip file size must not exceed 10MB.");
-                        s5Slip.reportValidity();
-                        return false;
-                    }
+                if (!s5Slip || !s5Slip.files || s5Slip.files.length === 0) {
+                    showFieldWarning(s5Slip, "You have not uploaded the official UCE Result Slip.");
+                    return false;
                 }
 
                 const s6Rep = document.getElementById('s6ReportFile');
-                if (s6Rep && s6Rep.files && s6Rep.files.length > 0) {
-                    const ext = s6Rep.files[0].name.split('.').pop().toLowerCase();
-                    if (!['pdf', 'png', 'jpg', 'jpeg'].includes(ext)) {
-                        s6Rep.setCustomValidity("Please attach your Senior Five report card in PDF, PNG, JPG, or JPEG format.");
-                        s6Rep.reportValidity();
-                        return false;
-                    }
-                    if (s6Rep.files[0].size > 10 * 1024 * 1024) {
-                        s6Rep.setCustomValidity("S5 report card file size must not exceed 10MB.");
-                        s6Rep.reportValidity();
-                        return false;
-                    }
+                if (!s6Rep || !s6Rep.files || s6Rep.files.length === 0) {
+                    showFieldWarning(s6Rep, "You have not uploaded the Senior Five (S5) Report Card / Transcript.");
+                    return false;
                 }
             } else {
+                // S2, S3, S4 Transfers
+                const fSchoolTr = document.getElementById('formerSchoolTransfer');
+                if (!fSchoolTr || !fSchoolTr.value.trim()) {
+                    showFieldWarning(fSchoolTr, "You have not entered the Former School attended.");
+                    return false;
+                }
+
+                const divTr = document.getElementById('divisionTransfer');
+                if (!divTr || !divTr.value) {
+                    showFieldWarning(divTr, "You have not selected the Last Class Attended.");
+                    return false;
+                }
+
+                const trReason = document.getElementById('transferReason');
+                if (!trReason || !trReason.value.trim()) {
+                    showFieldWarning(trReason, "You have not provided the Reason for School Transfer.");
+                    return false;
+                }
+
                 const trSlip = document.getElementById('resultSlipTransfer');
-                if (trSlip && trSlip.files && trSlip.files.length > 0) {
-                    const ext = trSlip.files[0].name.split('.').pop().toLowerCase();
-                    if (!['pdf', 'png', 'jpg', 'jpeg'].includes(ext)) {
-                        trSlip.setCustomValidity("Please attach your report card in PDF, PNG, JPG, or JPEG format.");
-                        trSlip.reportValidity();
-                        return false;
-                    }
-                    if (trSlip.files[0].size > 10 * 1024 * 1024) {
-                        trSlip.setCustomValidity("Report card file size must not exceed 10MB.");
-                        trSlip.reportValidity();
-                        return false;
-                    }
+                if (!trSlip || !trSlip.files || trSlip.files.length === 0) {
+                    showFieldWarning(trSlip, "You have not uploaded the Academic Report Card from your former school.");
+                    return false;
                 }
             }
         }
 
-        // STEP 3 VALIDATIONS: Address & Parent National ID Document (PDF, PNG, JPEG, JPG)
+        // STEP 3 VALIDATIONS: Parent / Guardian & Submit
         if (step === 3) {
+            const pName = document.querySelector("input[name='parent_name']");
+            if (!pName || pName.value.trim().length < 2) {
+                showFieldWarning(pName, "You have not entered the Parent / Guardian Full Name.");
+                return false;
+            }
+
+            const pNin = document.querySelector("input[name='parent_nin']");
+            if (pNin) {
+                pNin.value = pNin.value.trim().toUpperCase();
+                const ninRegex = /^(CM|CF|RM|RF)[0-9A-Z]{12}$/;
+                if (!ninRegex.test(pNin.value)) {
+                    showFieldWarning(pNin, "Please enter a valid Ugandan 14-character NIN starting with CM, CF, RM, or RF (e.g. CM89012345ABCD).");
+                    return false;
+                }
+            }
+
+            const pPhone = document.querySelector("input[name='parent_phone']");
+            if (pPhone) {
+                const phoneRegex = /^(?:\+256|256|0)[37][0-9]{8}$/;
+                if (!phoneRegex.test(pPhone.value.trim())) {
+                    showFieldWarning(pPhone, "Please enter a valid Uganda telephone number (e.g. 0772123456 or +256772123456).");
+                    return false;
+                }
+            }
+
+            const pEmail = document.querySelector("input[name='parent_email']");
+            if (pEmail) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(pEmail.value.trim())) {
+                    showFieldWarning(pEmail, "Please enter a valid Parent / Guardian Email Address.");
+                    return false;
+                }
+            }
+
+            const pDistrict = document.getElementById('parentDistrict');
+            if (!pDistrict || !pDistrict.value.trim()) {
+                showFieldWarning(pDistrict, "You have not entered the District of Residence.");
+                return false;
+            }
+
+            const pSubcounty = document.getElementById('parentSubcounty');
+            if (!pSubcounty || !pSubcounty.value.trim()) {
+                showFieldWarning(pSubcounty, "You have not entered the Sub-county / Town of Residence.");
+                return false;
+            }
+
             const parentIdInp = document.getElementById('parentIdFile');
-            if (parentIdInp && parentIdInp.files && parentIdInp.files.length > 0) {
-                const file = parentIdInp.files[0];
-                const ext = file.name.split('.').pop().toLowerCase();
-                const allowedId = ['pdf', 'png', 'jpg', 'jpeg'];
-                if (!allowedId.includes(ext)) {
-                    parentIdInp.setCustomValidity("Please upload your Parent National ID in PDF, PNG, JPG, or JPEG format.");
-                    parentIdInp.reportValidity();
-                    return false;
-                }
-                if (file.size > 10 * 1024 * 1024) {
-                    parentIdInp.setCustomValidity("Parent ID document size must be under 10MB.");
-                    parentIdInp.reportValidity();
-                    return false;
-                }
+            if (!parentIdInp || !parentIdInp.files || parentIdInp.files.length === 0) {
+                showFieldWarning(parentIdInp, "You have not uploaded the Parent / Guardian National ID Document.");
+                return false;
+            }
+            const idExt = parentIdInp.files[0].name.split('.').pop().toLowerCase();
+            if (!['pdf', 'png', 'jpg', 'jpeg'].includes(idExt)) {
+                showFieldWarning(parentIdInp, "Please upload your Parent National ID in PDF, PNG, JPG, or JPEG format.");
+                return false;
             }
 
             const declCheck = document.getElementById('declarationCheck');
             if (declCheck && !declCheck.checked) {
-                declCheck.setCustomValidity("You must confirm the truthfulness declaration before submitting.");
-                declCheck.reportValidity();
+                showFieldWarning(declCheck, "You must check the declaration box confirming truthfulness and authenticity of your documents.");
                 return false;
             }
 

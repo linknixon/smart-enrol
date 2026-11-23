@@ -8,6 +8,8 @@ Thumbs.db
 nbproject/
 uploads/circle_cache/*
 uploads/passports/circle_cache/*
+uploads/sessions/*
 !uploads/circle_cache/.gitkeep
 !uploads/passports/circle_cache/.gitkeep
+!uploads/sessions/.gitkeep
 config/local_db.php

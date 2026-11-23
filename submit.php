@@ -247,8 +247,16 @@ if ($class === 'S1') {
         'BIO' => ['name' => 'Biology', 'grade' => strtoupper(trim($_POST['uce_bio'] ?? ''))],
         'HIS' => ['name' => 'History & Political Educ.', 'grade' => strtoupper(trim($_POST['uce_his'] ?? ''))],
         'GEO' => ['name' => 'Geography', 'grade' => strtoupper(trim($_POST['uce_geo'] ?? ''))],
-        'CRE_IRE' => ['name' => 'Religious Education (CRE/IRE)', 'grade' => strtoupper(trim($_POST['uce_cre_ire'] ?? ''))],
     ];
+
+    // Religious Education (CRE / IRE) is an Elective in NLSC (not compulsory)
+    $creGrade = strtoupper(trim($_POST['uce_cre_ire'] ?? ''));
+    if (!empty($creGrade)) {
+        $subjects['CRE_IRE'] = [
+            'name' => 'Religious Education (CRE/IRE)',
+            'grade' => $creGrade
+        ];
+    }
 
     if (!empty($_POST['uce_elec1_name']) && !empty($_POST['uce_elec1_grade'])) {
         $subjects['ELEC1'] = [
@@ -276,6 +284,32 @@ if ($class === 'S1') {
         }
     }
     unset($subj);
+
+    // Auto-detect A-Level Subject Combination based on performance if not specified
+    if (empty($combination)) {
+        $matPts = $pointsMap[$subjects['MAT']['grade'] ?? ''] ?? 0;
+        $phyPts = $pointsMap[$subjects['PHY']['grade'] ?? ''] ?? 0;
+        $chePts = $pointsMap[$subjects['CHE']['grade'] ?? ''] ?? 0;
+        $bioPts = $pointsMap[$subjects['BIO']['grade'] ?? ''] ?? 0;
+        $hisPts = $pointsMap[$subjects['HIS']['grade'] ?? ''] ?? 0;
+        $geoPts = $pointsMap[$subjects['GEO']['grade'] ?? ''] ?? 0;
+
+        if ($matPts >= 3 && $phyPts >= 3 && $chePts >= 3) {
+            $combination = 'PCM/ICT';
+        } elseif ($bioPts >= 3 && $chePts >= 3 && $matPts >= 3) {
+            $combination = 'BCM/ICT';
+        } elseif ($bioPts >= 3 && $chePts >= 3 && $phyPts >= 3) {
+            $combination = 'PCB/ICT';
+        } elseif ($matPts >= 3 && $geoPts >= 3) {
+            $combination = 'MEG/ICT';
+        } elseif ($hisPts >= 3 && $geoPts >= 3) {
+            $combination = 'HEG/ICT';
+        } elseif ($hisPts >= 3) {
+            $combination = 'HEL/ICT';
+        } else {
+            $combination = 'HEG/ICT';
+        }
+    }
 
     // Compute best 8 equivalent aggregate (A=1, B=2, C=3, D=4, E=5)
     sort($equivList);
@@ -477,64 +511,71 @@ $parentMessage = "
 body, div, p, span, h1, h2, h3, h4, th, td, a {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
+@media only screen and (max-width: 620px) {
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 12px !important; margin: 0 !important; }
+    .email-body { padding: 24px 18px !important; font-size: 14.5px !important; }
+    .email-header { padding: 24px 16px !important; }
+    .summary-table td { display: block !important; width: 100% !important; padding: 4px 0 !important; }
+    .summary-table tr { display: block !important; border-bottom: 1px solid #edf2f7 !important; padding: 6px 0 !important; }
+}
 </style>
 </head>
-<body style='margin: 0; padding: 0; background-color: #f8fafc;'>
-<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; font-size: 14px; line-height: 1.6; color: #1e293b;\">
-    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
+<body style='margin: 0; padding: 0; background-color: #f1f5f9;'>
+<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 32px 14px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
+    <div class='email-container' style='max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div style='background-color: {$primary_color}; padding: 25px; text-align: center; border-bottom: 3px solid {$accent_color};'>
-            <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 12px auto; text-align: center; border-collapse: collapse;'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 30px 24px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+            <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 14px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
-                        <img src='cid:school_logo' alt='School Logo' style='display: block; margin: 0 auto; max-height: 70px; max-width: 150px; height: auto; width: auto; background-color: transparent; background: transparent; border: 0; outline: none; object-fit: contain;' onerror=\"this.onerror=null;this.src='{$logo_source}';\">
+                        <img src='{$logo_source}' alt='{$school_short_name} Logo' style='display: block; margin: 0 auto; max-height: 80px; max-width: 180px; height: auto; width: auto; background-color: transparent; border: 0; outline: none; object-fit: contain;'>
                     </td>
                 </tr>
             </table>
-            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
-            <p style='color: {$accent_color}; margin: 4px 0 0 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Online Admissions Portal</p>
+            <h2 style='color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
+            <p style='color: {$accent_color}; margin: 5px 0 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Online Admissions Portal</p>
         </div>
         <!-- Body -->
-        <div style='padding: 30px;'>
-            <p style='margin-top: 0; font-weight: bold; color: {$primary_color}; font-size: 15px;'>Dear Parent / Guardian ($parentName),</p>
+        <div class='email-body' style='padding: 34px 28px;'>
+            <p style='margin-top: 0; font-weight: 700; color: {$primary_color}; font-size: 16px;'>Dear Parent / Guardian (<strong>$parentName</strong>),</p>
             <p>Thank you for submitting your child's application to <strong>{$school_name}</strong>. We are pleased to confirm that the application has been successfully received and is currently under review by our admissions committee.</p>
             
-            <div style='background-color: #f8fafc; border-left: 4px solid {$primary_color}; padding: 20px; border-radius: 8px; margin: 25px 0;'>
-                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Application Details Summary</h4>
-                <table style='width: 100%; font-size: 13px; border-collapse: collapse;'>
+            <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$primary_color}; padding: 22px 20px; border-radius: 12px; margin: 26px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 700;'>Application Details Summary</h4>
+                <table class='summary-table' style='width: 100%; font-size: 14px; border-collapse: collapse;'>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; width: 140px; vertical-align: top;'>Student Name:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$studentName}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; width: 140px; vertical-align: top;'>Student Name:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$studentName}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Class of Entry:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$classEntry}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Class of Entry:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$classEntry}</td>
                     </tr>";
 
 if ($class === 'S1' || $class === 'S5' || $class === 'S6') {
     $parentMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Index Number:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-family: monospace;'>{$indexNumber}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Index Number:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-family: monospace; font-weight: 700;'>{$indexNumber}</td>
                     </tr>";
 }
 
 if ($class === 'S5' || $class === 'S6') {
     $parentMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>UCE NLSC Result:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$division} (Project Work: Grade {$uceProjectWork})</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>UCE NLSC Result:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$division} (Project Work: Grade {$uceProjectWork})</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>A-Level Combination:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$combination}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>A-Level Combination:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$combination}</td>
                     </tr>";
 }
 
 $parentMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Date Submitted:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$submissionDate}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Date Submitted:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$submissionDate}</td>
                     </tr>
                 </table>
             </div>
@@ -542,15 +583,15 @@ $parentMessage .= "
             <p>No further action is required from you at this time. Once the admissions committee completes the evaluation, a formal notification letter detailing the final decision will be sent to this email address.</p>
             <p>For any inquiries regarding your application, please reach out to the admissions office at <strong>{$school_email}</strong> or call <strong>{$school_phone}</strong>.</p>
             
-            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;'>
+            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;'>
             
-            <p style='margin-bottom: 0;'>Yours faithfully,</p>
-            <p style='margin-top: 5px; font-weight: bold; color: {$primary_color};'>Office of Admissions Registry<br><span style='color: #64748b; font-size: 12px; font-weight: normal;'>{$school_name}</span></p>
+            <p style='margin-bottom: 2px; font-size: 13.5px; color: #64748b;'>Yours faithfully,</p>
+            <p style='margin-top: 4px; font-weight: 700; color: {$primary_color}; font-size: 14.5px;'>Office of Admissions Registry<br><span style='color: #64748b; font-size: 12.5px; font-weight: normal;'>{$school_name}</span></p>
         </div>
         <!-- Footer -->
-        <div style='background-color: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
-            <p style='margin: 0; font-size: 11px; color: #94a3b8;'>This is an automated notification. Please do not reply directly to this email.</p>
-            <p style='margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
+        <div style='background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
+            <p style='margin: 0; font-size: 11.5px; color: #94a3b8;'>This is an automated notification. Please do not reply directly to this email.</p>
+            <p style='margin: 4px 0 0 0; font-size: 11.5px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
         </div>
     </div>
 </div>
@@ -570,111 +611,132 @@ if (empty($aiAdmissionResult['admitted'])) {
 // -----------------------------
 $adminSubject = "New Application Alert: {$studentName} ({$class}) - {$school_short_name}";
 $adminMessage = "
-<div style='font-family: Outfit, Arial, sans-serif; background-color: #f8fafc; padding: 30px; font-size: 14px; line-height: 1.6; color: #1e293b;'>
-    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;'>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<style>
+body, div, p, span, h1, h2, h3, h4, th, td, a {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}
+@media only screen and (max-width: 620px) {
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 12px !important; margin: 0 !important; }
+    .email-body { padding: 22px 16px !important; font-size: 14.5px !important; }
+    .email-header { padding: 24px 16px !important; }
+    .summary-table td { display: block !important; width: 100% !important; padding: 4px 0 !important; }
+    .summary-table tr { display: block !important; border-bottom: 1px solid #edf2f7 !important; padding: 6px 0 !important; }
+}
+</style>
+</head>
+<body style='margin: 0; padding: 0; background-color: #f1f5f9;'>
+<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 32px 14px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
+    <div class='email-container' style='max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div style='background-color: {$primary_color}; padding: 25px; text-align: center; border-bottom: 3px solid {$accent_color};'>
-            <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 12px auto; text-align: center; border-collapse: collapse;'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 30px 24px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+            <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 14px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
-                        <img src='cid:school_logo' alt='School Logo' style='display: block; margin: 0 auto; max-height: 70px; max-width: 150px; height: auto; width: auto; background-color: transparent; background: transparent; border: 0; outline: none; object-fit: contain;' onerror=\"this.onerror=null;this.src='{$logo_source}';\">
+                        <img src='{$logo_source}' alt='{$school_short_name} Logo' style='display: block; margin: 0 auto; max-height: 80px; max-width: 180px; height: auto; width: auto; background-color: transparent; border: 0; outline: none; object-fit: contain;'>
                     </td>
                 </tr>
             </table>
-            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
-            <p style='color: {$accent_color}; margin: 4px 0 0 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Admissions Control Center</p>
+            <h2 style='color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
+            <p style='color: {$accent_color}; margin: 5px 0 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Admissions Control Center</p>
         </div>
         <!-- Body -->
-        <div style='padding: 30px;'>
-            <p style='margin-top: 0; font-weight: bold; color: {$primary_color}; font-size: 15px;'>Alert: New Admission Application Submitted</p>
+        <div class='email-body' style='padding: 34px 28px;'>
+            <p style='margin-top: 0; font-weight: 700; color: {$primary_color}; font-size: 16px;'>Alert: New Admission Application Submitted</p>
             <p>A new application has been successfully submitted via the online admissions portal. Below is a summary of the applicant's details:</p>
             
-            <div style='background-color: #f8fafc; border-left: 4px solid {$accent_color}; padding: 20px; border-radius: 8px; margin: 25px 0;'>
-                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Student Credentials</h4>
-                <table style='width: 100%; font-size: 13px; border-collapse: collapse;'>
+            <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$accent_color}; padding: 22px 20px; border-radius: 12px; margin: 26px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 700;'>Student Credentials</h4>
+                <table class='summary-table' style='width: 100%; font-size: 14px; border-collapse: collapse;'>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; width: 140px; vertical-align: top;'>Student Name:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$studentName}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; width: 140px; vertical-align: top;'>Student Name:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$studentName}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Gender:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$_POST['sex']}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Gender:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$_POST['sex']}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Class of Entry:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$classEntry}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Class of Entry:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$classEntry}</td>
                     </tr>";
 
 if ($class === 'S1' || $class === 'S5' || $class === 'S6') {
     $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Index Number:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-family: monospace;'>{$indexNumber}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Index Number:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-family: monospace; font-weight: 700;'>{$indexNumber}</td>
                     </tr>";
 }
 
 if ($class === 'S1') {
     $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>PLE Aggregates:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$aggregates} ({$division})</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>PLE Aggregates:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$aggregates} ({$division})</td>
                     </tr>";
 } elseif ($class === 'S5' || $class === 'S6') {
     $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>UCE NLSC Result:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$division} (Project: Grade {$uceProjectWork})</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>UCE NLSC Result:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$division} (Project: Grade {$uceProjectWork})</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Competency Score:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$competencyScore} Points (Agg Equiv: {$aggregates})</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Competency Score:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$competencyScore} Points (Agg Equiv: {$aggregates})</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Combination:</td>
-                        <td style='padding: 6px 0; color: #1e293b; font-weight: bold;'>{$combination}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Combination:</td>
+                        <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$combination}</td>
                     </tr>";
     if ($class === 'S6' && !empty($s6FormerSchool)) {
         $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Former S5 School:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$s6FormerSchool}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Former S5 School:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$s6FormerSchool}</td>
                     </tr>";
     }
 } else {
     $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Last Class:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$division}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Last Class:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$division}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Transfer Reason:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$transferReason}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Transfer Reason:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$transferReason}</td>
                     </tr>";
 }
 
 $adminMessage .= "
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Parent/Guardian:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$parentName} ({$_POST['parent_phone']})</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Parent/Guardian:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$parentName} ({$_POST['parent_phone']})</td>
                     </tr>
                     <tr>
-                        <td style='padding: 6px 0; color: #64748b; font-weight: bold; vertical-align: top;'>Date Submitted:</td>
-                        <td style='padding: 6px 0; color: #1e293b;'>{$submissionDate}</td>
+                        <td style='padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;'>Date Submitted:</td>
+                        <td style='padding: 8px 0; color: #0f172a;'>{$submissionDate}</td>
                     </tr>
                 </table>
             </div>
 
             <div style='text-align: center; margin: 30px 0;'>
-                <a href='{$adminDashboardUrl}' style='background-color: {$primary_color}; color: #ffffff; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.15);'>
+                <a href='{$adminDashboardUrl}' style='background-color: {$primary_color}; color: #ffffff; padding: 14px 30px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14.5px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.12);'>
                     Access Admissions Admin Panel
                 </a>
             </div>
             
-            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;'>
-            <p style='margin: 0; font-size: 12px; color: #64748b; text-align: center;'>Admissions Portal System Notification</p>
+            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;'>
+            <p style='margin: 0; font-size: 12.5px; color: #64748b; text-align: center;'>Admissions Portal System Notification</p>
         </div>
     </div>
 </div>
+</body>
+</html>
 ";
 
 $notifyRecipientsRaw = getSetting($pdo, 'application_notification_emails', $admin_email);

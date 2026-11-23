@@ -1896,48 +1896,53 @@ if (!function_exists('dispatchAdmissionOfferNotification')) {
 body, div, p, span, h1, h2, h3, h4, th, td, a {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
+@media only screen and (max-width: 620px) {
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 12px !important; margin: 0 !important; }
+    .email-body { padding: 24px 18px !important; font-size: 14.5px !important; }
+    .email-header { padding: 24px 16px !important; }
+}
 </style>
 </head>
-<body style='margin: 0; padding: 0; background-color: #f8fafc;'>
-<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; font-size: 14px; line-height: 1.6; color: #1e293b;\">
-    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
-        <div style='background-color: {$primary_color}; padding: 25px; text-align: center; border-bottom: 3px solid {$accent_color};'>
-            <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 12px auto; text-align: center; border-collapse: collapse;'>
+<body style='margin: 0; padding: 0; background-color: #f1f5f9;'>
+<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 32px 14px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
+    <div class='email-container' style='max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 30px 24px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+            <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 14px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
-                        <img src='cid:school_logo' alt='School Logo' style='display: block; margin: 0 auto; max-height: 70px; max-width: 150px; height: auto; width: auto; background-color: transparent; background: transparent; border: 0; outline: none; object-fit: contain;' onerror=\"this.onerror=null;this.src='{$logo_source}';\">
+                        <img src='{$logo_source}' alt='{$school_short_name} Logo' style='display: block; margin: 0 auto; max-height: 80px; max-width: 180px; height: auto; width: auto; background-color: transparent; border: 0; outline: none; object-fit: contain;'>
                     </td>
                 </tr>
             </table>
-            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
-            <p style='color: {$accent_color}; margin: 4px 0 0 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Office of Admissions Registry</p>
+            <h2 style='color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
+            <p style='color: {$accent_color}; margin: 5px 0 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Office of Admissions Registry</p>
         </div>
-        <div style='padding: 30px;'>
-            <div style='display: inline-block; padding: 4px 12px; background-color: #ecfdf5; color: #065f46; font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 9999px; letter-spacing: 0.5px; margin-bottom: 12px;'>
-                Official Admission Offer
+        <div class='email-body' style='padding: 34px 28px;'>
+            <div style='display: inline-block; padding: 5px 14px; background-color: #ecfdf5; color: #065f46; font-size: 11.5px; font-weight: 700; text-transform: uppercase; border-radius: 9999px; letter-spacing: 0.5px; margin-bottom: 14px; border: 1px solid #a7f3d0;'>
+                Official Provisional Admission Offer
             </div>
-            <h3 style='color: {$primary_color}; margin-top: 0; font-size: 18px; font-weight: 800;'>Provisional Offer of Admission</h3>
-            <p>Dear Parent / Guardian ($parentName),</p>
-            <p>We are pleased to inform you that your child <strong>$studentName</strong> has been <strong>SUCCESSFULLY ADMITTED</strong> to <strong>$className</strong> at <strong>{$school_name}</strong> for the <strong>{$academic_year} Academic Year</strong>.</p>
+            <h3 style='color: {$primary_color}; margin-top: 0; font-size: 20px; font-weight: 800; line-height: 1.3;'>Provisional Offer of Admission</h3>
+            <p style='margin-top: 12px;'>Dear Parent / Guardian (<strong>$parentName</strong>),</p>
+            <p>We are delighted to inform you that your child <strong>$studentName</strong> has been evaluated and <strong>OFFICIALLY ADMITTED</strong> to <strong>$className</strong> at <strong>{$school_name}</strong> for the <strong>{$academic_year} Academic Year</strong>.</p>
             {$combNotice}
             {$reportingNotice}
-            <p>Please click the button below to download and print the official Provisional Admission Offer Letter (PDF):</p>
-            <div style='text-align: center; margin: 25px 0;'>
-                <a href='{$pdfLink}' style='background-color: {$primary_color}; color: #ffffff; padding: 13px 28px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 10px rgba(12,74,36,0.2);'>
+            <p style='margin-top: 20px;'>Please click the button below to download and print the official Provisional Admission Offer Letter (PDF):</p>
+            <div style='text-align: center; margin: 28px 0;'>
+                <a href='{$pdfLink}' style='background-color: {$primary_color}; color: #ffffff; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(12,74,36,0.22);'>
                     Download Admission Offer Letter (PDF)
                 </a>
             </div>
-            <p style='font-size: 12.5px; color: #64748b;'>Or copy this link to your web browser:<br>
+            <p style='font-size: 13px; color: #64748b; line-height: 1.5;'>Or copy this direct link into your browser:<br>
             <a href='{$pdfLink}' style='color: {$accent_color}; word-break: break-all; font-weight: 600;'>{$pdfLink}</a></p>
             {$enclosuresHtml}
-            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;'>
-            <p>We look forward to welcoming $studentName to our school community.</p>
-            <p style='margin-bottom: 2px; font-size: 13px; color: #64748b;'>Yours faithfully,</p>
-            <p style='margin-top: 4px; font-weight: 700; color: {$primary_color}; font-size: 14px;'>Office of Admissions Registry<br><span style='color: #64748b; font-size: 12px; font-weight: normal;'>{$school_name}</span></p>
+            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;'>
+            <p style='margin-bottom: 4px;'>We look forward to welcoming $studentName to our school family.</p>
+            <p style='margin-top: 12px; margin-bottom: 2px; font-size: 13.5px; color: #64748b;'>Yours faithfully,</p>
+            <p style='margin-top: 4px; font-weight: 700; color: {$primary_color}; font-size: 14.5px;'>Office of Admissions Registry<br><span style='color: #64748b; font-size: 12.5px; font-weight: normal;'>{$school_name}</span></p>
         </div>
-        <div style='background-color: #f8fafc; padding: 18px; text-align: center; border-top: 1px solid #e2e8f0;'>
-            <p style='margin: 0; font-size: 11px; color: #94a3b8;'>This is an official automated notification. Please do not reply directly to this email.</p>
-            <p style='margin: 4px 0 0 0; font-size: 11px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
+        <div style='background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
+            <p style='margin: 0; font-size: 11.5px; color: #94a3b8;'>This is an official automated notification. Please do not reply directly to this email.</p>
+            <p style='margin: 4px 0 0 0; font-size: 11.5px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
         </div>
     </div>
 </div>
@@ -1947,6 +1952,261 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             sendEmail($applicant['parent_email'], "$className Admission Offer - {$academic_year} - {$school_name}", $message);
         }
         return true;
+    }
+}
+
+// -------------------------------------------------------------
+// AI Academic Document Authenticity & Fake/Test Document Inspector
+// -------------------------------------------------------------
+if (!function_exists('extractTextFromPdfStream')) {
+    function extractTextFromPdfStream($pdfPath) {
+        if (!file_exists($pdfPath) || !is_file($pdfPath)) return '';
+        $content = @file_get_contents($pdfPath);
+        if (!$content) return '';
+
+        $extractedText = '';
+
+        // 1. Direct text stream objects (e.g. (Text) Tj or [ (Text1) 10 (Text2) ] TJ)
+        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $content, $matches)) {
+            $extractedText .= ' ' . implode(' ', $matches[1]);
+        }
+
+        // 2. Decompress FlateDecode streams if present
+        if (function_exists('gzuncompress')) {
+            if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $content, $streamMatches)) {
+                foreach ($streamMatches[1] as $stream) {
+                    $uncompressed = @gzuncompress($stream);
+                    if ($uncompressed) {
+                        if (preg_match_all('/\((.*?)\)\s*T[jJ]/s', $uncompressed, $subMatches)) {
+                            $extractedText .= ' ' . implode(' ', $subMatches[1]);
+                        }
+                        if (preg_match_all('/[a-zA-Z]{3,}/', $uncompressed, $wordMatches)) {
+                            $extractedText .= ' ' . implode(' ', $wordMatches[0]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback raw ASCII text sequences
+        if (preg_match_all('/[a-zA-Z0-9\/\-\.]{3,}/', $content, $rawWords)) {
+            $extractedText .= ' ' . implode(' ', $rawWords[0]);
+        }
+
+        return strtolower($extractedText);
+    }
+}
+
+if (!function_exists('verifyAcademicDocumentAuthenticity')) {
+    function verifyAcademicDocumentAuthenticity($docPath, $app = []) {
+        if (empty($docPath) || !file_exists($docPath) || !is_file($docPath)) {
+            return [
+                'is_authentic' => false,
+                'status' => 'missing',
+                'reason' => 'Academic credential file not found on server.'
+            ];
+        }
+
+        $fileSize = filesize($docPath);
+        if ($fileSize < 15360) { // < 15KB is too small for a legitimate multi-grade UNEB transcript or official scan
+            return [
+                'is_authentic' => false,
+                'status' => 'too_small',
+                'reason' => "Document file size ({$fileSize} bytes) is below authentic academic credential threshold (minimum 15KB)."
+            ];
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $docPath);
+        finfo_close($finfo);
+
+        $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        if (!in_array($mime, $allowedMimes)) {
+            return [
+                'is_authentic' => false,
+                'status' => 'invalid_mime',
+                'reason' => "Unsupported file mime type: {$mime}."
+            ];
+        }
+
+        // Strict Negative Non-Academic Keywords (Invoices, Receipts, CVs, Resumes, Dummy/Sample/Test files)
+        $nonAcademicKeywords = [
+            'invoice', 'tax invoice', 'receipt', 'payment voucher', 'bill of lading',
+            'purchase order', 'salary slip', 'payslip', 'payroll', 'curriculum vitae', 
+            'resume', 'lorem ipsum', 'dummy text', 'test document', 'test pdf', 
+            'sample document', 'sample pdf', 'blank page', 'hotel booking', 'boarding pass',
+            'flight ticket', 'supermarket', 'grocery', 'restaurant menu', 'test doc'
+        ];
+
+        // Strict Positive Ugandan Academic & Institutional Markers
+        $academicInstitutionalMarkers = [
+            'uganda national examinations board', 'uneb', 'ministry of education and sports',
+            'primary leaving examination', 'ple', 'uganda certificate of education', 'uce',
+            'uganda advanced certificate', 'uace', 'statement of results', 'result slip',
+            'pass slip', 'continuous assessment', 'new lower secondary curriculum', 'nlsc',
+            'competency', 'project work', 'learner identification number', 'candidate',
+            'index no', 'centre no', 'aggregates', 'division', 'distinction', 'credit',
+            'principal pass', 'report card', 'secondary school', 'primary school', 'headteacher',
+            'term 1', 'term 2', 'term 3', 'academic year', 'examinations board'
+        ];
+
+        $docBasename = strtolower(basename($docPath));
+        foreach ($nonAcademicKeywords as $badKw) {
+            if (stripos($docBasename, $badKw) !== false) {
+                return [
+                    'is_authentic' => false,
+                    'status' => 'non_academic_filename',
+                    'reason' => "File name contains non-academic descriptor ('{$badKw}')."
+                ];
+            }
+        }
+
+        if ($mime === 'application/pdf') {
+            $fp = @fopen($docPath, 'rb');
+            $header = $fp ? fread($fp, 5) : '';
+            if ($fp) fclose($fp);
+            if ($header !== '%PDF-') {
+                return [
+                    'is_authentic' => false,
+                    'status' => 'corrupted_pdf',
+                    'reason' => 'Corrupted or invalid PDF header structure.'
+                ];
+            }
+
+            $extractedText = extractTextFromPdfStream($docPath);
+
+            // Check for negative non-academic indicators in extracted PDF text
+            foreach ($nonAcademicKeywords as $badKw) {
+                if (stripos($extractedText, $badKw) !== false) {
+                    return [
+                        'is_authentic' => false,
+                        'status' => 'non_academic_content',
+                        'reason' => "PDF document content indicates non-academic data ('{$badKw}')."
+                    ];
+                }
+            }
+
+            // Count positive academic institutional markers
+            $foundMarkers = [];
+            foreach ($academicInstitutionalMarkers as $marker) {
+                if (stripos($extractedText, $marker) !== false) {
+                    $foundMarkers[] = $marker;
+                }
+            }
+
+            // Cross-reference applicant candidate credentials
+            $candidateMatches = [];
+            $surname = strtolower(trim($app['surname'] ?? ''));
+            $indexNo = strtolower(trim($app['index_number'] ?? ''));
+            $formerSchool = strtolower(trim($app['former_school'] ?? ''));
+
+            if (!empty($indexNo) && stripos($extractedText, $indexNo) !== false) {
+                $candidateMatches[] = "Index: {$indexNo}";
+            }
+            if (!empty($surname) && strlen($surname) >= 3 && stripos($extractedText, $surname) !== false) {
+                $candidateMatches[] = "Surname: {$surname}";
+            }
+            if (!empty($formerSchool) && strlen($formerSchool) >= 4 && stripos($extractedText, $formerSchool) !== false) {
+                $candidateMatches[] = "School: {$formerSchool}";
+            }
+
+            // Decision: Authentic if at least 2 institutional markers found, OR 1 strong marker + candidate match
+            $isAuthentic = (count($foundMarkers) >= 2) || (count($foundMarkers) >= 1 && count($candidateMatches) >= 1);
+
+            // Scanned image PDF fallback: if text extraction yielded very few words (image-only scan PDF),
+            // check if file size is substantial (>= 35KB) and no negative keywords were found
+            if (!$isAuthentic && strlen(trim($extractedText)) < 80 && $fileSize >= 35840) {
+                $rawContent = @file_get_contents($docPath);
+                if (stripos($rawContent, '/XObject') !== false && stripos($rawContent, '/Subtype /Image') !== false) {
+                    $isAuthentic = true;
+                    $foundMarkers[] = 'scanned_document_xobject';
+                }
+            }
+
+            if (!$isAuthentic) {
+                return [
+                    'is_authentic' => false,
+                    'status' => 'lacks_academic_credentials',
+                    'reason' => 'PDF document lacks verified UNEB institutional markers, examination board credentials, or applicant data.',
+                    'markers_found' => $foundMarkers
+                ];
+            }
+
+            return [
+                'is_authentic' => true,
+                'status' => 'verified_pdf',
+                'markers' => $foundMarkers,
+                'candidate_matches' => $candidateMatches
+            ];
+
+        } else {
+            // Image scan (JPEG, PNG, WEBP)
+            $imgInfo = @getimagesize($docPath);
+            if (!$imgInfo || $imgInfo[0] < 500 || $imgInfo[1] < 500) {
+                return [
+                    'is_authentic' => false,
+                    'status' => 'low_resolution_image',
+                    'reason' => "Result slip image dimensions (" . ($imgInfo ? "{$imgInfo[0]}x{$imgInfo[1]}" : 'unknown') . ") are below readable academic document standard (minimum 500x500)."
+                ];
+            }
+
+            $w = $imgInfo[0];
+            $h = $imgInfo[1];
+            $aspectRatio = $w / $h;
+            // Legitimate document scans have aspect ratios between 0.5 (portrait A4/letter) and 2.0 (landscape)
+            if ($aspectRatio < 0.5 || $aspectRatio > 2.0) {
+                return [
+                    'is_authentic' => false,
+                    'status' => 'abnormal_aspect_ratio',
+                    'reason' => "Image aspect ratio (" . round($aspectRatio, 2) . ") does not match standard academic document format."
+                ];
+            }
+
+            // Image variance test using GD to detect blank/flat/solid test images
+            if (extension_loaded('gd')) {
+                $sampleImg = null;
+                if ($mime === 'image/jpeg') $sampleImg = @imagecreatefromjpeg($docPath);
+                elseif ($mime === 'image/png') $sampleImg = @imagecreatefrompng($docPath);
+                elseif ($mime === 'image/webp') $sampleImg = @imagecreatefromwebp($docPath);
+
+                if ($sampleImg) {
+                    $luminances = [];
+                    for ($x = 10; $x < $w; $x += max(1, (int)($w / 5))) {
+                        for ($y = 10; $y < $h; $y += max(1, (int)($h / 5))) {
+                            $rgb = imagecolorat($sampleImg, $x, $y);
+                            $r = ($rgb >> 16) & 0xFF;
+                            $g = ($rgb >> 8) & 0xFF;
+                            $b = $rgb & 0xFF;
+                            $luminances[] = 0.299 * $r + 0.587 * $g + 0.114 * $b;
+                        }
+                    }
+                    imagedestroy($sampleImg);
+
+                    if (!empty($luminances)) {
+                        $mean = array_sum($luminances) / count($luminances);
+                        $variance = 0.0;
+                        foreach ($luminances as $lum) {
+                            $variance += pow($lum - $mean, 2);
+                        }
+                        $stdDev = sqrt($variance / count($luminances));
+
+                        if ($stdDev < 6.0) {
+                            return [
+                                'is_authentic' => false,
+                                'status' => 'blank_or_solid_image',
+                                'reason' => "Uploaded image lacks textual content variance (detected as blank, solid, or dummy graphic)."
+                            ];
+                        }
+                    }
+                }
+            }
+
+            return [
+                'is_authentic' => true,
+                'status' => 'verified_image',
+                'dimensions' => "{$w}x{$h}"
+            ];
+        }
     }
 }
 
@@ -1976,7 +2236,7 @@ if (!function_exists('evaluateApplicantAdmissionAI')) {
         $assignedComb = $app['combination'] ?? '';
         $evaluationNotes = [];
 
-        // 1. Bio-data & Document checks
+        // 1. Bio-data & Document existence checks
         if ((int)$app['age'] < 9) {
             return ['status' => 'ineligible', 'admitted' => false, 'reason' => 'Applicant below minimum age'];
         }
@@ -1984,90 +2244,37 @@ if (!function_exists('evaluateApplicantAdmissionAI')) {
             return ['status' => 'incomplete_docs', 'admitted' => false, 'reason' => 'Required documents missing'];
         }
 
-        // Strict Academic Result Document Inspection & Verification
-        // The AI does not blindly rely on user-filled form entries; it validates the physical uploaded document.
+        // Strict Academic Result Document Authenticity Verification
+        // Any non-academic, fake, test, or unverified document MUST NEVER be auto-admitted and must require manual committee admission!
         $slipRelative = $app['result_slip'] ?? '';
         $root = realpath(__DIR__ . '/..');
         $slipPath = $root . '/' . ltrim($slipRelative, '/');
         
-        $docVerified = false;
-        $docVerificationErrors = [];
-        
-        if (empty($slipRelative) || !file_exists($slipPath) || !is_file($slipPath)) {
-            $docVerificationErrors[] = "Uploaded academic document not found on server.";
-        } else {
-            $fileSizeBytes = filesize($slipPath);
-            if ($fileSizeBytes < 12288) { // Less than 12KB is suspicious/blank/dummy
-                $docVerificationErrors[] = "Result slip document file size ({$fileSizeBytes} bytes) is below authentic document threshold (12KB).";
-            } else {
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mimeType = finfo_file($finfo, $slipPath);
-                finfo_close($finfo);
+        $authInspection = verifyAcademicDocumentAuthenticity($slipPath, $app);
 
-                if ($mimeType === 'application/pdf') {
-                    $fp = @fopen($slipPath, 'rb');
-                    $header = $fp ? fread($fp, 5) : '';
-                    if ($fp) fclose($fp);
+        if (!$authInspection['is_authentic']) {
+            $reasonDetail = $authInspection['reason'] ?? 'Document failed academic authenticity verification.';
+            logActivity($pdo, 'AI System Evaluator', 'Manual Admission Required', "Application #{$appId} ({$studentName} - {$class}) held: {$reasonDetail}");
+            
+            // Mark application for manual committee verification and strictly disable auto-admit
+            $pdo->prepare("
+                UPDATE applications 
+                SET is_auto_admitted = 0,
+                    auto_admit_review_status = 'manual_verification_required',
+                    application_status = 'pending'
+                WHERE id = ?
+            ")->execute([$appId]);
 
-                    if ($header !== '%PDF-') {
-                        $docVerificationErrors[] = "Invalid or corrupted PDF header.";
-                    } else {
-                        $pdfContent = @file_get_contents($slipPath);
-                        $unebKeywords = [
-                            'UGANDA NATIONAL EXAMINATIONS BOARD', 
-                            'UNEB', 
-                            'RESULT SLIP', 
-                            'EXAMINATIONS BOARD', 
-                            'PRIMARY LEAVING', 
-                            'CERTIFICATE OF EDUCATION', 
-                            'CANDIDATE',
-                            'STATEMENT OF RESULTS'
-                        ];
-                        $hasUnebKeywords = false;
-                        foreach ($unebKeywords as $kw) {
-                            if (stripos($pdfContent, $kw) !== false) {
-                                $hasUnebKeywords = true;
-                                break;
-                            }
-                        }
-                        $indexNo = trim($app['index_number'] ?? '');
-                        $surname = trim($app['surname'] ?? '');
-                        $hasCandidateRef = false;
-                        if (!empty($indexNo) && stripos($pdfContent, $indexNo) !== false) {
-                            $hasCandidateRef = true;
-                        }
-                        if (!empty($surname) && stripos($pdfContent, $surname) !== false) {
-                            $hasCandidateRef = true;
-                        }
-
-                        if ($hasUnebKeywords || $hasCandidateRef || $fileSizeBytes >= 25600) {
-                            $docVerified = true;
-                        } else {
-                            $docVerificationErrors[] = "PDF slip lacks verified UNEB institutional markers or candidate credentials.";
-                        }
-                    }
-                } elseif (in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'])) {
-                    $imgInfo = @getimagesize($slipPath);
-                    if (!$imgInfo || $imgInfo[0] < 350 || $imgInfo[1] < 350) {
-                        $docVerificationErrors[] = "Result slip image dimensions do not meet standard document scan resolution.";
-                    } else {
-                        $docVerified = true;
-                    }
-                } else {
-                    $docVerificationErrors[] = "Unsupported document mime type ({$mimeType}).";
-                }
-            }
-        }
-
-        if (!$docVerified) {
-            $errorSummary = implode('; ', $docVerificationErrors);
-            logActivity($pdo, 'AI System Evaluator', 'AI Document Inspection Held', "Application #{$appId} ({$studentName} - {$class}) held: {$errorSummary}");
             return [
                 'status' => 'held_for_manual_verification',
                 'admitted' => false,
-                'notes' => 'Held for manual admissions committee evaluation: Uploaded academic result slip requires physical authenticity verification against form entries.'
+                'reason' => $reasonDetail,
+                'notes' => 'Held for manual admissions committee evaluation: Uploaded academic document did not pass authenticity verification standards.'
             ];
         }
+
+        // Document passed authenticity verification!
+        $evaluationNotes[] = "Academic document verified authentic (" . ($authInspection['status'] ?? 'verified') . ").";
 
         // 2. Class specific evaluation
         if ($class === 'S1') {
