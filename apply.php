@@ -415,11 +415,11 @@ html, body {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Former Primary School <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="former_school_s1" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Mutolere Primary School">
+                                <input type="text" name="former_school_s1" id="formerSchoolS1" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Mutolere Primary School">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">UNEB PLE Index Number <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="index_number_s1" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-700 transition uppercase" placeholder="e.g. 001234/001">
+                                <input type="text" name="index_number_s1" id="indexNumberS1" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-700 transition uppercase" placeholder="e.g. 001234/001">
                             </div>
                         </div>
 
@@ -438,7 +438,7 @@ html, body {
                                 ?>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-600 mb-1"><?= $subj ?> <span class="text-rose-500 font-bold">*</span></label>
-                                    <select name="<?= $k ?>" class="ple-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
+                                    <select name="<?= $k ?>" id="<?= $k ?>" class="ple-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
                                         <option value="D1">D1 (1)</option>
                                         <option value="D2">D2 (2)</option>
                                         <option value="C3">C3 (3)</option>
@@ -1033,11 +1033,11 @@ html, body {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Former School Name <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="former_school_transfer" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Previous Secondary School">
+                                <input type="text" name="former_school_transfer" id="formerSchoolTransfer" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Previous Secondary School">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Last Class Attended <span class="text-rose-500 font-bold">*</span></label>
-                                <select name="last_class_attended" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition bg-white">
+                                <select name="last_class_attended" id="lastClassAttended" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition bg-white">
                                     <option value="">Select Last Class</option>
                                     <option value="Senior One (S1)">Senior One (S1)</option>
                                     <option value="Senior Two (S2)">Senior Two (S2)</option>
@@ -1066,7 +1066,7 @@ html, body {
 
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Reason for Seeking Transfer <span class="text-rose-500 font-bold">*</span></label>
-                            <textarea name="transfer_reason" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="State reason (relocation, academic advancement, etc.)..."></textarea>
+                            <textarea name="transfer_reason" id="transferReason" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="State reason (relocation, academic advancement, etc.)..."></textarea>
                         </div>
 
                         <div>
@@ -1432,12 +1432,19 @@ html, body {
             banner.classList.remove('hidden');
         }
 
+        // Resolve element if selector or ID string passed
+        if (typeof inputElem === 'string') {
+            inputElem = document.getElementById(inputElem) || document.querySelector(inputElem);
+        }
+
         // Highlight element
         if (inputElem) {
             document.querySelectorAll('.field-error-highlight').forEach(el => el.classList.remove('field-error-highlight'));
             inputElem.classList.add('field-error-highlight');
-            inputElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            try { inputElem.focus(); } catch(e) {}
+            try {
+                inputElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                inputElem.focus();
+            } catch(e) {}
             
             const clearFn = function() {
                 inputElem.classList.remove('field-error-highlight');
@@ -1783,54 +1790,55 @@ html, body {
             const classVal = classOfEntrySelect.value;
 
             if (classVal === 'S1') {
-                const fs = document.getElementById('formerSchoolS1');
+                const fs = document.getElementById('formerSchoolS1') || document.querySelector("input[name='former_school_s1']");
                 if (!fs || !fs.value.trim()) {
-                    showFieldWarning(fs, "You have not entered the candidate's Former Primary School.");
+                    showFieldWarning(fs || "input[name='former_school_s1']", "You have not entered the candidate's Former Primary School.");
                     return false;
                 }
 
-                const idx = document.getElementById('indexNumberS1');
+                const idx = document.getElementById('indexNumberS1') || document.querySelector("input[name='index_number_s1']");
                 if (!idx || !idx.value.trim()) {
-                    showFieldWarning(idx, "You have not entered the candidate's PLE Index Number.");
+                    showFieldWarning(idx || "input[name='index_number_s1']", "You have not entered the candidate's PLE Index Number.");
                     return false;
                 }
 
-                const eng = document.getElementById('english');
+                const eng = document.getElementById('english') || document.querySelector("select[name='english']");
                 if (!eng || !eng.value) {
-                    showFieldWarning(eng, "You have not selected a grade for English Language.");
+                    showFieldWarning(eng || "select[name='english']", "You have not selected a grade for English Language.");
                     return false;
                 }
 
-                const mat = document.getElementById('mathematics');
+                const mat = document.getElementById('mathematics') || document.querySelector("select[name='mathematics']");
                 if (!mat || !mat.value) {
-                    showFieldWarning(mat, "You have not selected a grade for Mathematics.");
+                    showFieldWarning(mat || "select[name='mathematics']", "You have not selected a grade for Mathematics.");
                     return false;
                 }
 
-                const sci = document.getElementById('science');
+                const sci = document.getElementById('science') || document.querySelector("select[name='science']");
                 if (!sci || !sci.value) {
-                    showFieldWarning(sci, "You have not selected a grade for Science.");
+                    showFieldWarning(sci || "select[name='science']", "You have not selected a grade for Science.");
                     return false;
                 }
 
-                const sst = document.getElementById('sst');
+                const sst = document.getElementById('sst') || document.querySelector("select[name='sst']");
                 if (!sst || !sst.value) {
-                    showFieldWarning(sst, "You have not selected a grade for Social Studies (SST).");
+                    showFieldWarning(sst || "select[name='sst']", "You have not selected a grade for Social Studies (SST).");
                     return false;
                 }
 
-                const pleAgg = parseInt(document.getElementById('aggregatesS1').value, 10) || 0;
+                const pleAggInp = document.getElementById('aggregatesS1') || document.querySelector("input[name='aggregates_s1']");
+                const pleAgg = parseInt(pleAggInp ? pleAggInp.value : 0, 10) || 0;
                 if (cutoffPassmarks['S1'] !== null && cutoffPassmarks['S1'] !== '') {
                     const cutoffS1 = parseInt(cutoffPassmarks['S1'], 10);
                     if (pleAgg > cutoffS1) {
-                        showFieldWarning(document.getElementById('aggregatesS1'), "Cutoff Aggregates Exceeded: Your PLE aggregates (" + pleAgg + ") exceed the school's maximum admission cutoff of " + cutoffS1 + " aggregates.");
+                        showFieldWarning(pleAggInp, "Cutoff Aggregates Exceeded: Your PLE aggregates (" + pleAgg + ") exceed the school's maximum admission cutoff of " + cutoffS1 + " aggregates.");
                         return false;
                     }
                 }
 
-                const s1Slip = document.getElementById('resultSlipS1');
+                const s1Slip = document.getElementById('resultSlipS1') || document.querySelector("input[name='result_slip_s1']");
                 if (!s1Slip || !s1Slip.files || s1Slip.files.length === 0) {
-                    showFieldWarning(s1Slip, "You have not uploaded the candidate's official PLE Result Slip.");
+                    showFieldWarning(s1Slip || "input[name='result_slip_s1']", "You have not uploaded the candidate's official PLE Result Slip.");
                     return false;
                 }
                 const s1Ext = s1Slip.files[0].name.split('.').pop().toLowerCase();
@@ -1928,27 +1936,33 @@ html, body {
                 }
             } else {
                 // S2, S3, S4 Transfers
-                const fSchoolTr = document.getElementById('formerSchoolTransfer');
+                const fSchoolTr = document.getElementById('formerSchoolTransfer') || document.querySelector("input[name='former_school_transfer']");
                 if (!fSchoolTr || !fSchoolTr.value.trim()) {
-                    showFieldWarning(fSchoolTr, "You have not entered the Former School attended.");
+                    showFieldWarning(fSchoolTr || "input[name='former_school_transfer']", "You have not entered the Former School attended.");
                     return false;
                 }
 
-                const divTr = document.getElementById('divisionTransfer');
+                const lastCls = document.getElementById('lastClassAttended') || document.querySelector("select[name='last_class_attended']");
+                if (!lastCls || !lastCls.value) {
+                    showFieldWarning(lastCls || "select[name='last_class_attended']", "You have not selected the Last Class Attended.");
+                    return false;
+                }
+
+                const divTr = document.getElementById('divisionTransfer') || document.querySelector("select[name='division_transfer']");
                 if (!divTr || !divTr.value) {
-                    showFieldWarning(divTr, "You have not selected the Last Class Attended.");
+                    showFieldWarning(divTr || "select[name='division_transfer']", "You have not selected the Previous Class Standing / Division.");
                     return false;
                 }
 
-                const trReason = document.getElementById('transferReason');
+                const trReason = document.getElementById('transferReason') || document.querySelector("textarea[name='transfer_reason']");
                 if (!trReason || !trReason.value.trim()) {
-                    showFieldWarning(trReason, "You have not provided the Reason for School Transfer.");
+                    showFieldWarning(trReason || "textarea[name='transfer_reason']", "You have not provided the Reason for School Transfer.");
                     return false;
                 }
 
-                const trSlip = document.getElementById('resultSlipTransfer');
+                const trSlip = document.getElementById('resultSlipTransfer') || document.querySelector("input[name='result_slip_transfer']");
                 if (!trSlip || !trSlip.files || trSlip.files.length === 0) {
-                    showFieldWarning(trSlip, "You have not uploaded the Academic Report Card from your former school.");
+                    showFieldWarning(trSlip || "input[name='result_slip_transfer']", "You have not uploaded the Academic Report Card from your former school.");
                     return false;
                 }
             }
@@ -2031,13 +2045,23 @@ html, body {
         return true;
     }
 
-    // Clear custom validity on input
+    // Clear custom validity and validation error highlight on input
     document.querySelectorAll("input, select, textarea").forEach(inp => {
         inp.addEventListener("input", function() { 
             if (this.name === 'parent_nin') this.value = this.value.toUpperCase();
             this.setCustomValidity(""); 
+            if (this.classList.contains('field-error-highlight')) {
+                this.classList.remove('field-error-highlight');
+                dismissFieldWarning();
+            }
         });
-        inp.addEventListener("change", function() { this.setCustomValidity(""); });
+        inp.addEventListener("change", function() { 
+            this.setCustomValidity(""); 
+            if (this.classList.contains('field-error-highlight')) {
+                this.classList.remove('field-error-highlight');
+                dismissFieldWarning();
+            }
+        });
     });
 
     document.getElementById('admissionForm').addEventListener('submit', function(e) {
