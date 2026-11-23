@@ -254,7 +254,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1.5">Password</label>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-600 uppercase">Password</label>
+                    <a href="forgot_password.php" class="text-xs font-semibold text-brand-700 hover:text-brand-900 transition hover:underline">
+                        Forgot Password?
+                    </a>
+                </div>
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                         <i class="fa-solid fa-lock"></i>

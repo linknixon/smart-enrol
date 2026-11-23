@@ -136,6 +136,8 @@ try {
         mfa_temp_token VARCHAR(100) DEFAULT NULL,
         mfa_grace_until DATETIME DEFAULT NULL,
         mfa_secret VARCHAR(100) DEFAULT NULL,
+        reset_token VARCHAR(100) DEFAULT NULL,
+        reset_expires_at DATETIME DEFAULT NULL,
         failed_attempts INT DEFAULT 0,
         lock_until DATETIME DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -245,6 +247,8 @@ try {
         'mfa_temp_token'       => "ALTER TABLE admin_users ADD mfa_temp_token VARCHAR(100) DEFAULT NULL AFTER mfa_expires_at",
         'mfa_grace_until'      => "ALTER TABLE admin_users ADD mfa_grace_until DATETIME DEFAULT NULL AFTER mfa_temp_token",
         'mfa_secret'           => "ALTER TABLE admin_users ADD mfa_secret VARCHAR(100) DEFAULT NULL AFTER mfa_grace_until",
+        'reset_token'          => "ALTER TABLE admin_users ADD reset_token VARCHAR(100) DEFAULT NULL AFTER mfa_secret",
+        'reset_expires_at'     => "ALTER TABLE admin_users ADD reset_expires_at DATETIME DEFAULT NULL AFTER reset_token",
         'failed_attempts'      => "ALTER TABLE admin_users ADD failed_attempts INT DEFAULT 0",
         'lock_until'           => "ALTER TABLE admin_users ADD lock_until DATETIME DEFAULT NULL",
     ];
