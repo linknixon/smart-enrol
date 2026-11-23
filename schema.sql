@@ -18,8 +18,12 @@ CREATE TABLE IF NOT EXISTS `admin_users` (
   `must_change_password` TINYINT DEFAULT 0,
   `role` VARCHAR(50) NOT NULL DEFAULT 'admin',
   `roles_json` TEXT DEFAULT NULL,
-  `mfa_secret` VARCHAR(100) DEFAULT NULL,
   `mfa_enabled` TINYINT DEFAULT 0,
+  `mfa_code` VARCHAR(20) DEFAULT NULL,
+  `mfa_expires_at` DATETIME DEFAULT NULL,
+  `mfa_temp_token` VARCHAR(100) DEFAULT NULL,
+  `mfa_grace_until` DATETIME DEFAULT NULL,
+  `mfa_secret` VARCHAR(100) DEFAULT NULL,
   `failed_attempts` INT DEFAULT 0,
   `lock_until` DATETIME DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP

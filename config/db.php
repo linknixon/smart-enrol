@@ -129,6 +129,13 @@ try {
         password VARCHAR(255) NOT NULL,
         must_change_password TINYINT DEFAULT 0,
         role VARCHAR(50) NOT NULL DEFAULT 'admin',
+        roles_json TEXT DEFAULT NULL,
+        mfa_enabled TINYINT DEFAULT 0,
+        mfa_code VARCHAR(20) DEFAULT NULL,
+        mfa_expires_at DATETIME DEFAULT NULL,
+        mfa_temp_token VARCHAR(100) DEFAULT NULL,
+        mfa_grace_until DATETIME DEFAULT NULL,
+        mfa_secret VARCHAR(100) DEFAULT NULL,
         failed_attempts INT DEFAULT 0,
         lock_until DATETIME DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -231,14 +238,24 @@ try {
         'lastname'             => "ALTER TABLE admin_users ADD lastname VARCHAR(100) DEFAULT '' AFTER firstname",
         'email'                => "ALTER TABLE admin_users ADD email VARCHAR(100) DEFAULT '' AFTER lastname",
         'roles_json'           => "ALTER TABLE admin_users ADD roles_json TEXT DEFAULT NULL AFTER role",
-        'must_change_password' => "ALTER TABLE admin_users ADD must_change_password TINYINT DEFAULT 0 AFTER password"
+        'must_change_password' => "ALTER TABLE admin_users ADD must_change_password TINYINT DEFAULT 0 AFTER password",
+        'mfa_enabled'          => "ALTER TABLE admin_users ADD mfa_enabled TINYINT DEFAULT 0 AFTER roles_json",
+        'mfa_code'             => "ALTER TABLE admin_users ADD mfa_code VARCHAR(20) DEFAULT NULL AFTER mfa_enabled",
+        'mfa_expires_at'       => "ALTER TABLE admin_users ADD mfa_expires_at DATETIME DEFAULT NULL AFTER mfa_code",
+        'mfa_temp_token'       => "ALTER TABLE admin_users ADD mfa_temp_token VARCHAR(100) DEFAULT NULL AFTER mfa_expires_at",
+        'mfa_grace_until'      => "ALTER TABLE admin_users ADD mfa_grace_until DATETIME DEFAULT NULL AFTER mfa_temp_token",
+        'mfa_secret'           => "ALTER TABLE admin_users ADD mfa_secret VARCHAR(100) DEFAULT NULL AFTER mfa_grace_until",
+        'failed_attempts'      => "ALTER TABLE admin_users ADD failed_attempts INT DEFAULT 0",
+        'lock_until'           => "ALTER TABLE admin_users ADD lock_until DATETIME DEFAULT NULL",
     ];
 
     foreach ($colsToCheck as $colName => $alterQuery) {
-        $checkCol = $pdo->query("SHOW COLUMNS FROM admin_users LIKE '$colName'");
-        if ($checkCol->rowCount() === 0) {
-            $pdo->exec($alterQuery);
-        }
+        try {
+            $checkCol = $pdo->query("SHOW COLUMNS FROM admin_users LIKE '$colName'");
+            if ($checkCol && $checkCol->rowCount() === 0) {
+                $pdo->exec($alterQuery);
+            }
+        } catch (Exception $e) {}
     }
 
     // Auto-create and migrate system_roles table

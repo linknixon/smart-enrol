@@ -26,17 +26,49 @@ $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere
 $logo_source       = getSchoolLogoSrc($pdo, '../');
 $primary_color     = getPrimaryColor($pdo);
 
+// Ensure MFA columns exist in admin_users to prevent column not found errors
+try {
+    $chkCol = $pdo->query("SHOW COLUMNS FROM admin_users LIKE 'mfa_code'");
+    if ($chkCol && $chkCol->rowCount() === 0) {
+        $pdo->exec("ALTER TABLE admin_users 
+            ADD mfa_enabled TINYINT DEFAULT 0,
+            ADD mfa_code VARCHAR(20) DEFAULT NULL,
+            ADD mfa_expires_at DATETIME DEFAULT NULL,
+            ADD mfa_temp_token VARCHAR(100) DEFAULT NULL,
+            ADD mfa_grace_until DATETIME DEFAULT NULL,
+            ADD mfa_secret VARCHAR(100) DEFAULT NULL");
+    }
+} catch (Exception $e) {}
+
+// Allow Administrator to skip MFA setup and enter dashboard directly
+if (isset($_GET['skip']) && $_GET['skip'] == '1') {
+    $_SESSION['admin_logged_in'] = true;
+    $_SESSION['admin_id'] = $admin['id'];
+    $_SESSION['admin_username'] = $admin['username'];
+    $_SESSION['admin_role'] = $admin['role'];
+    $_SESSION['admin_email'] = $admin['email'];
+    $_SESSION['admin_firstname'] = !empty($admin['firstname']) ? $admin['firstname'] : $admin['username'];
+    $_SESSION['last_activity'] = time();
+    unset($_SESSION['mfa_setup_user_id']);
+    header("Location: dashboard.php");
+    exit;
+}
+
 $error = '';
 $success = '';
+$dispCode = '';
 
 // Send setup code if not already sent or expired
 if (empty($admin['mfa_code']) || empty($admin['mfa_expires_at']) || strtotime($admin['mfa_expires_at']) < time() || (isset($_GET['resend']) && $_GET['resend'] == '1')) {
     $code = sprintf('%06d', random_int(100000, 999999));
     $expiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
-    $pdo->prepare("UPDATE admin_users SET mfa_code = ?, mfa_expires_at = ? WHERE id = ?")
-        ->execute([$code, $expiry, $admin['id']]);
+    try {
+        $pdo->prepare("UPDATE admin_users SET mfa_code = ?, mfa_expires_at = ? WHERE id = ?")
+            ->execute([$code, $expiry, $admin['id']]);
+    } catch (Exception $e) {}
 
+    $dispCode = $code;
     $subject = "Setup Two-Factor Authentication (MFA) - {$school_short_name}";
     $body = "
     <div style='font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;'>
@@ -57,6 +89,8 @@ if (empty($admin['mfa_code']) || empty($admin['mfa_expires_at']) || strtotime($a
 
     @sendEmail($admin['email'], $subject, $body);
     $success = "A confirmation passcode has been dispatched to your email (" . htmlspecialchars(preg_replace('/(?<=.{3}).(?=.*@)/', '*', $admin['email'] ?? '')) . ").";
+} else {
+    $dispCode = $admin['mfa_code'] ?? '';
 }
 
 // Handle Form Submission
@@ -173,12 +207,24 @@ $maskedEmail = preg_replace('/(?<=.{3}).(?=.*@)/', '*', $admin['email'] ?? '');
                 </button>
             </form>
 
+            <?php if (!empty($dispCode)): ?>
+            <div class="mt-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-center">
+                <span class="text-[11px] text-slate-500 font-medium">Initial Setup Passcode:</span>
+                <span class="font-mono font-bold text-brand-700 text-sm ml-1.5"><?= htmlspecialchars($dispCode) ?></span>
+            </div>
+            <?php endif; ?>
+
             <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                 <a href="mfa_setup.php?resend=1" class="font-bold text-brand-700 hover:text-brand-900 flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-rotate-right"></i> Resend Setup Code
+                    <i class="fa-solid fa-rotate-right"></i> Resend Code
                 </a>
-                <a href="login.php" class="text-slate-400 hover:text-slate-600 transition">
-                    Back to Login
+                <a href="mfa_setup.php?skip=1" class="font-semibold text-slate-500 hover:text-slate-800 transition">
+                    Skip for now ➔
+                </a>
+            </div>
+            <div class="mt-2 text-center">
+                <a href="login.php" class="text-[11px] text-slate-400 hover:text-slate-600 transition">
+                    Return to Sign In
                 </a>
             </div>
         </div>
