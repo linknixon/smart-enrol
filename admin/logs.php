@@ -12,24 +12,36 @@ if (!hasPermission($pdo, $currentRole, 'can_view_logs')) {
     exit;
 }
 
-// Pagination & 90 Days Constraint
+// Pagination, Search & 90 Days Constraint
 $perPage = 50;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 $isSuperAdmin = (($currentRole ?? '') === 'super_admin');
+$search = trim($_GET['search'] ?? '');
 
-// Super admin sees all logs; other roles do NOT see any super_admin activity
-if ($isSuperAdmin) {
-    $countSql = "SELECT COUNT(*) FROM admin_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)";
-    $fetchSql = "SELECT * FROM admin_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY) ORDER BY id DESC LIMIT ? OFFSET ?";
-} else {
-    $countSql = "SELECT COUNT(*) FROM admin_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY) AND username NOT IN (SELECT username FROM admin_users WHERE role = 'super_admin') AND details NOT LIKE '%super_admin%' AND action NOT LIKE '%super_admin%'";
-    $fetchSql = "SELECT * FROM admin_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY) AND username NOT IN (SELECT username FROM admin_users WHERE role = 'super_admin') AND details NOT LIKE '%super_admin%' AND action NOT LIKE '%super_admin%' ORDER BY id DESC LIMIT ? OFFSET ?";
+$where = ["created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)"];
+$params = [];
+
+if (!$isSuperAdmin) {
+    $where[] = "username NOT IN (SELECT username FROM admin_users WHERE role = 'super_admin') AND details NOT LIKE '%super_admin%' AND action NOT LIKE '%super_admin%'";
 }
 
-$countStmt = $pdo->query($countSql);
+if ($search !== '') {
+    $where[] = "(username LIKE ? OR action LIKE ? OR details LIKE ? OR ip_address LIKE ?)";
+    $like = '%' . $search . '%';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+}
+
+$whereClause = implode(" AND ", $where);
+$countSql = "SELECT COUNT(*) FROM admin_logs WHERE {$whereClause}";
+$countStmt = $pdo->prepare($countSql);
+$countStmt->execute($params);
 $totalLogs = (int)$countStmt->fetchColumn();
+
 $totalPages = max(1, (int)ceil($totalLogs / $perPage));
 if ($page > $totalPages && $totalPages > 0) {
     $page = $totalPages;
@@ -37,9 +49,14 @@ if ($page > $totalPages && $totalPages > 0) {
 }
 
 // Fetch logs
+$fetchSql = "SELECT * FROM admin_logs WHERE {$whereClause} ORDER BY id DESC LIMIT ? OFFSET ?";
 $stmt = $pdo->prepare($fetchSql);
-$stmt->bindValue(1, $perPage, PDO::PARAM_INT);
-$stmt->bindValue(2, $offset, PDO::PARAM_INT);
+$paramIdx = 1;
+foreach ($params as $p) {
+    $stmt->bindValue($paramIdx++, $p);
+}
+$stmt->bindValue($paramIdx++, $perPage, PDO::PARAM_INT);
+$stmt->bindValue($paramIdx++, $offset, PDO::PARAM_INT);
 $stmt->execute();
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -208,16 +225,32 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <!-- Logs Registry Table Card -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                     <div>
                         <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider">
                             <i class="fa-solid fa-clock-rotate-left text-brand-700 me-1.5"></i> Activity & Admissions Logs (Last 90 Days)
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Captures system audits, admissions changes, and application submission failure reasons.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Captures system audits, admissions changes, and originating client machine IP addresses.</p>
                     </div>
-                    <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1 rounded-full">
-                        Total 90-Day Logs: <?= number_format($totalLogs) ?>
-                    </span>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <form method="GET" action="logs.php" class="flex items-center gap-1.5 w-full md:w-auto">
+                            <div class="relative flex-1 md:w-64">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                </span>
+                                <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search user, action, details, IP..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-brand-700 font-medium">
+                            </div>
+                            <?php if ($search !== ''): ?>
+                                <a href="logs.php" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg text-xs" title="Clear filter"><i class="fa-solid fa-xmark"></i></a>
+                            <?php endif; ?>
+                            <button type="submit" class="px-3 py-1.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-xs font-bold transition">
+                                Filter
+                            </button>
+                        </form>
+                        <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1 rounded-full whitespace-nowrap hidden sm:inline-block">
+                            Logs: <?= number_format($totalLogs) ?>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -228,7 +261,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th class="px-4 py-3">User / Actor</th>
                                 <th class="px-4 py-3">Operation / Event</th>
                                 <th class="px-4 py-3">Details / Reason</th>
-                                <th class="px-4 py-3 text-center">IP Address</th>
+                                <th class="px-4 py-3 text-center">User Machine IP</th>
                                 <th class="px-4 py-3 text-center">Timestamp</th>
                             </tr>
                         </thead>
@@ -249,7 +282,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td class="px-4 py-3">
                                     <?php if ($isBlock): ?>
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                            <i class="fa-solid fa-circle-exclamation text-[10px]"></i> <?= htmlspecialchars($l['action']) ?>
+                                             <i class="fa-solid fa-circle-exclamation text-[10px]"></i> <?= htmlspecialchars($l['action']) ?>
                                         </span>
                                     <?php elseif ($isSubmission): ?>
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -260,7 +293,16 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3 text-slate-600 font-medium text-xs max-w-md break-words"><?= htmlspecialchars($l['details']) ?></td>
-                                <td class="px-4 py-3 text-center font-mono text-xs text-slate-400"><?= htmlspecialchars($l['ip_address']) ?></td>
+                                <td class="px-4 py-3 text-center font-mono text-xs">
+                                    <?php if (!empty($l['ip_address'])): ?>
+                                        <a href="logs.php?search=<?= urlencode($l['ip_address']) ?>" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-300 text-slate-700 border border-slate-200 text-[11px] font-semibold transition" title="Click to filter by Machine IP: <?= htmlspecialchars($l['ip_address']) ?>">
+                                            <i class="fa-solid fa-network-wired text-[9px] text-slate-400"></i>
+                                            <?= htmlspecialchars($l['ip_address']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-slate-300 italic text-[11px]">N/A</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="px-4 py-3 text-center font-mono text-xs text-slate-500 whitespace-nowrap"><?= htmlspecialchars($l['created_at']) ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -284,8 +326,11 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         Showing <span class="font-bold text-slate-700"><?= min($offset + 1, $totalLogs) ?></span> to <span class="font-bold text-slate-700"><?= min($offset + $perPage, $totalLogs) ?></span> of <span class="font-bold text-slate-700"><?= $totalLogs ?></span> operations (50 per page)
                     </span>
                     <div class="flex items-center gap-1.5">
+                        <?php 
+                            $searchQueryParam = !empty($search) ? '&search=' . urlencode($search) : '';
+                        ?>
                         <?php if ($page > 1): ?>
-                            <a href="logs.php?page=<?= $page - 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
+                            <a href="logs.php?page=<?= $page - 1 ?><?= $searchQueryParam ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
                                 <i class="fa-solid fa-chevron-left me-1"></i> Prev
                             </a>
                         <?php else: ?>
@@ -299,7 +344,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </span>
 
                         <?php if ($page < $totalPages): ?>
-                            <a href="logs.php?page=<?= $page + 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
+                            <a href="logs.php?page=<?= $page + 1 ?><?= $searchQueryParam ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
                                 Next <i class="fa-solid fa-chevron-right ms-1"></i>
                             </a>
                         <?php else: ?>

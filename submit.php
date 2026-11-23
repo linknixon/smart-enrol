@@ -38,7 +38,7 @@ if ($cfEnabled === '1' && !empty($cfSecret)) {
     $postData = http_build_query([
         'secret' => $cfSecret,
         'response' => $cfToken,
-        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+        'remoteip' => getClientIp()
     ]);
     
     $opts = [

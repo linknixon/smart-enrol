@@ -526,10 +526,47 @@ try {
     }
 }
 
-// Activity Logging Helper Function
+// Extract True Client Machine IP Address across Cloudflare, Reverse Proxies, and Direct Connections
+if (!function_exists('getClientIp')) {
+    function getClientIp() {
+        // Priority list of headers populated by Cloudflare, reverse proxies, and load balancers
+        $headers = [
+            'HTTP_CF_CONNECTING_IP',   // Cloudflare verified client machine IP
+            'HTTP_X_REAL_IP',          // Nginx / HAProxy / Caddy reverse proxy client IP
+            'HTTP_CLIENT_IP',          // Direct client IP header
+            'HTTP_X_FORWARDED_FOR',    // Standard proxy forwarded list (client, proxy1, proxy2...)
+            'HTTP_X_FORWARDED',        // Proxy header
+            'HTTP_X_CLUSTER_CLIENT_IP',// Cluster load balancer client IP
+            'HTTP_FORWARDED_FOR',      // Alternative forwarded
+            'HTTP_FORWARDED',          // RFC 7239 standard Forwarded
+            'REMOTE_ADDR'              // Direct socket connection fallback
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                // If comma-separated, the first IP is the original user client machine
+                $rawList = explode(',', (string)$_SERVER[$header]);
+                foreach ($rawList as $rawIp) {
+                    $ip = trim($rawIp);
+                    // Handle IPv4 with port (e.g. 192.168.1.10:8080)
+                    if (strpos($ip, ':') !== false && substr_count($ip, ':') === 1) {
+                        $ip = explode(':', $ip)[0];
+                    }
+                    if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                        return $ip;
+                    }
+                }
+            }
+        }
+
+        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    }
+}
+
+// Activity Logging Helper Function (Captures Real Client Machine IP)
 if (!function_exists('logActivity')) {
     function logActivity($pdo, $username, $action, $details = '') {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ip = getClientIp();
         try {
             $stmt = $pdo->prepare("INSERT INTO admin_logs (username, action, details, ip_address) VALUES (?, ?, ?, ?)");
             $stmt->execute([$username, $action, $details, $ip]);
@@ -1637,7 +1674,7 @@ if (!function_exists('verifyTurnstileToken')) {
         $postData = http_build_query([
             'secret'   => $cfSecret,
             'response' => $token,
-            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+            'remoteip' => getClientIp()
         ]);
         $opts = [
             'http' => [
