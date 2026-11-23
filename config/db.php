@@ -657,7 +657,7 @@ if (!function_exists('renderThemeConfig')) {
         $primary = htmlspecialchars(getPrimaryColor($pdo));
         $accent  = htmlspecialchars(getAccentColor($pdo));
         return "
-        <script data-cfasync="false">
+        <script data-cfasync=\"false\">
         tailwind = window.tailwind || {};
         tailwind.config = {
             theme: {
