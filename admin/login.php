@@ -8,10 +8,28 @@ $logo_source        = getSchoolLogoSrc($pdo, '../');
 $school_website_url = getSchoolWebsiteUrl($pdo);
 $primary_color      = getPrimaryColor($pdo);
 
+// If already logged in, redirect straight to dashboard (unless explicitly requesting to switch accounts)
+if (!empty($_SESSION['admin_logged_in']) && !isset($_GET['switch']) && !isset($_GET['logged_out'])) {
+    header("Location: dashboard.php");
+    exit;
+}
+
 $error = '';
 $notice = '';
 if (isset($_GET['timeout'])) {
     $notice = "Your session expired after inactivity. Please log in again.";
+} elseif (isset($_GET['logged_out'])) {
+    $notice = "You have been successfully logged out of the staff portal.";
+} elseif (isset($_GET['changed'])) {
+    $notice = "Password updated successfully. You may now log in with your new credentials.";
+} elseif (isset($_GET['error'])) {
+    if ($_GET['error'] === 'account_locked') {
+        $error = "This staff account is currently locked due to too many failed attempts.";
+    } elseif ($_GET['error'] === 'account_removed') {
+        $error = "This staff account has been deactivated or removed.";
+    } elseif ($_GET['error'] === 'invalid_token') {
+        $error = "Invalid or expired verification session. Please sign in again.";
+    }
 }
 
 $MAX_ATTEMPTS = 5;

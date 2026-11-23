@@ -1,11 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 header('Content-Type: application/json; charset=utf-8');
-
-require __DIR__ . '/auth.php';
-require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../form-one/tcpdf/tcpdf.php';
 require_once __DIR__ . '/../form-one/vendor/autoload.php';
 

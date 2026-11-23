@@ -1,14 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 require_once __DIR__ . '/../config/db.php';
-
-// If already logged in, redirect to dashboard
-if (!empty($_SESSION['admin_logged_in'])) {
-    header("Location: dashboard.php");
-    exit;
-}
 
 $school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
 $school_short_name  = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');

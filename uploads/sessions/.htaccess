@@ -1,0 +1,2 @@
+# Prevent web access to session files
+Deny from all

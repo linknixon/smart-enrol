@@ -1,15 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../form-one/includes/mailer.php';
-
-// If already logged in, redirect to dashboard
-if (!empty($_SESSION['admin_logged_in'])) {
-    header("Location: dashboard.php");
-    exit;
-}
 
 $school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
 $school_short_name  = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
@@ -80,9 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $maskedEmail = preg_replace('/(?<=.{3}).(?=.*@)/', '*', $user['email'] ?? '');
                 $success = "If a staff account matches that username or email, reset instructions have been dispatched to " . (!empty($maskedEmail) ? "<b>" . htmlspecialchars($maskedEmail) . "</b>" : "your registered email") . ". Please check your inbox and spam folder.";
 
-                // Development / localhost helper
+                // Development / localhost helper (Strictly for local environment, NEVER on live domains)
                 $isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false;
-                if ($isLocal || !$mailSent) {
+                if ($isLocal) {
                     $devResetLink = $resetUrl;
                     $devOtp = $otp;
                 }

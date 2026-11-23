@@ -1,9 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-require __DIR__ . '/auth.php';
-require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/auth.php';
 
 $currentRole = $_SESSION['admin_role'] ?? '';
 if (!hasPermission($pdo, $currentRole, 'can_admit_students') && !hasPermission($pdo, $currentRole, 'can_manage_settings') && $currentRole !== 'super_admin') {
