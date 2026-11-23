@@ -18,11 +18,10 @@ if (strpos($logo_source, 'http') === false) {
     $logo_source = getBaseUrl($pdo) . '/' . ltrim($logo_source, '/');
 }
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+$id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : (isset($_GET['id']) && is_numeric($_GET['id']) ? (int)$_GET['id'] : 0);
+if ($id <= 0) {
     die("Invalid request");
 }
-
-$id = (int)$_GET['id'];
 
 /* ================= FETCH APPLICANT ================= */
 $stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
@@ -31,6 +30,18 @@ $applicant = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$applicant) {
     die("Applicant not found");
+}
+
+/* ================= MANUAL A-LEVEL COMBINATION ASSIGNMENT ================= */
+$assignedCombination = trim($_POST['combination'] ?? $_GET['combination'] ?? '');
+$customComb = trim($_POST['custom_combination'] ?? $_GET['custom_combination'] ?? '');
+if ($assignedCombination === 'CUSTOM' || $assignedCombination === 'OTHER' || !empty($customComb)) {
+    $assignedCombination = strtoupper($customComb);
+}
+
+if (!empty($assignedCombination)) {
+    $pdo->prepare("UPDATE applications SET combination = ? WHERE id = ?")->execute([$assignedCombination, $id]);
+    $applicant['combination'] = $assignedCombination;
 }
 
 $academic_year = getAcademicYear($pdo, $applicant['class_of_entry'] ?? 'S1');
@@ -56,7 +67,8 @@ $update = $pdo->prepare("
 $update->execute([$adminFullName, $id]);
 
 // Log activity
-logActivity($pdo, $_SESSION['admin_username'], "Admit Student", "Admitted applicant: " . $applicant['firstname'] . " " . $applicant['surname'] . " (" . $applicant['class_of_entry'] . ")");
+$combLog = !empty($applicant['combination']) ? " - Assigned Combination: " . $applicant['combination'] : "";
+logActivity($pdo, $_SESSION['admin_username'], "Admit Student", "Admitted applicant: " . $applicant['firstname'] . " " . $applicant['surname'] . " (" . $applicant['class_of_entry'] . "){$combLog}");
 
 /* ================= PDF & REPORTING DETAILS ================= */
 $pdfLink = getBaseUrl($pdo) . "/admin/admission_offer.php?id=" . $id;
@@ -101,6 +113,15 @@ if (!empty($reportingDate)) {
         <strong>Official Reporting Date:</strong> <span style='color: {$primary_color}; font-weight: bold;'>{$reportingDate}</span><br>
         <span style='color: #b45309; font-weight: bold;'>* Please bring a printed copy of your admission letter on reporting date.</span>
     </p>";
+}
+
+$combinationNotice = "";
+if (!empty($applicant['combination']) && in_array($applicant['class_of_entry'], ['S5', 'S6'])) {
+    $combinationNotice = "
+    <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$primary_color}; padding: 12px 15px; border-radius: 6px; margin: 15px 0;'>
+        <span style='font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;'>Officially Assigned A-Level Combination:</span><br>
+        <strong style='font-size: 15px; color: {$primary_color};'>" . htmlspecialchars($applicant['combination']) . "</strong>
+    </div>";
 }
 
 $message = "
@@ -153,6 +174,7 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             <p>We are pleased to inform you that your child <strong>$studentName</strong> has been <strong>SUCCESSFULLY ADMITTED</strong> to <strong>$className</strong> at <strong>{$school_name}</strong> for the <strong>{$academic_year} Academic Year</strong>.</p>
             
             {$reportingNotice}
+            {$combinationNotice}
 
             <p style='margin-top: 18px;'>Please click the button below to download and print the official Provisional Admission Offer Letter (PDF):</p>
             

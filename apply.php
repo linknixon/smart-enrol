@@ -42,16 +42,13 @@ $cf_turnstile_site_key = getSetting($pdo, 'cf_turnstile_site_key', '');
 $defaultCombinations = [
     'Sciences' => [
         'PCM/ICT' => 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)',
-        'PCM/SMT' => 'PCM/SMT (Physics, Chemistry, Mathematics & Sub-Math)',
         'PCB/ICT' => 'PCB/ICT (Physics, Chemistry, Biology & ICT)',
         'PCB/SMT' => 'PCB/SMT (Physics, Chemistry, Biology & Sub-Math)',
         'BCM/ICT' => 'BCM/ICT (Biology, Chemistry, Mathematics & ICT)',
-        'BCM/SMT' => 'BCM/SMT (Biology, Chemistry, Mathematics & Sub-Math)',
         'PEM/ICT' => 'PEM/ICT (Physics, Economics, Mathematics & ICT)',
-        'PEM/SMT' => 'PEM/SMT (Physics, Economics, Mathematics & Sub-Math)',
         'MEG/ICT' => 'MEG/ICT (Mathematics, Economics, Geography & ICT)',
-        'MEG/SMT' => 'MEG/SMT (Mathematics, Economics, Geography & Sub-Math)',
         'BCG/ICT' => 'BCG/ICT (Biology, Chemistry, Geography & ICT)',
+        'BCG/SMT' => 'BCG/SMT (Biology, Chemistry, Geography & Sub-Math)',
         'MAG/ICT' => 'MAG/ICT (Mathematics, Agriculture, Geography & ICT)',
     ],
     'Arts & Humanities' => [
@@ -60,7 +57,9 @@ $defaultCombinations = [
         'HEL/ICT' => 'HEL/ICT (History, Economics, Literature & ICT)',
         'HEL/SMT' => 'HEL/SMT (History, Economics, Literature & Sub-Math)',
         'HLD/ICT' => 'HLD/ICT (History, Literature, Divinity & ICT)',
+        'HLD/SMT' => 'HLD/SMT (History, Literature, Divinity & Sub-Math)',
         'DEG/ICT' => 'DEG/ICT (Divinity, Economics, Geography & ICT)',
+        'DEG/SMT' => 'DEG/SMT (Divinity, Economics, Geography & Sub-Math)',
         'HED/ICT' => 'HED/ICT (History, Economics, Divinity & ICT)',
         'LEG/ICT' => 'LEG/ICT (Literature, Economics, Geography & ICT)',
         'GEA/ICT' => 'GEA/ICT (Geography, Entrepreneurship, Art & ICT)',
@@ -909,51 +908,28 @@ html, body {
                             <input type="hidden" name="aggregates_s5" id="aggregatesS5" value="0">
                         </div>
 
-                        <!-- Auto-Detected A-Level Subject Combination (Automatically calculated from Performance) -->
-                        <div class="space-y-2.5 p-4 rounded-2xl bg-gradient-to-r from-emerald-50/70 via-teal-50/50 to-slate-50 border border-emerald-200/90 shadow-2xs">
+                        <!-- Desired A-Level Subject Combination Selection -->
+                        <div class="space-y-3 p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs">
                             <div class="flex items-center justify-between flex-wrap gap-2">
-                                <label class="text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500 text-sm"></i>
-                                    <span>A-Level Subject Combination</span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                        Auto-Detected
+                                <label class="text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-md bg-brand-700 text-white flex items-center justify-center text-xs">
+                                        <i class="fa-solid fa-book-open"></i>
                                     </span>
+                                    <span>Desired A-Level Subject Combination <span class="text-rose-500 font-bold">*</span></span>
                                 </label>
-                                <button type="button" id="toggleCombinationOverrideBtn" class="text-[11px] font-bold text-brand-700 hover:text-brand-900 underline transition inline-flex items-center gap-1" onclick="toggleCombinationOverride()">
-                                    <i class="fa-solid fa-sliders"></i>
-                                    <span>Change / Select Manually</span>
-                                </button>
+                                <span class="text-[11px] font-semibold text-slate-500">
+                                    Choose from list or type custom
+                                </span>
                             </div>
 
-                            <!-- Live Auto-Detection Visual Badge Card -->
-                            <div id="autoCombinationCard" class="p-3.5 rounded-xl bg-white border-2 border-emerald-500/50 shadow-xs flex items-start gap-3 transition-all">
-                                <div class="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs text-base">
-                                    <i class="fa-solid fa-check-double"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span id="autoCombGroupBadge" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-200">
-                                            Sciences Track
-                                        </span>
-                                        <span class="text-[11px] text-slate-500 font-semibold">Matched to Performance</span>
-                                    </div>
-                                    <h4 id="autoCombTitle" class="text-base sm:text-lg font-black text-slate-900 tracking-tight mt-0.5 leading-snug">
-                                        PCM/ICT (Physics, Chemistry, Mathematics & ICT)
-                                    </h4>
-                                    <p id="autoCombDesc" class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                        Auto-detected from your UCE subject competencies. Update grades above to re-calculate.
-                                    </p>
-                                </div>
-                            </div>
+                            <p class="text-[11.5px] text-slate-600 leading-relaxed">
+                                Select your desired A-Level combination below. If your preferred combination is missing, select <strong>"Other / Type Custom Combination"</strong> to type it manually. The school admissions committee will review your UCE results and officially assign your final combination upon admission.
+                            </p>
 
-                            <!-- Hidden / Form-Bound input holding the active combination value -->
-                            <input type="hidden" name="combination_s5" id="combinationS5" value="PCM/ICT">
-
-                            <!-- Optional Manual Override Select (Hidden by default, opened only when requested) -->
-                            <div id="combinationOverrideSection" class="hidden pt-2 border-t border-slate-200 space-y-1.5">
-                                <label class="block text-[11px] font-bold text-slate-700 uppercase">Select Alternative Combination:</label>
-                                <select id="combinationOverrideSelect" class="w-full px-3.5 py-2.5 border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-800 bg-white focus:outline-none focus:border-brand-700 transition" onchange="applyManualCombination(this.value)">
-                                    <option value="">-- Choose from Available Combinations --</option>
+                            <!-- Combination Select Dropdown -->
+                            <div>
+                                <select name="combination_select_s5" id="combinationSelectS5" onchange="handleCombinationChange(this.value)" class="w-full px-3.5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-800 bg-white focus:outline-none focus:border-brand-700 transition">
+                                    <option value="">-- Select Your Desired A-Level Combination --</option>
                                     <?php foreach ($aLevelCombinations as $group => $items): ?>
                                         <optgroup label="<?= htmlspecialchars($group) ?>">
                                             <?php foreach ($items as $val => $label): ?>
@@ -961,8 +937,24 @@ html, body {
                                             <?php endforeach; ?>
                                         </optgroup>
                                     <?php endforeach; ?>
+                                    <option value="OTHER" class="text-brand-700 font-black">+ Other / Type Custom Combination...</option>
                                 </select>
                             </div>
+
+                            <!-- Manual Type Input (Revealed if "OTHER" is chosen) -->
+                            <div id="customCombinationWrap" class="hidden space-y-1.5 pt-1">
+                                <label class="block text-[11px] font-bold text-brand-800 uppercase">
+                                    Type Desired Combination <span class="text-rose-500 font-bold">*</span> (e.g. PCB/ICT, PCM/ICT, BCM/ICT, MEG/ICT)
+                                </label>
+                                <div class="relative">
+                                    <input type="text" id="customCombinationInput" oninput="handleCustomCombInput(this.value)" class="w-full px-3.5 py-2.5 border-2 border-brand-300 rounded-xl text-sm font-mono font-bold uppercase focus:outline-none focus:border-brand-700 bg-white" placeholder="e.g. PCB/ICT, BCM/ICT, MEG/ICT">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10.5px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">Custom</span>
+                                </div>
+                                <p class="text-[10.5px] text-slate-400">Note: In Uganda, all combinations taking Principal Mathematics take Subsidiary ICT (not Sub-Math).</p>
+                            </div>
+
+                            <!-- Hidden field holding the final submitted value -->
+                            <input type="hidden" name="combination_s5" id="combinationS5" value="">
                         </div>
 
                         <!-- S6 Transfer Specific Fields (Only displayed when S6 is selected) -->
@@ -1463,152 +1455,27 @@ html, body {
         document.querySelectorAll('.field-error-highlight').forEach(el => el.classList.remove('field-error-highlight'));
     }
 
-    // Real-Time A-Level Subject Combination Auto-Detection Engine
-    window.combinationIsManualOverride = false;
-
-    function autoDetectS5Combination() {
-        if (window.combinationIsManualOverride) return;
-
-        const getG = (id) => {
-            const el = document.getElementById(id);
-            return el ? el.value : '';
-        };
-
-        const mat = getG('uce_mat');
-        const phy = getG('uce_phy');
-        const che = getG('uce_che');
-        const bio = getG('uce_bio');
-        const his = getG('uce_his');
-        const geo = getG('uce_geo');
-        const eng = getG('uce_eng');
-        const cre = getG('uce_cre_ire');
-        const elec1Grade = getG('uce_elec1_grade');
-
-        const points = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1 };
-        const matPts = points[mat] || 0;
-        const phyPts = points[phy] || 0;
-        const chePts = points[che] || 0;
-        const bioPts = points[bio] || 0;
-        const hisPts = points[his] || 0;
-        const geoPts = points[geo] || 0;
-        const engPts = points[eng] || 0;
-        const crePts = points[cre] || 0;
-        const el1Pts = points[elec1Grade] || 0;
-
-        // Science Combination Scores
-        const pcmScore = (matPts >= 3 && phyPts >= 3 && chePts >= 3) ? (matPts + phyPts + chePts) : (matPts >= 2 && phyPts >= 2 ? matPts + phyPts : 0);
-        const bcmScore = (bioPts >= 3 && chePts >= 3 && matPts >= 3) ? (bioPts + chePts + matPts) : 0;
-        const pcbScore = (bioPts >= 3 && chePts >= 3 && phyPts >= 3) ? (bioPts + chePts + phyPts) : 0;
-        const pemScore = (matPts >= 3 && phyPts >= 3 && (geoPts >= 3 || el1Pts >= 3)) ? (matPts + phyPts + Math.max(geoPts, el1Pts)) : 0;
-
-        // Economics & Business Scores
-        const megScore = (matPts >= 3 && geoPts >= 3) ? (matPts + geoPts + Math.max(hisPts, el1Pts)) : 0;
-
-        // Arts & Humanities Scores
-        const hegScore = (hisPts >= 3 && geoPts >= 3) ? (hisPts + geoPts + Math.max(matPts, el1Pts, crePts)) : 0;
-        const helScore = (hisPts >= 3 && engPts >= 3) ? (hisPts + engPts + Math.max(geoPts, crePts)) : 0;
-        const hldScore = (hisPts >= 3 && crePts >= 3) ? (hisPts + crePts + Math.max(geoPts, engPts)) : 0;
-
-        let detectedCode = 'PCM/ICT';
-        let detectedGroup = 'Sciences Track';
-        let detectedFullName = 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)';
-        let detectedReason = '';
-
-        const bestScience = Math.max(pcmScore, bcmScore, pcbScore, pemScore);
-        const bestArts = Math.max(hegScore, helScore, hldScore);
-        const bestEcon = megScore;
-
-        if (bestScience >= 9 && bestScience >= bestArts && bestScience >= bestEcon) {
-            if (pcmScore >= bcmScore && pcmScore >= pcbScore) {
-                detectedCode = 'PCM/ICT';
-                detectedFullName = 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)';
-                detectedReason = 'Auto-detected from your Exceptional / Outstanding performance in Mathematics (' + (mat || 'N/A') + '), Physics (' + (phy || 'N/A') + '), and Chemistry (' + (che || 'N/A') + ').';
-            } else if (bcmScore >= pcbScore) {
-                detectedCode = 'BCM/ICT';
-                detectedFullName = 'BCM/ICT (Biology, Chemistry, Mathematics & ICT)';
-                detectedReason = 'Auto-detected from your high performance in Biology (' + (bio || 'N/A') + '), Chemistry (' + (che || 'N/A') + '), and Mathematics (' + (mat || 'N/A') + ').';
-            } else {
-                detectedCode = 'PCB/ICT';
-                detectedFullName = 'PCB/ICT (Physics, Chemistry, Biology & ICT)';
-                detectedReason = 'Auto-detected from your strong foundation in Biology (' + (bio || 'N/A') + '), Chemistry (' + (che || 'N/A') + '), and Physics (' + (phy || 'N/A') + ').';
+    // Manual A-Level Subject Combination Selection & Custom Input Handler
+    function handleCombinationChange(val) {
+        const wrap = document.getElementById('customCombinationWrap');
+        const customInp = document.getElementById('customCombinationInput');
+        const hiddenInp = document.getElementById('combinationS5');
+        
+        if (val === 'OTHER') {
+            if (wrap) wrap.classList.remove('hidden');
+            if (customInp) {
+                customInp.focus();
+                if (hiddenInp) hiddenInp.value = customInp.value.trim().toUpperCase();
             }
-            detectedGroup = 'Sciences Track';
-        } else if (bestEcon >= 9 && bestEcon >= bestArts) {
-            detectedCode = 'MEG/ICT';
-            detectedGroup = 'Economics & Business Track';
-            detectedFullName = 'MEG/ICT (Mathematics, Economics, Geography & ICT)';
-            detectedReason = 'Auto-detected from your strong aptitude in Mathematics (' + (mat || 'N/A') + ') and Geography (' + (geo || 'N/A') + ').';
-        } else if (bestArts >= 8) {
-            if (helScore > hegScore) {
-                detectedCode = 'HEL/ICT';
-                detectedFullName = 'HEL/ICT (History, Economics, Literature & ICT)';
-                detectedReason = 'Auto-detected based on your high performance in History (' + (his || 'N/A') + ') and English Language (' + (eng || 'N/A') + ').';
-            } else if (hldScore > hegScore && crePts >= 3) {
-                detectedCode = 'HLD/ICT';
-                detectedFullName = 'HLD/ICT (History, Literature, Divinity & ICT)';
-                detectedReason = 'Auto-detected based on your high performance in History (' + (his || 'N/A') + ') and Religious Education (' + (cre || 'N/A') + ').';
-            } else {
-                detectedCode = 'HEG/ICT';
-                detectedFullName = 'HEG/ICT (History, Economics, Geography & ICT)';
-                detectedReason = 'Auto-detected based on your high performance in History (' + (his || 'N/A') + ') and Geography (' + (geo || 'N/A') + ').';
-            }
-            detectedGroup = 'Arts & Humanities Track';
         } else {
-            if (matPts >= hisPts) {
-                detectedCode = 'PCM/ICT';
-                detectedFullName = 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)';
-                detectedGroup = 'Sciences Track';
-                detectedReason = 'Assigned optimal Science combination based on performance profile.';
-            } else {
-                detectedCode = 'HEG/ICT';
-                detectedFullName = 'HEG/ICT (History, Economics, Geography & ICT)';
-                detectedGroup = 'Arts & Humanities Track';
-                detectedReason = 'Assigned optimal Arts combination based on performance profile.';
-            }
-        }
-
-        const combInput = document.getElementById('combinationS5');
-        if (combInput) combInput.value = detectedCode;
-
-        const badgeEl = document.getElementById('autoCombGroupBadge');
-        if (badgeEl) badgeEl.textContent = detectedGroup;
-
-        const titleEl = document.getElementById('autoCombTitle');
-        if (titleEl) titleEl.textContent = detectedFullName;
-
-        const descEl = document.getElementById('autoCombDesc');
-        if (descEl) descEl.textContent = detectedReason;
-    }
-
-    function toggleCombinationOverride() {
-        const sec = document.getElementById('combinationOverrideSection');
-        const btn = document.getElementById('toggleCombinationOverrideBtn');
-        if (!sec) return;
-        if (sec.classList.contains('hidden')) {
-            sec.classList.remove('hidden');
-            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Switch to Auto-Detect</span>';
-        } else {
-            sec.classList.add('hidden');
-            btn.innerHTML = '<i class="fa-solid fa-sliders"></i> <span>Change / Select Manually</span>';
-            window.combinationIsManualOverride = false;
-            autoDetectS5Combination();
+            if (wrap) wrap.classList.add('hidden');
+            if (hiddenInp) hiddenInp.value = val;
         }
     }
 
-    function applyManualCombination(val) {
-        if (!val) return;
-        window.combinationIsManualOverride = true;
-        const combInput = document.getElementById('combinationS5');
-        if (combInput) combInput.value = val;
-
-        const titleEl = document.getElementById('autoCombTitle');
-        if (titleEl) titleEl.textContent = val;
-
-        const badgeEl = document.getElementById('autoCombGroupBadge');
-        if (badgeEl) badgeEl.textContent = 'Manually Selected';
-
-        const descEl = document.getElementById('autoCombDesc');
-        if (descEl) descEl.textContent = 'Combination explicitly selected. Click "Switch to Auto-Detect" above to restore performance-based detection.';
+    function handleCustomCombInput(val) {
+        const hiddenInp = document.getElementById('combinationS5');
+        if (hiddenInp) hiddenInp.value = val.trim().toUpperCase();
     }
 
     // UNEB NLSC Real-Time Competency Calculation (Attachment 1 & 2)
@@ -1650,9 +1517,6 @@ html, body {
             best8Sum += equivScores[i];
         }
         if (aggS5) aggS5.value = best8Sum;
-
-        // Trigger Real-time Combination Auto-Detection
-        autoDetectS5Combination();
     }
 
     document.querySelectorAll('.nlsc-grade-select').forEach(sel => {
@@ -1910,6 +1774,14 @@ html, body {
                     showFieldWarning(s5Slip, "Please attach your UCE result slip in PDF, PNG, JPG, or JPEG format.");
                     return false;
                 }
+
+                // S5 Subject Combination Check
+                const combValS5 = ((document.getElementById('combinationS5') || {}).value || '').trim();
+                if (!combValS5) {
+                    const selBox = document.getElementById('combinationSelectS5');
+                    showFieldWarning(selBox, "Please select or type your desired A-Level Subject Combination.");
+                    return false;
+                }
             } else if (classVal === 'S6') {
                 const s6School = document.getElementById('s6FormerSchool');
                 if (!s6School || !s6School.value.trim()) {
@@ -1932,6 +1804,14 @@ html, body {
                 const s6Rep = document.getElementById('s6ReportFile');
                 if (!s6Rep || !s6Rep.files || s6Rep.files.length === 0) {
                     showFieldWarning(s6Rep, "You have not uploaded the Senior Five (S5) Report Card / Transcript.");
+                    return false;
+                }
+
+                // S6 Subject Combination Check
+                const combValS6 = ((document.getElementById('combinationS5') || {}).value || '').trim();
+                if (!combValS6) {
+                    const selBox = document.getElementById('combinationSelectS5');
+                    showFieldWarning(selBox, "Please select or type your desired A-Level Subject Combination.");
                     return false;
                 }
             } else {

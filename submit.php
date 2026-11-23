@@ -240,6 +240,10 @@ if ($class === 'S1') {
     $division       = trim($_POST['division_s5'] ?? ''); // e.g. "Result 1"
     $uceProjectWork = strtoupper(trim($_POST['uce_project_work'] ?? '')); // e.g. "C"
     $combination    = trim($_POST['combination_s5'] ?? '');
+    if (empty($combination) && !empty($_POST['custom_combination_s5'])) {
+        $combination = trim($_POST['custom_combination_s5']);
+    }
+    $combination = strtoupper($combination);
 
     // Descriptors and Point Mappings according to UNEB NLSC Gazette
     $descriptors = [
@@ -298,30 +302,9 @@ if ($class === 'S1') {
     }
     unset($subj);
 
-    // Auto-detect A-Level Subject Combination based on performance if not specified
+    // If candidate did not specify a combination, mark for Admissions Committee review
     if (empty($combination)) {
-        $matPts = $pointsMap[$subjects['MAT']['grade'] ?? ''] ?? 0;
-        $phyPts = $pointsMap[$subjects['PHY']['grade'] ?? ''] ?? 0;
-        $chePts = $pointsMap[$subjects['CHE']['grade'] ?? ''] ?? 0;
-        $bioPts = $pointsMap[$subjects['BIO']['grade'] ?? ''] ?? 0;
-        $hisPts = $pointsMap[$subjects['HIS']['grade'] ?? ''] ?? 0;
-        $geoPts = $pointsMap[$subjects['GEO']['grade'] ?? ''] ?? 0;
-
-        if ($matPts >= 3 && $phyPts >= 3 && $chePts >= 3) {
-            $combination = 'PCM/ICT';
-        } elseif ($bioPts >= 3 && $chePts >= 3 && $matPts >= 3) {
-            $combination = 'BCM/ICT';
-        } elseif ($bioPts >= 3 && $chePts >= 3 && $phyPts >= 3) {
-            $combination = 'PCB/ICT';
-        } elseif ($matPts >= 3 && $geoPts >= 3) {
-            $combination = 'MEG/ICT';
-        } elseif ($hisPts >= 3 && $geoPts >= 3) {
-            $combination = 'HEG/ICT';
-        } elseif ($hisPts >= 3) {
-            $combination = 'HEL/ICT';
-        } else {
-            $combination = 'HEG/ICT';
-        }
+        $combination = 'Pending Committee Assignment';
     }
 
     // Compute best 8 equivalent aggregate (A=1, B=2, C=3, D=4, E=5)
@@ -478,11 +461,8 @@ $stmt->execute([
 
 $newAppId = (int)$pdo->lastInsertId();
 
-// AI Smart Auto-Evaluation & Auto-Admission Engine
+// All applications are held in Pending status for manual Admissions Committee evaluation
 $aiAdmissionResult = null;
-if (function_exists('evaluateApplicantAdmissionAI')) {
-    $aiAdmissionResult = evaluateApplicantAdmissionAI($pdo, $newAppId);
-}
 
 // Log Successful Application in Activity Logs
 $studentLogName = trim($_POST['firstname'] . ' ' . $_POST['surname']);
@@ -771,8 +751,6 @@ foreach ($adminEmails as $admin) {
     );
 }
 
-// Redirect on success with auto-admit flags
-$admittedParam = !empty($aiAdmissionResult['admitted']) ? '&admitted=1' : '';
-$combParam = !empty($aiAdmissionResult['combination']) ? '&comb=' . urlencode($aiAdmissionResult['combination']) : '';
-header("Location: success.php?name=" . urlencode($studentName) . "&id=" . $newAppId . $admittedParam . $combParam);
+// Redirect on success to confirmation page (All submissions held for manual committee review)
+header("Location: success.php?name=" . urlencode($studentName) . "&id=" . $newAppId);
 exit;

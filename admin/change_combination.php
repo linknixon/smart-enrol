@@ -14,6 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : 0;
 $combination = trim($_POST['combination'] ?? '');
+$customComb = trim($_POST['custom_combination'] ?? '');
+if ($combination === 'CUSTOM' || $combination === 'OTHER' || !empty($customComb)) {
+    $combination = strtoupper($customComb);
+}
 
 if ($id <= 0 || empty($combination)) {
     header("Location: dashboard.php?error=" . urlencode("Invalid student ID or combination."));

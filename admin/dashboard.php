@@ -45,16 +45,25 @@ if (empty($aLevelCombinations)) {
     $aLevelCombinations = [
         ['category' => 'Sciences', 'code' => 'PCM/ICT', 'name' => 'Physics, Chemistry, Mathematics & ICT'],
         ['category' => 'Sciences', 'code' => 'PCB/ICT', 'name' => 'Physics, Chemistry, Biology & ICT'],
+        ['category' => 'Sciences', 'code' => 'PCB/SMT', 'name' => 'Physics, Chemistry, Biology & Sub-Math'],
         ['category' => 'Sciences', 'code' => 'BCM/ICT', 'name' => 'Biology, Chemistry, Mathematics & ICT'],
         ['category' => 'Sciences', 'code' => 'PEM/ICT', 'name' => 'Physics, Economics, Mathematics & ICT'],
         ['category' => 'Sciences', 'code' => 'MEG/ICT', 'name' => 'Mathematics, Economics, Geography & ICT'],
         ['category' => 'Sciences', 'code' => 'BCG/ICT', 'name' => 'Biology, Chemistry, Geography & ICT'],
+        ['category' => 'Sciences', 'code' => 'BCG/SMT', 'name' => 'Biology, Chemistry, Geography & Sub-Math'],
+        ['category' => 'Sciences', 'code' => 'MAG/ICT', 'name' => 'Mathematics, Agriculture, Geography & ICT'],
         ['category' => 'Arts & Humanities', 'code' => 'HEG/ICT', 'name' => 'History, Economics, Geography & ICT'],
+        ['category' => 'Arts & Humanities', 'code' => 'HEG/SMT', 'name' => 'History, Economics, Geography & Sub-Math'],
         ['category' => 'Arts & Humanities', 'code' => 'HEL/ICT', 'name' => 'History, Economics, Literature & ICT'],
+        ['category' => 'Arts & Humanities', 'code' => 'HEL/SMT', 'name' => 'History, Economics, Literature & Sub-Math'],
         ['category' => 'Arts & Humanities', 'code' => 'HLD/ICT', 'name' => 'History, Literature, Divinity & ICT'],
+        ['category' => 'Arts & Humanities', 'code' => 'HLD/SMT', 'name' => 'History, Literature, Divinity & Sub-Math'],
         ['category' => 'Arts & Humanities', 'code' => 'DEG/ICT', 'name' => 'Divinity, Economics, Geography & ICT'],
+        ['category' => 'Arts & Humanities', 'code' => 'DEG/SMT', 'name' => 'Divinity, Economics, Geography & Sub-Math'],
         ['category' => 'Arts & Humanities', 'code' => 'HED/ICT', 'name' => 'History, Economics, Divinity & ICT'],
-        ['category' => 'Arts & Humanities', 'code' => 'LEG/ICT', 'name' => 'Literature, Economics, Geography & ICT']
+        ['category' => 'Arts & Humanities', 'code' => 'LEG/ICT', 'name' => 'Literature, Economics, Geography & ICT'],
+        ['category' => 'Arts & Humanities', 'code' => 'GEA/ICT', 'name' => 'Geography, Entrepreneurship, Art & ICT'],
+        ['category' => 'Arts & Humanities', 'code' => 'MEA/ICT', 'name' => 'Mathematics, Economics, Art & ICT']
     ];
 }
 
@@ -145,16 +154,27 @@ $combinationsRaw = getSetting($pdo, 'a_level_combinations', '');
 $aLevelCombs = !empty($combinationsRaw) ? json_decode($combinationsRaw, true) : null;
 if (!is_array($aLevelCombs) || empty($aLevelCombs)) {
     $aLevelCombs = [
-        ["code" => "PCM", "name" => "Physics, Chemistry, Mathematics (PCM)"],
-        ["code" => "PCB", "name" => "Physics, Chemistry, Biology (PCB)"],
-        ["code" => "BCM", "name" => "Biology, Chemistry, Mathematics (BCM)"],
-        ["code" => "PEM", "name" => "Physics, Economics, Mathematics (PEM)"],
-        ["code" => "MEG", "name" => "Mathematics, Economics, Geography (MEG)"],
-        ["code" => "HEG", "name" => "History, Economics, Geography (HEG)"],
-        ["code" => "HEL", "name" => "History, Economics, Literature (HEL)"],
-        ["code" => "DEG", "name" => "Divinity, Economics, Geography (DEG)"],
-        ["code" => "GEA", "name" => "Geography, Economics, Art (GEA)"],
-        ["code" => "HED", "name" => "History, Economics, Divinity (HED)"]
+        ["code" => "PCM/ICT", "name" => "Physics, Chemistry, Mathematics & ICT"],
+        ["code" => "PCB/ICT", "name" => "Physics, Chemistry, Biology & ICT"],
+        ["code" => "PCB/SMT", "name" => "Physics, Chemistry, Biology & Sub-Math"],
+        ["code" => "BCM/ICT", "name" => "Biology, Chemistry, Mathematics & ICT"],
+        ["code" => "PEM/ICT", "name" => "Physics, Economics, Mathematics & ICT"],
+        ["code" => "MEG/ICT", "name" => "Mathematics, Economics, Geography & ICT"],
+        ["code" => "BCG/ICT", "name" => "Biology, Chemistry, Geography & ICT"],
+        ["code" => "BCG/SMT", "name" => "Biology, Chemistry, Geography & Sub-Math"],
+        ["code" => "MAG/ICT", "name" => "Mathematics, Agriculture, Geography & ICT"],
+        ["code" => "HEG/ICT", "name" => "History, Economics, Geography & ICT"],
+        ["code" => "HEG/SMT", "name" => "History, Economics, Geography & Sub-Math"],
+        ["code" => "HEL/ICT", "name" => "History, Economics, Literature & ICT"],
+        ["code" => "HEL/SMT", "name" => "History, Economics, Literature & Sub-Math"],
+        ["code" => "HLD/ICT", "name" => "History, Literature, Divinity & ICT"],
+        ["code" => "HLD/SMT", "name" => "History, Literature, Divinity & Sub-Math"],
+        ["code" => "DEG/ICT", "name" => "Divinity, Economics, Geography & ICT"],
+        ["code" => "DEG/SMT", "name" => "Divinity, Economics, Geography & Sub-Math"],
+        ["code" => "HED/ICT", "name" => "History, Economics, Divinity & ICT"],
+        ["code" => "LEG/ICT", "name" => "Literature, Economics, Geography & ICT"],
+        ["code" => "GEA/ICT", "name" => "Geography, Entrepreneurship, Art & ICT"],
+        ["code" => "MEA/ICT", "name" => "Mathematics, Economics, Art & ICT"]
     ];
 }
 
@@ -1019,9 +1039,17 @@ $msg = $_GET['msg'] ?? '';
                                         <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
                                             <?php if($status=='pending'): ?>
                                                 <?php if(hasPermission($pdo, $currentRole, 'can_admit_students')): ?>
-                                                    <a href="admit.php?id=<?= $app['id'] ?>" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit Candidate">
-                                                        <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
-                                                    </a>
+                                                    <?php if(in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
+                                                        <button type="button" 
+                                                                onclick="openAdmitS5Modal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes(trim($app['firstname'].' '.$app['surname'])), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>')" 
+                                                                class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="Admit & Assign Combination">
+                                                            <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes(trim($app['firstname'].' '.$app['surname']))) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>?')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit Candidate">
+                                                            <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
+                                                        </a>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                                 <?php if(hasPermission($pdo, $currentRole, 'can_reject_students')): ?>
                                                     <button type="button" 
@@ -1895,10 +1923,20 @@ $msg = $_GET['msg'] ?? '';
         if (canTakeAppActions) {
             if (st === 'pending') {
                 if (canAdmitStudents) {
-                    const admitBtn = document.createElement('a');
-                    admitBtn.href = 'admit.php?id=' + app.id;
-                    admitBtn.className = 'px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5';
+                    const admitBtn = document.createElement('button');
+                    admitBtn.type = 'button';
+                    admitBtn.className = 'px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer';
                     admitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Admit Candidate';
+                    admitBtn.onclick = function() {
+                        closeFullAppModal();
+                        if (app.class_of_entry === 'S5' || app.class_of_entry === 'S6') {
+                            openAdmitS5Modal(app.id, fullName, app.class_of_entry, app.combination || '');
+                        } else {
+                            if (confirm('Confirm admission of ' + fullName + ' to ' + app.class_of_entry + '?')) {
+                                window.location.href = 'admit.php?id=' + app.id;
+                            }
+                        }
+                    };
                     actionsDiv.appendChild(admitBtn);
                 }
                 if (canRejectStudents) {
@@ -2136,14 +2174,76 @@ $msg = $_GET['msg'] ?? '';
         document.getElementById('changeCombStudentName').textContent = name;
         document.getElementById('changeCombCurrentVal').textContent = currentComb || 'None';
         const select = document.getElementById('changeCombSelect');
+        const customWrap = document.getElementById('changeCombCustomWrap');
+        const customInp = document.getElementById('changeCombCustomInput');
+        if (customWrap) customWrap.classList.add('hidden');
+        if (customInp) customInp.value = '';
+
         if (select) {
             select.value = currentComb || '';
+            if (currentComb && select.value !== currentComb) {
+                select.value = 'CUSTOM';
+                if (customWrap) customWrap.classList.remove('hidden');
+                if (customInp) customInp.value = currentComb;
+            }
         }
         document.getElementById('changeCombModal').classList.remove('hidden');
     }
 
     function closeChangeCombModal() {
         document.getElementById('changeCombModal').classList.add('hidden');
+    }
+
+    function toggleChangeCombCustom(val) {
+        const wrap = document.getElementById('changeCombCustomWrap');
+        const inp = document.getElementById('changeCombCustomInput');
+        if (val === 'CUSTOM') {
+            if (wrap) wrap.classList.remove('hidden');
+            if (inp) { inp.focus(); inp.required = true; }
+        } else {
+            if (wrap) wrap.classList.add('hidden');
+            if (inp) { inp.required = false; }
+        }
+    }
+
+    // Admit S5/S6 Candidate & Confirm Combination Modal
+    function openAdmitS5Modal(id, name, classVal, currentComb) {
+        document.getElementById('admitS5ApplicantId').value = id;
+        document.getElementById('admitS5StudentName').textContent = name;
+        document.getElementById('admitS5Class').textContent = (classVal === 'S6') ? 'Senior Six (S6)' : 'Senior Five (S5)';
+        document.getElementById('admitS5DesiredComb').textContent = currentComb || 'None Specified';
+        
+        const sel = document.getElementById('admitS5CombSelect');
+        const customWrap = document.getElementById('admitS5CustomWrap');
+        const customInp = document.getElementById('admitS5CustomInput');
+        if (customWrap) customWrap.classList.add('hidden');
+        if (customInp) customInp.value = '';
+
+        if (sel) {
+            sel.value = currentComb || '';
+            if (currentComb && sel.value !== currentComb) {
+                sel.value = 'CUSTOM';
+                if (customWrap) customWrap.classList.remove('hidden');
+                if (customInp) customInp.value = currentComb;
+            }
+        }
+        document.getElementById('admitS5Modal').classList.remove('hidden');
+    }
+
+    function closeAdmitS5Modal() {
+        document.getElementById('admitS5Modal').classList.add('hidden');
+    }
+
+    function toggleAdmitCustomComb(val) {
+        const wrap = document.getElementById('admitS5CustomWrap');
+        const inp = document.getElementById('admitS5CustomInput');
+        if (val === 'CUSTOM') {
+            if (wrap) wrap.classList.remove('hidden');
+            if (inp) { inp.focus(); inp.required = true; }
+        } else {
+            if (wrap) wrap.classList.add('hidden');
+            if (inp) { inp.required = false; }
+        }
     }
 
     // Floating Back-to-top button
@@ -2170,7 +2270,7 @@ $msg = $_GET['msg'] ?? '';
                         <i class="fa-solid fa-graduation-cap"></i>
                     </span>
                     <div>
-                        <h3 class="text-sm font-bold uppercase tracking-tight">Change Subject Combination</h3>
+                        <h3 class="text-sm font-bold uppercase tracking-tight">Assign / Change Subject Combination</h3>
                         <p class="text-[11px] text-brand-200">Update A-Level combination for student</p>
                     </div>
                 </div>
@@ -2192,16 +2292,22 @@ $msg = $_GET['msg'] ?? '';
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
-                        Select New A-Level Combination <span class="text-rose-600">*</span>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase">
+                        Select A-Level Combination <span class="text-rose-600">*</span>
                     </label>
-                    <select name="combination" id="changeCombSelect" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:border-brand-700 font-semibold text-slate-800">
+                    <select name="combination" id="changeCombSelect" onchange="toggleChangeCombCustom(this.value)" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:border-brand-700 font-semibold text-slate-800">
                         <option value="">-- Select Combination --</option>
                         <?php foreach($aLevelCombinations as $c): ?>
                             <option value="<?= htmlspecialchars($c['code']) ?>"><?= htmlspecialchars($c['code']) ?> - <?= htmlspecialchars($c['name']) ?> (<?= htmlspecialchars($c['category']) ?>)</option>
                         <?php endforeach; ?>
+                        <option value="CUSTOM">+ Other / Type Custom Combination...</option>
                     </select>
+                </div>
+
+                <div id="changeCombCustomWrap" class="hidden space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-700 uppercase">Type Custom Combination Code:</label>
+                    <input type="text" name="custom_combination" id="changeCombCustomInput" placeholder="e.g. PCB/ICT, BCM/ICT, MEG/ICT" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-700">
                 </div>
 
                 <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
@@ -2214,6 +2320,78 @@ $msg = $_GET['msg'] ?? '';
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- Admit S5/S6 Candidate & Confirm Subject Combination Modal -->
+    <div id="admitS5Modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div class="px-6 py-4 bg-emerald-800 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sm font-bold border border-white/20 text-emerald-200">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold uppercase tracking-tight">Admit Candidate & Assign Combination</h3>
+                        <p class="text-[11px] text-emerald-200">Admissions Committee Manual Review & Assignment</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdmitS5Modal()" class="text-white/70 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <form method="POST" action="admit.php" class="p-6 space-y-4">
+                <input type="hidden" name="id" id="admitS5ApplicantId" value="">
+                
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 font-semibold">Candidate:</span>
+                        <span id="admitS5StudentName" class="font-bold text-slate-900 text-sm"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 font-semibold">Class of Entry:</span>
+                        <span id="admitS5Class" class="font-black text-brand-800 bg-brand-50 px-2 py-0.5 rounded border border-brand-200"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 font-semibold">Candidate Desired Combination:</span>
+                        <span id="admitS5DesiredComb" class="font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200"></span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 uppercase">
+                        Select Official Assigned Combination <span class="text-rose-600">*</span>
+                    </label>
+                    <select name="combination" id="admitS5CombSelect" onchange="toggleAdmitCustomComb(this.value)" required class="w-full px-3.5 py-2.5 border-2 border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none focus:border-brand-700 text-slate-800">
+                        <option value="">-- Choose Assigned Combination --</option>
+                        <?php foreach($aLevelCombinations as $c): ?>
+                            <option value="<?= htmlspecialchars($c['code']) ?>"><?= htmlspecialchars($c['code']) ?> - <?= htmlspecialchars($c['name']) ?> (<?= htmlspecialchars($c['category']) ?>)</option>
+                        <?php endforeach; ?>
+                        <option value="CUSTOM">+ Type Custom Combination...</option>
+                    </select>
+                </div>
+
+                <div id="admitS5CustomWrap" class="hidden space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-700 uppercase">Type Custom Combination Code:</label>
+                    <input type="text" name="custom_combination" id="admitS5CustomInput" placeholder="e.g. PCB/ICT, BCM/ICT, MEG/ICT" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-700">
+                    <p class="text-[10px] text-slate-400">All combinations with Principal Mathematics take on Subsidiary ICT (not Sub-Math).</p>
+                </div>
+
+                <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 shrink-0"></i>
+                    <span>Confirming this will officially admit the candidate, register their assigned combination, and dispatch their official Provisional Admission Offer Letter with reporting instructions.</span>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeAdmitS5Modal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Confirm Admission & Assign Combination
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     </div>
 
     <!-- Chart.js Multi-Year & Categorical Analytics Initialization -->

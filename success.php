@@ -32,41 +32,18 @@ $assignedComb       = htmlspecialchars($_GET['comb'] ?? '');
             <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain">
         </div>
 
-        <?php if ($isAutoAdmitted): ?>
-            <!-- Success Icon: Admitted -->
-            <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-inner border border-emerald-200">
-                <i class="fa-solid fa-graduation-cap"></i>
-            </div>
+        <!-- Success Icon: Received -->
+        <div class="w-16 h-16 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-3xl mx-auto shadow-inner">
+            <i class="fa-solid fa-check"></i>
+        </div>
 
-            <!-- Content -->
-            <div class="space-y-1.5">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    <i class="fa-solid fa-circle-check text-emerald-600"></i> Merit Auto-Admitted
-                </span>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Congratulations!</h2>
-                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Dear <strong class="text-brand-700"><?= $applicantName ?></strong>, based on your qualifying academic merit credentials, your provisional admission offer has been <strong>APPROVED</strong>!
-                </p>
-                <?php if (!empty($assignedComb)): ?>
-                    <div class="p-2.5 rounded-xl bg-brand-50 border border-brand-200 text-xs font-bold text-brand-900 mt-2">
-                        Assigned A-Level Combination: <span class="text-gold-700"><?= $assignedComb ?></span>
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php else: ?>
-            <!-- Success Icon: Received -->
-            <div class="w-16 h-16 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-3xl mx-auto shadow-inner">
-                <i class="fa-solid fa-check"></i>
-            </div>
-
-            <!-- Content -->
-            <div class="space-y-1.5">
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Application Received!</h2>
-                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Thank you, <strong class="text-brand-700"><?= $applicantName ?></strong>. Your admission application has been successfully submitted to <strong class="text-slate-800"><?= htmlspecialchars($school_name) ?></strong>.
-                </p>
-            </div>
-        <?php endif; ?>
+        <!-- Content -->
+        <div class="space-y-1.5">
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Application Received!</h2>
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Thank you, <strong class="text-brand-700"><?= $applicantName ?></strong>. Your admission application has been successfully submitted to <strong class="text-slate-800"><?= htmlspecialchars($school_name) ?></strong>.
+            </p>
+        </div>
 
         <!-- Prominent Notification Advice Callout -->
         <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left text-xs text-amber-950 space-y-1.5">
@@ -85,16 +62,11 @@ $assignedComb       = htmlspecialchars($_GET['comb'] ?? '');
                 <i class="fa-solid fa-circle-info text-brand-700"></i>
                 <span>Next Steps:</span>
             </div>
-            <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500">
-                <?php if ($isAutoAdmitted): ?>
-                    <li>An official Provisional Offer Letter with QR verification has been dispatched to your parent/guardian email.</li>
-                    <li>Download and print your offer letter to present on the official reporting date.</li>
-                    <li>Your name is registered on the school's official Admitted Register.</li>
-                <?php else: ?>
-                    <li>An automated confirmation email has been dispatched to your parent/guardian.</li>
-                    <li>The Admissions Committee is reviewing your credentials and attachments.</li>
-                    <li>Once admitted, your name will appear on the official Admitted Register.</li>
-                <?php endif; ?>
+            <ul class="list-disc list-inside space-y-1.5 text-[11px] text-slate-500">
+                <li>An automated submission confirmation has been recorded and sent to your parent/guardian.</li>
+                <li>The School Admissions Committee is reviewing your academic credentials and uploaded documents.</li>
+                <li>For Senior Five candidates, the committee will evaluate your UCE competencies and assign your official A-Level combination.</li>
+                <li>Once officially admitted by the committee, you will receive an admission offer notification and your name will appear on the school's Admitted Register.</li>
             </ul>
         </div>
 

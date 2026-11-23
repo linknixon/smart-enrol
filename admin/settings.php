@@ -278,8 +278,8 @@ $val_date_trans = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($reporting_date_trans
 $school_requirements        = getSetting($pdo, 'school_requirements', "1. School Uniform (Available at School Bursar's Office)\n2. Black leather shoes and white socks / stockings\n3. 10 Counter books (4-quire) and mathematical set\n4. Ream of photocopy paper (Rotatrim / Double A)\n5. 1 Hoe with handle and 1 Slasher\n6. Standard 2.5-inch Mattress, 2 pairs of bedsheets, and a blanket\n7. Metallic suitcase / trunk with sturdy padlock\n8. Passport photos (4 copies) and original PLE / UCE result slip");
 $admission_letter_custom_note = getSetting($pdo, 'admission_letter_custom_note', 'Please note: This provisional admission offer is subject to physical verification of original UNEB results slips and birth certificate upon arrival on the reporting date. Fees once paid are non-refundable.');
 
-$ai_auto_admit_enabled       = getSetting($pdo, 'ai_auto_admit_enabled', '1');
-$ai_auto_combination_enabled = getSetting($pdo, 'ai_auto_combination_enabled', '1');
+$ai_auto_admit_enabled       = getSetting($pdo, 'ai_auto_admit_enabled', '0');
+$ai_auto_combination_enabled = getSetting($pdo, 'ai_auto_combination_enabled', '0');
 
 $doc_school_rules           = getSetting($pdo, 'doc_school_rules', '');
 $doc_admission_circular     = getSetting($pdo, 'doc_admission_circular', '');
@@ -879,26 +879,26 @@ if (empty($current_slider_images)) {
                             <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                                 <label class="flex items-center justify-between cursor-pointer">
                                     <div>
-                                        <span class="block text-xs font-bold text-slate-800">AI Auto-Admission on Qualifying Merit</span>
-                                        <span class="block text-[11px] text-slate-500">Auto-evaluates submissions against cutoff passmarks and instantly admits candidates.</span>
+                                        <span class="block text-xs font-bold text-slate-800">System Auto-Admissions (Disabled - Manual Admissions Enforced)</span>
+                                        <span class="block text-[11px] text-slate-500">School admissions committee manually evaluates all candidate documents and approves admissions.</span>
                                     </div>
                                     <input type="checkbox" name="ai_auto_admit_enabled" value="1" <?= ($ai_auto_admit_enabled === '1') ? 'checked' : '' ?> class="w-5 h-5 rounded text-brand-700 focus:ring-brand-700">
                                 </label>
                                 <p class="text-[10px] text-slate-400 leading-relaxed">
-                                    When enabled, candidates meeting cutoff criteria (PLE aggregates for S1, UCE passmarks for S5) are automatically admitted, issued provisional offers via email, and logged to audit trails.
+                                    Recommended: Keep disabled. Per school admissions policy, all submitted applications remain in pending review until authorized school administrators manually verify documents and click Admit.
                                 </p>
                             </div>
 
                             <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                                 <label class="flex items-center justify-between cursor-pointer">
                                     <div>
-                                        <span class="block text-xs font-bold text-slate-800">AI Intelligent S5 Subject Combination Matcher</span>
-                                        <span class="block text-[11px] text-slate-500">Evaluates UCE NLSC competencies to assign optimal subject combinations.</span>
+                                        <span class="block text-xs font-bold text-slate-800">Manual S5/S6 Combination Assignment (Active)</span>
+                                        <span class="block text-[11px] text-slate-500">Candidates submit desired combinations; admissions committee assigns final combinations.</span>
                                     </div>
                                     <input type="checkbox" name="ai_auto_combination_enabled" value="1" <?= ($ai_auto_combination_enabled === '1') ? 'checked' : '' ?> class="w-5 h-5 rounded text-brand-700 focus:ring-brand-700">
                                 </label>
                                 <p class="text-[10px] text-slate-400 leading-relaxed">
-                                    Analyzes candidate's top grades in Sciences and Arts to recommend and confirm matching combinations (e.g. PCM, PCB, BCM, HEG, HEL).
+                                    In accordance with Ugandan UNEB curriculum guidelines, all combinations involving Principal Mathematics strictly take Subsidiary ICT. The school admissions committee manually assigns or confirms the combination upon admission.
                                 </p>
                             </div>
                         </div>
@@ -948,16 +948,13 @@ if (empty($current_slider_images)) {
                         $rawCombs = !empty($a_level_combinations) ? $a_level_combinations : json_encode([
                             'Sciences' => [
                                 'PCM/ICT' => 'PCM/ICT (Physics, Chemistry, Mathematics & ICT)',
-                                'PCM/SMT' => 'PCM/SMT (Physics, Chemistry, Mathematics & Sub-Math)',
                                 'PCB/ICT' => 'PCB/ICT (Physics, Chemistry, Biology & ICT)',
                                 'PCB/SMT' => 'PCB/SMT (Physics, Chemistry, Biology & Sub-Math)',
                                 'BCM/ICT' => 'BCM/ICT (Biology, Chemistry, Mathematics & ICT)',
-                                'BCM/SMT' => 'BCM/SMT (Biology, Chemistry, Mathematics & Sub-Math)',
                                 'PEM/ICT' => 'PEM/ICT (Physics, Economics, Mathematics & ICT)',
-                                'PEM/SMT' => 'PEM/SMT (Physics, Economics, Mathematics & Sub-Math)',
                                 'MEG/ICT' => 'MEG/ICT (Mathematics, Economics, Geography & ICT)',
-                                'MEG/SMT' => 'MEG/SMT (Mathematics, Economics, Geography & Sub-Math)',
                                 'BCG/ICT' => 'BCG/ICT (Biology, Chemistry, Geography & ICT)',
+                                'BCG/SMT' => 'BCG/SMT (Biology, Chemistry, Geography & Sub-Math)',
                                 'MAG/ICT' => 'MAG/ICT (Mathematics, Agriculture, Geography & ICT)',
                             ],
                             'Arts & Humanities' => [
@@ -966,7 +963,9 @@ if (empty($current_slider_images)) {
                                 'HEL/ICT' => 'HEL/ICT (History, Economics, Literature & ICT)',
                                 'HEL/SMT' => 'HEL/SMT (History, Economics, Literature & Sub-Math)',
                                 'HLD/ICT' => 'HLD/ICT (History, Literature, Divinity & ICT)',
+                                'HLD/SMT' => 'HLD/SMT (History, Literature, Divinity & Sub-Math)',
                                 'DEG/ICT' => 'DEG/ICT (Divinity, Economics, Geography & ICT)',
+                                'DEG/SMT' => 'DEG/SMT (Divinity, Economics, Geography & Sub-Math)',
                                 'HED/ICT' => 'HED/ICT (History, Economics, Divinity & ICT)',
                                 'LEG/ICT' => 'LEG/ICT (Literature, Economics, Geography & ICT)',
                                 'GEA/ICT' => 'GEA/ICT (Geography, Entrepreneurship, Art & ICT)',
