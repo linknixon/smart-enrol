@@ -1952,34 +1952,34 @@ if (!function_exists('dispatchAdmissionOfferNotification')) {
         $enclosuresHtml = '';
         if (!empty($docRules) || !empty($docCircular) || !empty($docMedForm)) {
             $enclosuresHtml .= "
-            <div style='background-color: #f1f5f9; padding: 15px; border-radius: 8px; margin: 20px 0;'>
-                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 13px; font-weight: bold;'>Official School Enclosures & Attachments:</h4>
-                <ul style='margin: 5px 0 0 0; padding-left: 20px; font-size: 13px; color: #334155;'>";
+            <div class='inner-box' style='background-color: #f1f5f9; padding: 14px 14px; border-radius: 10px; margin: 18px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 13.5px; font-weight: bold;'>Official School Enclosures & Attachments:</h4>
+                <ul style='margin: 6px 0 0 0; padding-left: 20px; font-size: 13px; color: #334155;'>";
             if (!empty($docRules)) {
-                $enclosuresHtml .= "<li><a href='{$baseUrl}/{$docRules}' target='_blank' style='color: {$primary_color}; font-weight: bold;'>Download School Rules & Regulations (PDF)</a></li>";
+                $enclosuresHtml .= "<li style='margin-bottom: 6px;'><a href='{$baseUrl}/{$docRules}' target='_blank' style='color: {$primary_color}; font-weight: bold;'>Download School Rules & Regulations (PDF)</a></li>";
             }
             if (!empty($docCircular)) {
-                $enclosuresHtml .= "<li><a href='{$baseUrl}/{$docCircular}' target='_blank' style='color: {$primary_color}; font-weight: bold;'>Download Term I Admissions Circular (PDF)</a></li>";
+                $enclosuresHtml .= "<li style='margin-bottom: 6px;'><a href='{$baseUrl}/{$docCircular}' target='_blank' style='color: {$primary_color}; font-weight: bold;'>Download Term I Admissions Circular (PDF)</a></li>";
             }
             if (!empty($docMedForm)) {
-                $enclosuresHtml .= "<li><a href='{$baseUrl}/{$docMedForm}' target='_blank' style='color: {$primary_color}; font-weight: bold;'>Download Student Medical Examination Form (PDF)</a></li>";
+                $enclosuresHtml .= "<li style='margin-bottom: 6px;'><a href='{$baseUrl}/{$docMedForm}' target='_blank' style='color: {$primary_color}; font-weight: bold;'>Download Student Medical Examination Form (PDF)</a></li>";
             }
             $enclosuresHtml .= "</ul></div>";
         }
 
         $reportingNotice = "";
         if (!empty($reportingDate)) {
-            $reportingNotice = "<p style='background-color: #ecfdf5; border-left: 4px solid {$primary_color}; padding: 10px 15px; border-radius: 6px; font-size: 13px;'>
+            $reportingNotice = "<div class='inner-box' style='background-color: #ecfdf5; border-left: 4px solid {$primary_color}; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; margin: 16px 0;'>
                 <strong>Official Reporting Date:</strong> <span style='color: {$primary_color}; font-weight: bold;'>{$reportingDate}</span><br>
                 <span style='color: #b45309; font-weight: bold;'>* Please bring a printed copy of your admission letter on reporting date.</span>
-            </p>";
+            </div>";
         }
 
         $combNotice = "";
         if (!empty($applicant['combination'])) {
-            $combNotice = "<p style='background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 6px; font-size: 13px;'>
+            $combNotice = "<div class='inner-box' style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$accent_color}; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; margin: 16px 0;'>
                 <strong>Approved A-Level Combination:</strong> <span style='color: {$primary_color}; font-weight: bold;'>" . htmlspecialchars($applicant['combination']) . "</span>
-            </p>";
+            </div>";
         }
 
         $message = "
@@ -1996,16 +1996,21 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 @media only screen and (max-width: 620px) {
-    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 12px !important; margin: 0 !important; }
-    .email-body { padding: 24px 18px !important; font-size: 14.5px !important; }
-    .email-header { padding: 24px 16px !important; }
+    .outer-wrapper { padding: 8px 4px !important; }
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 8px !important; margin: 0 auto !important; }
+    .email-body { padding: 18px 12px !important; font-size: 14.5px !important; line-height: 1.6 !important; }
+    .email-header { padding: 22px 14px !important; }
+    .email-header h2 { font-size: 17px !important; line-height: 1.3 !important; }
+    .inner-box { padding: 12px 10px !important; margin: 14px 0 !important; border-radius: 8px !important; }
+    .btn-action { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; padding: 13px 12px !important; font-size: 14px !important; }
+    .email-footer { padding: 16px 10px !important; }
 }
 </style>
 </head>
 <body style='margin: 0; padding: 0; background-color: #f1f5f9;'>
-<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 32px 14px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
-    <div class='email-container' style='max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
-        <div class='email-header' style='background-color: {$primary_color}; padding: 30px 24px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+<div class='outer-wrapper' style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 20px 8px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
+    <div class='email-container' style='max-width: 620px; width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 26px 20px; text-align: center; border-bottom: 3px solid {$accent_color};'>
             <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 14px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
@@ -2016,7 +2021,7 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             <h2 style='color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
             <p style='color: {$accent_color}; margin: 5px 0 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Office of Admissions Registry</p>
         </div>
-        <div class='email-body' style='padding: 34px 28px;'>
+        <div class='email-body' style='padding: 26px 20px;'>
             <div style='display: inline-block; padding: 5px 14px; background-color: #ecfdf5; color: #065f46; font-size: 11.5px; font-weight: 700; text-transform: uppercase; border-radius: 9999px; letter-spacing: 0.5px; margin-bottom: 14px; border: 1px solid #a7f3d0;'>
                 Official Provisional Admission Offer
             </div>
@@ -2026,20 +2031,20 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             {$combNotice}
             {$reportingNotice}
             <p style='margin-top: 20px;'>Please click the button below to download and print the official Provisional Admission Offer Letter (PDF):</p>
-            <div style='text-align: center; margin: 28px 0;'>
-                <a href='{$pdfLink}' style='background-color: {$primary_color}; color: #ffffff; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(12,74,36,0.22);'>
+            <div style='text-align: center; margin: 24px 0;'>
+                <a href='{$pdfLink}' class='btn-action' style='background-color: {$primary_color}; color: #ffffff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14.5px; display: inline-block; box-shadow: 0 4px 12px rgba(12,74,36,0.22);'>
                     Download Admission Offer Letter (PDF)
                 </a>
             </div>
             <p style='font-size: 13px; color: #64748b; line-height: 1.5;'>Or copy this direct link into your browser:<br>
             <a href='{$pdfLink}' style='color: {$accent_color}; word-break: break-all; font-weight: 600;'>{$pdfLink}</a></p>
             {$enclosuresHtml}
-            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;'>
+            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;'>
             <p style='margin-bottom: 4px;'>We look forward to welcoming $studentName to our school family.</p>
             <p style='margin-top: 12px; margin-bottom: 2px; font-size: 13.5px; color: #64748b;'>Yours faithfully,</p>
             <p style='margin-top: 4px; font-weight: 700; color: {$primary_color}; font-size: 14.5px;'>Office of Admissions Registry<br><span style='color: #64748b; font-size: 12.5px; font-weight: normal;'>{$school_name}</span></p>
         </div>
-        <div style='background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
+        <div class='email-footer' style='background-color: #f8fafc; padding: 18px; text-align: center; border-top: 1px solid #e2e8f0;'>
             <p style='margin: 0; font-size: 11.5px; color: #94a3b8;'>This is an official automated notification. Please do not reply directly to this email.</p>
             <p style='margin: 4px 0 0 0; font-size: 11.5px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
         </div>

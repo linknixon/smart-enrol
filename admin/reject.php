@@ -75,13 +75,22 @@ $message = "
 body, div, p, span, h1, h2, h3, h4, th, td, a {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
+@media only screen and (max-width: 620px) {
+    .outer-wrapper { padding: 8px 4px !important; }
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 8px !important; margin: 0 auto !important; }
+    .email-body { padding: 18px 12px !important; font-size: 14.5px !important; line-height: 1.6 !important; }
+    .email-header { padding: 22px 14px !important; }
+    .email-header h2 { font-size: 17px !important; line-height: 1.3 !important; }
+    .inner-box { padding: 12px 10px !important; margin: 14px 0 !important; border-radius: 8px !important; }
+    .email-footer { padding: 16px 10px !important; }
+}
 </style>
 </head>
 <body style='margin: 0; padding: 0; background-color: #f8fafc;'>
-<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; font-size: 14px; line-height: 1.6; color: #1e293b;\">
-    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
+<div class='outer-wrapper' style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 20px 8px; font-size: 14.5px; line-height: 1.6; color: #1e293b;\">
+    <div class='email-container' style='max-width: 620px; width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div style='background-color: {$primary_color}; padding: 25px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 26px 20px; text-align: center; border-bottom: 3px solid {$accent_color};'>
             <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 12px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
@@ -89,12 +98,12 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
                     </td>
                 </tr>
             </table>
-            <h2 style='color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
+            <h2 style='color: #ffffff; margin: 0; font-size: 19px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;'>{$school_name}</h2>
             <p style='color: {$accent_color}; margin: 4px 0 0 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Office of Admissions Registry</p>
         </div>
         
         <!-- Body -->
-        <div style='padding: 30px;'>
+        <div class='email-body' style='padding: 26px 20px;'>
             <div style='display: inline-block; padding: 4px 12px; background-color: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 9999px; letter-spacing: 0.5px; margin-bottom: 12px;'>
                 Admission Decision Notice
             </div>
@@ -105,7 +114,7 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             <p>Following thorough consideration by the Admissions Committee, we regret to inform you that this application was <strong>not successful</strong> for the upcoming academic intake.</p>
             
             <!-- Reason for Rejection Card -->
-            <div style='background-color: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 8px; padding: 15px 18px; margin: 22px 0;'>
+            <div class='inner-box' style='background-color: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 8px; padding: 14px 14px; margin: 20px 0;'>
                 <span style='display: block; font-size: 11px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;'>Reason for Decision:</span>
                 <span style='font-size: 13.5px; color: #1e293b; line-height: 1.5; font-weight: 500;'>{$safeReason}</span>
             </div>
@@ -122,7 +131,7 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
         </div>
         
         <!-- Footer -->
-        <div style='background-color: #f8fafc; padding: 18px; text-align: center; border-top: 1px solid #e2e8f0;'>
+        <div class='email-footer' style='background-color: #f8fafc; padding: 18px; text-align: center; border-top: 1px solid #e2e8f0;'>
             <p style='margin: 0; font-size: 11px; color: #94a3b8;'>This is an official automated notification from {$school_short_name} Online Admissions Portal.</p>
             <p style='margin: 4px 0 0 0; font-size: 11px; color: #94a3b8;'>&copy; " . date('Y') . " {$school_name}. All rights reserved.</p>
         </div>

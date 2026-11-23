@@ -525,19 +525,23 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 @media only screen and (max-width: 620px) {
-    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 12px !important; margin: 0 !important; }
-    .email-body { padding: 24px 18px !important; font-size: 14.5px !important; }
-    .email-header { padding: 24px 16px !important; }
-    .summary-table td { display: block !important; width: 100% !important; padding: 4px 0 !important; }
-    .summary-table tr { display: block !important; border-bottom: 1px solid #edf2f7 !important; padding: 6px 0 !important; }
+    .outer-wrapper { padding: 8px 4px !important; }
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 8px !important; margin: 0 auto !important; }
+    .email-body { padding: 18px 12px !important; font-size: 14.5px !important; line-height: 1.6 !important; }
+    .email-header { padding: 22px 14px !important; }
+    .email-header h2 { font-size: 17px !important; line-height: 1.3 !important; }
+    .inner-box { padding: 12px 10px !important; margin: 14px 0 !important; border-radius: 8px !important; }
+    .summary-table td { display: block !important; width: 100% !important; box-sizing: border-box !important; padding: 3px 0 !important; }
+    .summary-table tr { display: block !important; border-bottom: 1px solid #edf2f7 !important; padding: 5px 0 !important; }
+    .email-footer { padding: 16px 10px !important; }
 }
 </style>
 </head>
 <body style='margin: 0; padding: 0; background-color: #f1f5f9;'>
-<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 32px 14px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
-    <div class='email-container' style='max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
+<div class='outer-wrapper' style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 20px 8px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
+    <div class='email-container' style='max-width: 620px; width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div class='email-header' style='background-color: {$primary_color}; padding: 30px 24px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 26px 20px; text-align: center; border-bottom: 3px solid {$accent_color};'>
             <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 14px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
@@ -549,13 +553,13 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             <p style='color: {$accent_color}; margin: 5px 0 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Online Admissions Portal</p>
         </div>
         <!-- Body -->
-        <div class='email-body' style='padding: 34px 28px;'>
+        <div class='email-body' style='padding: 26px 20px;'>
             <p style='margin-top: 0; font-weight: 700; color: {$primary_color}; font-size: 16px;'>Dear Parent / Guardian (<strong>$parentName</strong>),</p>
             <p>Thank you for submitting your child's application to <strong>{$school_name}</strong>. We are pleased to confirm that the application has been successfully received and is currently under review by our admissions committee.</p>
             
-            <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$primary_color}; padding: 22px 20px; border-radius: 12px; margin: 26px 0;'>
-                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 700;'>Application Details Summary</h4>
-                <table class='summary-table' style='width: 100%; font-size: 14px; border-collapse: collapse;'>
+            <div class='inner-box' style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$primary_color}; padding: 16px 14px; border-radius: 10px; margin: 20px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Application Details Summary</h4>
+                <table class='summary-table' style='width: 100%; font-size: 14px; border-collapse: collapse; table-layout: auto;'>
                     <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600; width: 140px; vertical-align: top;'>Student Name:</td>
                         <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$studentName}</td>
@@ -634,19 +638,24 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 @media only screen and (max-width: 620px) {
-    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 12px !important; margin: 0 !important; }
-    .email-body { padding: 22px 16px !important; font-size: 14.5px !important; }
-    .email-header { padding: 24px 16px !important; }
-    .summary-table td { display: block !important; width: 100% !important; padding: 4px 0 !important; }
-    .summary-table tr { display: block !important; border-bottom: 1px solid #edf2f7 !important; padding: 6px 0 !important; }
+    .outer-wrapper { padding: 8px 4px !important; }
+    .email-container { width: 100% !important; max-width: 100% !important; border-radius: 8px !important; margin: 0 auto !important; }
+    .email-body { padding: 18px 12px !important; font-size: 14.5px !important; line-height: 1.6 !important; }
+    .email-header { padding: 22px 14px !important; }
+    .email-header h2 { font-size: 17px !important; line-height: 1.3 !important; }
+    .inner-box { padding: 12px 10px !important; margin: 14px 0 !important; border-radius: 8px !important; }
+    .summary-table td { display: block !important; width: 100% !important; box-sizing: border-box !important; padding: 3px 0 !important; }
+    .summary-table tr { display: block !important; border-bottom: 1px solid #edf2f7 !important; padding: 5px 0 !important; }
+    .btn-action { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; padding: 13px 12px !important; font-size: 14px !important; }
+    .email-footer { padding: 16px 10px !important; }
 }
 </style>
 </head>
 <body style='margin: 0; padding: 0; background-color: #f1f5f9;'>
-<div style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 32px 14px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
-    <div class='email-container' style='max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
+<div class='outer-wrapper' style=\"font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 20px 8px; font-size: 15px; line-height: 1.65; color: #1e293b;\">
+    <div class='email-container' style='max-width: 620px; width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;'>
         <!-- Header -->
-        <div class='email-header' style='background-color: {$primary_color}; padding: 30px 24px; text-align: center; border-bottom: 3px solid {$accent_color};'>
+        <div class='email-header' style='background-color: {$primary_color}; padding: 26px 20px; text-align: center; border-bottom: 3px solid {$accent_color};'>
             <table role='presentation' border='0' cellpadding='0' cellspacing='0' align='center' style='margin: 0 auto 14px auto; text-align: center; border-collapse: collapse;'>
                 <tr>
                     <td align='center' style='text-align: center; background: transparent; background-color: transparent;'>
@@ -658,13 +667,13 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             <p style='color: {$accent_color}; margin: 5px 0 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;'>Admissions Control Center</p>
         </div>
         <!-- Body -->
-        <div class='email-body' style='padding: 34px 28px;'>
+        <div class='email-body' style='padding: 26px 20px;'>
             <p style='margin-top: 0; font-weight: 700; color: {$primary_color}; font-size: 16px;'>Alert: New Admission Application Submitted</p>
             <p>A new application has been successfully submitted via the online admissions portal. Below is a summary of the applicant's details:</p>
             
-            <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$accent_color}; padding: 22px 20px; border-radius: 12px; margin: 26px 0;'>
-                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 700;'>Student Credentials</h4>
-                <table class='summary-table' style='width: 100%; font-size: 14px; border-collapse: collapse;'>
+            <div class='inner-box' style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$accent_color}; padding: 16px 14px; border-radius: 10px; margin: 20px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; font-weight: 700;'>Student Credentials</h4>
+                <table class='summary-table' style='width: 100%; font-size: 14px; border-collapse: collapse; table-layout: auto;'>
                     <tr>
                         <td style='padding: 8px 0; color: #64748b; font-weight: 600; width: 140px; vertical-align: top;'>Student Name:</td>
                         <td style='padding: 8px 0; color: #0f172a; font-weight: 700;'>{$studentName}</td>
@@ -737,8 +746,8 @@ $adminMessage .= "
                 </table>
             </div>
 
-            <div style='text-align: center; margin: 30px 0;'>
-                <a href='{$adminDashboardUrl}' style='background-color: {$primary_color}; color: #ffffff; padding: 14px 30px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14.5px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.12);'>
+            <div style='text-align: center; margin: 24px 0;'>
+                <a href='{$adminDashboardUrl}' class='btn-action' style='background-color: {$primary_color}; color: #ffffff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14.5px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.12);'>
                     Access Admissions Admin Panel
                 </a>
             </div>
