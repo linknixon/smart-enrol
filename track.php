@@ -106,20 +106,22 @@ if ($searched) {
 
         <!-- Navigation Header -->
         <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm transition">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+            <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2 sm:gap-4">
                 <!-- Brand Info -->
-                <a href="index.php" class="flex items-center gap-3.5 group">
-                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="h-11 w-auto object-contain shrink-0 group-hover:scale-105 transition">
-                    <div>
-                        <span class="block text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition">
+                <a href="index.php" class="flex items-center gap-2.5 sm:gap-3.5 group min-w-0 pr-1 sm:pr-2">
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-xs">
+                        <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full object-contain">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="block text-[13px] sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase group-hover:text-brand-700 transition truncate">
                             <?= htmlspecialchars($school_short_name) ?>
                         </span>
                         <?php if (!empty($school_motto)): ?>
-                            <span class="block text-[11.5px] font-bold text-gold-600 italic tracking-wide">
+                            <span class="block text-[10px] sm:text-[11.5px] font-bold text-gold-600 italic tracking-wide leading-tight truncate mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                                 “<?= htmlspecialchars($school_motto) ?>”
                             </span>
                         <?php else: ?>
-                            <span class="block text-[11px] font-semibold text-gold-600 uppercase tracking-wider">
+                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight truncate">
                                 Application Tracking Portal
                             </span>
                         <?php endif; ?>
@@ -127,12 +129,16 @@ if ($searched) {
                 </a>
 
                 <!-- Action Buttons -->
-                <div class="flex items-center gap-2">
-                    <a href="index.php" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
-                        <i class="fa-solid fa-arrow-left text-xs text-brand-700"></i> Main Portal
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <a href="index.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
+                        <i class="fa-solid fa-arrow-left text-[11px] sm:text-xs text-brand-700"></i>
+                        <span class="hidden sm:inline">Main Portal</span>
+                        <span class="sm:hidden">Home</span>
                     </a>
-                    <a href="apply.php" class="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-md shadow-brand-700/20 transition hover:-translate-y-0.5">
-                        <i class="fa-solid fa-paper-plane text-xs"></i> Apply Now
+                    <a href="apply.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
+                        <i class="fa-solid fa-paper-plane text-[10px] sm:text-xs"></i>
+                        <span>Apply</span>
+                        <span class="hidden sm:inline">Now</span>
                     </a>
                 </div>
             </div>

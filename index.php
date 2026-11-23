@@ -62,20 +62,22 @@ if (empty($slider_images)) {
 
         <!-- Main Navigation Header -->
         <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm transition">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+            <div class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2 sm:gap-4">
                 <!-- Brand Info -->
-                <a href="index.php" class="flex items-center gap-3.5 group">
-                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="h-12 w-auto object-contain shrink-0 group-hover:scale-105 transition">
-                    <div>
-                        <span class="block text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition">
+                <a href="index.php" class="flex items-center gap-2.5 sm:gap-3.5 group min-w-0 pr-1 sm:pr-2">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-xs">
+                        <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full object-contain">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="block text-[13px] sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase group-hover:text-brand-700 transition truncate">
                             <?= htmlspecialchars($school_short_name) ?>
                         </span>
                         <?php if (!empty($school_motto)): ?>
-                            <span class="block text-[11.5px] font-bold text-gold-600 italic tracking-wide">
+                            <span class="block text-[10px] sm:text-[11.5px] font-bold text-gold-600 italic tracking-wide leading-tight truncate mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                                 “<?= htmlspecialchars($school_motto) ?>”
                             </span>
                         <?php else: ?>
-                            <span class="block text-[11px] font-semibold text-gold-600 uppercase tracking-wider">
+                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight truncate">
                                 Online Admissions Portal
                             </span>
                         <?php endif; ?>
@@ -95,43 +97,57 @@ if (empty($slider_images)) {
                 </nav>
 
                 <!-- Action Buttons & Mobile Toggle -->
-                <div class="flex items-center gap-2 shrink-0">
-                    <a href="admin/login.php" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <a href="admin/login.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
                         <i class="fa-solid fa-user-lock text-xs text-brand-700"></i> Staff
                     </a>
-                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-md shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
-                        <i class="fa-solid fa-paper-plane text-xs"></i> Apply
+                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
+                        <i class="fa-solid fa-paper-plane text-[11px] sm:text-xs"></i> <span>Apply</span><span class="hidden sm:inline"> Now</span>
                     </a>
                     <!-- Mobile Navigation Toggle -->
-                    <button type="button" onclick="document.getElementById('mobileNav').classList.toggle('hidden')" class="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition focus:outline-none" aria-label="Toggle navigation">
-                        <i class="fa-solid fa-bars text-lg"></i>
+                    <button type="button" onclick="document.getElementById('mobileNav').classList.toggle('hidden')" class="md:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl text-slate-700 hover:text-brand-700 hover:bg-slate-100 border border-slate-200 transition focus:outline-none" aria-label="Toggle navigation">
+                        <i class="fa-solid fa-bars text-sm sm:text-base"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Mobile Navigation Menu -->
-            <div id="mobileNav" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-2.5 shadow-lg">
-                <a href="#pathways" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="block py-2 text-sm font-semibold text-slate-700 hover:text-brand-700 transition">
-                    <i class="fa-solid fa-layer-group text-gold-500 w-5"></i> Entry Pathways
+            <div id="mobileNav" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1.5 shadow-xl">
+                <a href="#pathways" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
+                    <i class="fa-solid fa-layer-group text-gold-500 w-5 text-center"></i>
+                    <span>Entry Pathways</span>
                 </a>
-                <a href="#requirements" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="block py-2 text-sm font-semibold text-slate-700 hover:text-brand-700 transition">
-                    <i class="fa-solid fa-list-check text-gold-500 w-5"></i> Application Procedure
+                <a href="#requirements" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
+                    <i class="fa-solid fa-list-check text-gold-500 w-5 text-center"></i>
+                    <span>Application Procedure</span>
                 </a>
-                <a href="#registers" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="block py-2 text-sm font-semibold text-slate-700 hover:text-brand-700 transition">
-                    <i class="fa-solid fa-graduation-cap text-gold-500 w-5"></i> Admitted Lists
+                <a href="#registers" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
+                    <i class="fa-solid fa-graduation-cap text-gold-500 w-5 text-center"></i>
+                    <span>Admitted Lists</span>
                 </a>
-                <a href="track.php" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="block py-2 text-sm font-bold text-brand-700 hover:text-brand-800 transition">
-                    <i class="fa-solid fa-location-crosshairs text-brand-700 w-5"></i> Track Application
+                <a href="track.php" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-bold text-brand-700 hover:bg-brand-50 transition">
+                    <i class="fa-solid fa-location-crosshairs text-brand-700 w-5 text-center"></i>
+                    <span>Track Application</span>
                 </a>
-                <a href="#contact" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="block py-2 text-sm font-semibold text-slate-700 hover:text-brand-700 transition">
-                    <i class="fa-solid fa-envelope text-gold-500 w-5"></i> School Contacts
+                <a href="#contact" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
+                    <i class="fa-solid fa-envelope text-gold-500 w-5 text-center"></i>
+                    <span>School Contacts</span>
                 </a>
-                <a href="<?= htmlspecialchars($school_website_url) ?>" target="_blank" class="block py-2 text-sm font-bold text-brand-700 hover:text-brand-800 transition flex items-center gap-2">
-                    <i class="fa-solid fa-globe text-gold-500 w-5"></i> Main School Website <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-auto"></i>
+                <a href="<?= htmlspecialchars($school_website_url) ?>" target="_blank" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-bold text-brand-700 hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-globe text-gold-500 w-5 text-center"></i>
+                    <span>Main School Website</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 ml-auto"></i>
                 </a>
-                <a href="admin/login.php" class="block py-2 text-sm font-bold text-brand-700 hover:text-brand-800 border-t border-slate-100 pt-2 transition">
-                    <i class="fa-solid fa-user-lock text-brand-700 w-5"></i> Staff Login
-                </a>
+                <div class="pt-2 border-t border-slate-100 flex gap-2">
+                    <a href="admin/login.php" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+                        <i class="fa-solid fa-user-lock text-brand-700"></i>
+                        <span>Staff Login</span>
+                    </a>
+                    <a href="apply.php" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm transition">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Apply Now</span>
+                    </a>
+                </div>
             </div>
         </header>
 
