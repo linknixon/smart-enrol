@@ -1,7 +1,6 @@
 <?php
-// Enable error reporting for development
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Suppress display errors in PDF output stream to prevent header corruption
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 require __DIR__ . '/../config/db.php';
@@ -9,22 +8,23 @@ require_once(__DIR__ . '/../form-one/tcpdf/tcpdf.php');
 
 /* ================= VALIDATION ================= */
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    die('Invalid request');
+    die('Invalid request: Missing application identifier.');
 }
 
 $id = (int)$_GET['id'];
 
 /* ================= FETCH STUDENT ================= */
-$stmt = $pdo->prepare("
-    SELECT * FROM applications
-    WHERE id = ? AND application_status = 'admitted'
-");
+$stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
 $stmt->execute([$id]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$student) {
-    die('Student not found or not admitted');
+    die('Student application record not found.');
 }
+
+$isAdmin = !empty($_SESSION['admin_user']) || !empty($_SESSION['role']);
+$appStatus = strtolower($student['application_status'] ?? 'pending');
+$isAdmitted = ($appStatus === 'admitted');
 
 /* ================= SYSTEM CONFIGURATION ================= */
 $school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
@@ -57,27 +57,13 @@ $docRules    = getSetting($pdo, 'doc_school_rules', '');
 $docCircular = getSetting($pdo, 'doc_admission_circular', '');
 $docMedForm  = getSetting($pdo, 'doc_medical_form', '');
 
-// Resolve Head Teacher E-Signature
+// Resolve Head Teacher E-Signature (Direct local file path for TCPDF stability)
 $signaturePath = getSchoolSignatureFilePath($pdo, __DIR__ . '/..');
 $hasSignature = (!empty($signaturePath) && file_exists($signaturePath));
-$sigSrc = '';
-if ($hasSignature) {
-    $sigData = base64_encode(file_get_contents($signaturePath));
-    $sigExt = strtolower(pathinfo($signaturePath, PATHINFO_EXTENSION));
-    $sigMime = in_array($sigExt, ['jpg', 'jpeg']) ? 'image/jpeg' : 'image/png';
-    $sigSrc = 'data:' . $sigMime . ';base64,' . $sigData;
-}
 
-// Resolve Circular Student Passport Photo
+// Resolve Circular Student Passport Photo (Direct local file path for TCPDF stability)
 $studentPhotoPath = getCircularStudentPhotoFilePath($student['passport_photo'] ?? '', __DIR__ . '/..');
 $hasStudentPhoto = (!empty($studentPhotoPath) && file_exists($studentPhotoPath));
-$photoSrc = '';
-if ($hasStudentPhoto) {
-    $photoData = base64_encode(file_get_contents($studentPhotoPath));
-    $photoExt = strtolower(pathinfo($studentPhotoPath, PATHINFO_EXTENSION));
-    $photoMime = in_array($photoExt, ['jpg', 'jpeg']) ? 'image/jpeg' : 'image/png';
-    $photoSrc = 'data:' . $photoMime . ';base64,' . $photoData;
-}
 
 if (!function_exists('formatCombinationElective')) {
     function formatCombinationElective($combCode, $pdo) {
@@ -175,17 +161,17 @@ $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
 $pdf->SetCreator($school_name);
 $pdf->SetAuthor($school_name);
-$pdf->SetTitle('Official Admission Offer - ' . $student_number);
-$pdf->SetMargins(15, 10, 15); // Standard formal 15mm margins
-$pdf->SetAutoPageBreak(false); // Guarantee strictly 1 single page
+$docTitle = ($isAdmitted || $isAdmin) ? ('Official Admission Offer - ' . $student_number) : ('Provisional Application Receipt - ' . $student_number);
+$pdf->SetTitle($docTitle);
+$pdf->SetMargins(15, 10, 15);
+$pdf->SetAutoPageBreak(false);
 $pdf->AddPage();
 
 /* ================= CENTERED OFFICIAL LETTERHEAD ================= */
 $hasLogo = false;
-$logoH = 20; // Prominent standard logo height
+$logoH = 20;
 if (!empty($logo_source) && file_exists($logo_source)) {
     try {
-        // Center the logo proportionally on 210mm page width: (210 - 36) / 2 = 87
         $pdf->Image($logo_source, 87, 8, 36, $logoH, '', '', '', false, 300, '', false, false, 0, 'CM');
         $hasLogo = true;
     } catch (Exception $e) {
@@ -196,7 +182,7 @@ if (!empty($logo_source) && file_exists($logo_source)) {
 $headerY = $hasLogo ? (8 + $logoH + 2) : 10;
 
 $pdf->SetXY(15, $headerY);
-$pdf->SetTextColor(15, 23, 42); // Formal black/slate
+$pdf->SetTextColor(15, 23, 42);
 $pdf->SetFont('trebuchetms', 'B', 13);
 $pdf->Cell(180, 5, strtoupper($school_name), 0, 1, 'C');
 
@@ -222,9 +208,20 @@ $pdf->Line(15, $divY + 0.4, 195, $divY + 0.4, ['width' => 0.15, 'color' => [148,
 /* ================= TITLE ================= */
 $titleY = $divY + 2;
 $pdf->SetXY(15, $titleY);
-$pdf->SetTextColor(12, 74, 36); // Official forest green
+
+if ($isAdmitted) {
+    $pdf->SetTextColor(12, 74, 36); // Forest green
+    $titlePrefix = 'OFFICIAL OFFER OF ADMISSION';
+} elseif ($isAdmin) {
+    $pdf->SetTextColor(180, 83, 9); // Amber
+    $titlePrefix = 'PROVISIONAL ADMISSION PREVIEW (PENDING APPROVAL)';
+} else {
+    $pdf->SetTextColor(15, 23, 42); // Black/Slate
+    $titlePrefix = 'OFFICIAL PROVISIONAL APPLICATION RECEIPT & VERIFICATION SLIP';
+}
+
 $pdf->SetFont('trebuchetms', 'B', 9.5);
-$titleText = 'OFFICIAL OFFER OF ADMISSION — ' . strtoupper($classNameLong);
+$titleText = $titlePrefix . ' — ' . strtoupper($classNameLong);
 if (($class === 'S5' || $class === 'S6') && !empty($studentCombinationShort)) {
     $titleText .= ' (' . strtoupper(htmlspecialchars($studentCombinationShort)) . ')';
 }
@@ -237,11 +234,11 @@ $pdf->SetXY(15, $contentY);
 
 $studentFullName = strtoupper(trim($student['surname'] . ' ' . $student['firstname'] . ' ' . ($student['othernames'] ?? '')));
 
-// Build Circular Photo HTML cell for top right box
+// Build Circular Photo HTML cell (Strict direct file path, no data URIs)
 $photoCellHtml = '';
-if ($hasStudentPhoto && !empty($photoSrc)) {
+if ($hasStudentPhoto) {
     $photoCellHtml = '<td width="18%" align="center" style="vertical-align: middle; padding: 0px;">
-        <img src="' . $photoSrc . '" width="68" height="68" />
+        <img src="' . htmlspecialchars($studentPhotoPath) . '" width="68" height="68" />
     </td>';
 } else {
     $photoCellHtml = '<td width="18%" align="center" style="vertical-align: middle; padding: 0px;">
@@ -257,8 +254,9 @@ if ($class === 'S1') {
     $academicIndexTag = '<strong>PLE Index:</strong> ' . htmlspecialchars($student['index_number']) . ' (Agg ' . htmlspecialchars($student['aggregates']) . ' ' . htmlspecialchars($student['division']) . ')';
 } elseif ($class === 'S5' || $class === 'S6') {
     $resultTag = !empty($student['division']) ? htmlspecialchars($student['division']) : ('Agg ' . htmlspecialchars($student['aggregates']));
-    if (!empty($student['uce_project_work'])) {
-        $resultTag .= ' · Proj: ' . htmlspecialchars($student['uce_project_work']);
+    $pWork = $student['uce_project_work'] ?? '';
+    if (!empty($pWork)) {
+        $resultTag .= ' · Proj: ' . htmlspecialchars($pWork);
     }
     $academicIndexTag = '<strong>UCE Index:</strong> ' . htmlspecialchars($student['index_number']) . ' (' . $resultTag . ')';
 } else {
@@ -266,27 +264,42 @@ if ($class === 'S1') {
 }
 
 $statusOrCombTag = '';
-if ($class === 'S5' || $class === 'S6') {
-    $statusOrCombTag = '<strong>Combination:</strong> <span style="font-weight: bold; color: #0c4a24;">' . htmlspecialchars($studentCombinationDisplay) . '</span>';
+if ($isAdmitted) {
+    if (($class === 'S5' || $class === 'S6') && !empty($studentCombinationDisplay)) {
+        $statusOrCombTag = '<strong>Combination:</strong> <span style="font-weight: bold; color: #0c4a24;">' . htmlspecialchars($studentCombinationDisplay) . '</span>';
+    } else {
+        $statusOrCombTag = '<strong>Admission Status:</strong> <span style="font-weight: bold; color: #0c4a24;">OFFICIAL PROVISIONAL ADMISSION</span>';
+    }
 } else {
-    $statusOrCombTag = '<strong>Admission Status:</strong> <span style="font-weight: bold; color: #0c4a24;">OFFICIAL PROVISIONAL ADMISSION</span>';
+    $statusOrCombTag = '<strong>Application Status:</strong> <span style="font-weight: bold; color: #b45309;">UNDER COMMITTEE EVALUATION</span>';
 }
 
-$admissionParagraph = "On behalf of the Board of Governors and Administration of <strong>" . htmlspecialchars($school_name) . "</strong>, we are pleased to inform you that your child has been <strong>successfully admitted</strong> to <strong>" . $classNameLong . "</strong>";
-if (($class === 'S5' || $class === 'S6') && !empty($studentCombinationDisplay)) {
-    $admissionParagraph .= " offering the <strong>Subject Combination: " . htmlspecialchars($studentCombinationDisplay) . "</strong>";
+if ($isAdmitted) {
+    $admissionParagraph = "On behalf of the Board of Governors and Administration of <strong>" . htmlspecialchars($school_name) . "</strong>, we are pleased to inform you that your child has been <strong>successfully admitted</strong> to <strong>" . $classNameLong . "</strong>";
+    if (($class === 'S5' || $class === 'S6') && !empty($studentCombinationDisplay)) {
+        $admissionParagraph .= " offering the <strong>Subject Combination: " . htmlspecialchars($studentCombinationDisplay) . "</strong>";
+    }
+    $admissionParagraph .= " for the <strong>" . htmlspecialchars($academic_year) . " Academic Year</strong>. This provisional offer is awarded on academic merit and satisfactory record of conduct.";
+} else {
+    $admissionParagraph = "On behalf of the Admissions Registry of <strong>" . htmlspecialchars($school_name) . "</strong>, this certifies that your online application for admission to <strong>" . $classNameLong . "</strong> for the <strong>" . htmlspecialchars($academic_year) . " Academic Year</strong> has been successfully received and registered. Your submitted academic credentials and attachments are currently undergoing active evaluation and verification by the Admissions Committee.";
 }
-$admissionParagraph .= " for the <strong>" . htmlspecialchars($academic_year) . " Academic Year</strong>. This provisional offer is awarded on academic merit and satisfactory record of conduct.";
 
 // Build Reporting Instructions Content Flush to Margin
-$instructionsBody = '<div style="font-size: 7.4pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;"><strong style="color: #0c4a24;">Reporting Instructions:</strong> The admitted student is expected to report on <strong>' . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'the official school reporting date') . '</strong>. <strong>Bring a physical copy of this offer letter on the reporting date</strong> alongside original UNEB result slips, 2 recent passport photographs, and all student requirements listed in the school prospectus.</div>';
-if (!empty($schoolRequirements)) {
-    $reqSummary = htmlspecialchars(substr($schoolRequirements, 0, 160));
-    $instructionsBody .= '<div style="font-size: 6.8pt; color: #334155; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>School Requirements:</strong> ' . $reqSummary . '... (Refer to attached School Prospectus for full checklist).</div>';
+if ($isAdmitted) {
+    $instructionsBody = '<div style="font-size: 7.4pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;"><strong style="color: #0c4a24;">Reporting Instructions:</strong> The admitted student is expected to report on <strong>' . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'the official school reporting date') . '</strong>. <strong>Bring a physical copy of this offer letter on the reporting date</strong> alongside original UNEB result slips, 2 recent passport photographs, and all student requirements listed in the school prospectus.</div>';
+    if (!empty($schoolRequirements)) {
+        $reqSummary = htmlspecialchars(substr($schoolRequirements, 0, 160));
+        $instructionsBody .= '<div style="font-size: 6.8pt; color: #334155; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>School Requirements:</strong> ' . $reqSummary . '... (Refer to attached School Prospectus for full checklist).</div>';
+    }
+    $instructionsBody .= '<div style="font-size: 6.8pt; color: #475569; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>Official Enclosures:</strong> (1) School Rules & Regulations (2) Term Admissions Circular (3) Medical Examination Form.</div>';
+} else {
+    $instructionsBody = '<div style="font-size: 7.4pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;"><strong style="color: #b45309;">Application Review Notice:</strong> Your application has been logged in the admissions registry under Verification ID <strong>' . $student_number . '</strong>. Official admissions decisions and downloadable provisional offer letters are dispatched via SMS and parent email. You may also track real-time admission decisions online using your registered Index/Phone number.</div>';
+    $instructionsBody .= '<div style="font-size: 6.8pt; color: #475569; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>Requirements for Physical Verification:</strong> Upon admission approval, applicants must present original UNEB result slips, birth certificate, 2 passport photographs, and parent National ID copy.</div>';
 }
-$instructionsBody .= '<div style="font-size: 6.8pt; color: #475569; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>Official Enclosures:</strong> (1) School Rules & Regulations (2) Term Admissions Circular (3) Medical Examination Form.</div>';
 
-// Build Student Details Card Rows Strictly Flush on Margin Ruler (No Leading Paragraph Spaces)
+$feeMatrixTitle = $isAdmitted ? 'TERM I TUITION & FEES MATRIX (UGX)' : 'PROSPECTIVE TERM I TUITION & FEES MATRIX (UGX)';
+
+// Build Student Details Card Rows Strictly Flush on Margin Ruler
 $detailsHtml = '<div style="font-family: \'trebuchetms\', \'Trebuchet MS\', Arial, sans-serif; font-size: 7.8pt; color: #0f172a; line-height: 1.35; text-align: justify; margin: 0; padding: 0;">' .
 '<table cellpadding="3" cellspacing="0" style="width: 100%; border-collapse: collapse; margin: 0 0 2px 0;">' .
     '<tr>' .
@@ -294,14 +307,14 @@ $detailsHtml = '<div style="font-family: \'trebuchetms\', \'Trebuchet MS\', Aria
             '<table cellpadding="3" cellspacing="0" style="width: 100%; border: 1px solid #0c4a24; background-color: #ffffff; font-size: 7.5pt;">' .
                 '<tr>' .
                     '<td width="55%" style="border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; background-color: #f8fafc;"><strong>Student Name:</strong> <span style="font-weight: bold; color: #0c4a24;">' . htmlspecialchars($studentFullName) . '</span></td>' .
-                    '<td width="45%" style="border-bottom: 1px solid #cbd5e1; background-color: #f8fafc;"><strong>Student Number:</strong> <span style="font-weight: bold; font-family: courier, monospace; color: #0c4a24;">' . $student_number . '</span></td>' .
+                    '<td width="45%" style="border-bottom: 1px solid #cbd5e1; background-color: #f8fafc;"><strong>Student / App ID:</strong> <span style="font-weight: bold; font-family: courier, monospace; color: #0c4a24;">' . $student_number . '</span></td>' .
                 '</tr>' .
                 '<tr>' .
                     '<td width="55%" style="border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;"><strong>Sex:</strong> ' . ucfirst($student['sex']) . ' &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Class:</strong> ' . $classNameLong . '</td>' .
                     '<td width="45%" style="border-bottom: 1px solid #cbd5e1;">' . $academicIndexTag . '</td>' .
                 '</tr>' .
                 '<tr>' .
-                    '<td width="55%" style="border-right: 1px solid #cbd5e1;"><strong>Reporting Date:</strong> <span style="font-weight: bold; color: #0f172a;">' . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'Official Opening Date') . '</span></td>' .
+                    '<td width="55%" style="border-right: 1px solid #cbd5e1;"><strong>' . ($isAdmitted ? 'Reporting Date:' : 'Target Term Intake:') . '</strong> <span style="font-weight: bold; color: #0f172a;">' . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'Official Opening Date') . '</span></td>' .
                     '<td width="45%">' . $statusOrCombTag . '</td>' .
                 '</tr>' .
             '</table>' .
@@ -311,7 +324,7 @@ $detailsHtml = '<div style="font-family: \'trebuchetms\', \'Trebuchet MS\', Aria
 '</table>' .
 '<p style="margin: 2px 0 1.5px 0; padding: 0; font-size: 7.8pt; color: #0f172a; text-align: left; text-indent: 0;">Dear Parent / Guardian of <strong>' . htmlspecialchars($student['firstname'] . ' ' . $student['surname']) . '</strong>,</p>' .
 '<p style="margin: 0 0 3px 0; padding: 0; font-size: 7.8pt; color: #1e293b; line-height: 1.35; text-align: justify; text-indent: 0;">' . trim($admissionParagraph) . '</p>' .
-'<div style="font-size: 7.6pt; font-weight: bold; color: #0c4a24; margin: 0 0 1.5px 0; padding: 0; text-align: left; text-indent: 0;">TERM I TUITION & FEES MATRIX (UGX)</div>' .
+'<div style="font-size: 7.6pt; font-weight: bold; color: #0c4a24; margin: 0 0 1.5px 0; padding: 0; text-align: left; text-indent: 0;">' . $feeMatrixTitle . '</div>' .
 '<table cellpadding="2.5" cellspacing="0" style="width: 100%; border: 1px solid #0c4a24; font-size: 7.4pt; border-collapse: collapse; margin: 0;">' .
     '<thead>' .
         '<tr style="background-color: #0c4a24; color: #ffffff; font-weight: bold;">' .
@@ -347,7 +360,7 @@ $pdf->writeHTML($detailsHtml, true, false, true, false, '');
 /* ================= SIGNATURE & VERIFICATION SECTION ================= */
 $sigY = $pdf->GetY() + 1.5;
 
-// Build Bottom Verification and Signature Section
+// Direct local file path in HTML (avoiding base64 data URIs)
 $sigHtml = '
 <div style="font-family: \'trebuchetms\', \'Trebuchet MS\', Arial, sans-serif;">
 <table cellpadding="0" cellspacing="0" style="width: 100%; border: none; font-size: 7.4pt;">
@@ -369,10 +382,10 @@ $sigHtml = '
         <td width="52%" align="center" style="vertical-align: top; text-align: center;">
             <div style="font-size: 7.4pt; color: #334155; margin-bottom: 2px;">Yours faithfully,</div>';
 
-if ($hasSignature && !empty($sigSrc)) {
+if ($hasSignature) {
     $sigHtml .= '
             <div style="margin: 1px 0 2px 0;">
-                <img src="' . $sigSrc . '" height="38" />
+                <img src="' . htmlspecialchars($signaturePath) . '" height="38" />
             </div>';
 } else {
     $sigHtml .= '
@@ -400,7 +413,7 @@ $qrStyle = [
     'fgcolor' => [15, 23, 42],
     'bgcolor' => false
 ];
-$qrLink = getBaseUrl($pdo) . '/admin/admission_list.php?class=' . urlencode($class);
+$qrLink = getBaseUrl($pdo) . ($isAdmitted ? ('/admin/admission_list.php?class=' . urlencode($class)) : ('/track.php?identifier=' . urlencode($student['index_number'] ?: $student['parent_phone'])));
 $pdf->write2DBarcode($qrLink, 'QRCODE,H', 16, $sigY + 2.5, 16, 16, $qrStyle, 'N');
 
 /* ================= FOOTER PROVISIONAL OFFER NOTICE ================= */
@@ -410,7 +423,7 @@ $pdf->SetTextColor(71, 85, 105);
 $pdf->MultiCell(180, 3.2, '* Please note: This provisional admission offer is subject to physical verification of original UNEB results slips and birth certificate upon arrival on the reporting date. Fees once paid are non-refundable.', 0, 'C', 0, 1);
 
 /* ================= SECURITY FOOTER ================= */
-date_default_timezone_set('Africa/Kampala'); // EAT
+date_default_timezone_set('Africa/Kampala');
 $generatedTime = date('d-M-Y H:i:s T');
 
 $pdf->Line(15, 285.5, 195, 285.5, ['width' => 0.2, 'color' => [203, 213, 225]]);
@@ -420,4 +433,6 @@ $pdf->SetTextColor(100, 116, 139);
 $pdf->Cell(180, 3.5, 'Generated: ' . $generatedTime . ' | Verification ID: ' . $student_number . ' | Official Admissions Document', 0, 1, 'C');
 
 /* ================= OUTPUT ================= */
-$pdf->Output('Admission_Offer_' . $student_number . '.pdf', 'I');
+$outFilename = ($isAdmitted ? 'Admission_Offer_' : 'Application_Receipt_') . $student_number . '.pdf';
+$pdf->Output($outFilename, 'I');
+exit;

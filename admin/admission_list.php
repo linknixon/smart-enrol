@@ -466,7 +466,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                             <tr class="hover:bg-slate-50 transition duration-150">
                                 <td class="px-2 py-3 text-center font-bold text-slate-400 font-mono print:text-black"><?= $serialNo ?></td>
                                 <td class="px-2 py-3 text-center font-mono font-bold text-slate-700 print:text-black">
-                                    <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-brand-700 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes(getAdmissionNumber($s))) ?>', this)" title="Click to copy Student No">
+                                    <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-slate-900 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes(getAdmissionNumber($s))) ?>', this)" title="Click to copy Student No">
                                         <span><?= htmlspecialchars(getAdmissionNumber($s)) ?></span>
                                         <i class="fa-regular fa-copy text-[8.5px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                     </span>
@@ -482,9 +482,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-2 py-3 text-center capitalize text-slate-600 print:text-black"><?= htmlspecialchars($s['sex']) ?></td>
-                                <td class="px-2 py-3 text-center font-bold text-brand-700 print:text-black"><?= htmlspecialchars($sClass) ?></td>
+                                <td class="px-2 py-3 text-center font-bold text-slate-800 print:text-black"><?= htmlspecialchars($sClass) ?></td>
                                 <td class="px-2 py-3 text-center font-mono text-slate-600 print:text-black">
-                                    <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-brand-700 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($s['index_number'] ?? '')) ?>', this)" title="Click to copy Index No">
+                                    <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-slate-900 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($s['index_number'] ?? '')) ?>', this)" title="Click to copy Index No">
                                         <span><?= htmlspecialchars($s['index_number'] ?? 'N/A') ?></span>
                                         <i class="fa-regular fa-copy text-[8.5px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                     </span>

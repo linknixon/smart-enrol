@@ -818,10 +818,10 @@ $msg = $_GET['msg'] ?? '';
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                     <div>
-                        <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider">Candidate Registry</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Showing 20 applicants per page</p>
+                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Candidate Registry</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Showing 20 applicants per page</p>
                     </div>
-                    <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded">Filtered Total: <?= $filteredCount ?></span>
+                    <span class="text-xs font-bold text-slate-800 bg-slate-100 border border-slate-300 px-2.5 py-1 rounded">Filtered Total: <?= $filteredCount ?></span>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -859,8 +859,8 @@ $msg = $_GET['msg'] ?? '';
                                     if(!empty($photoUrl)): 
                                     ?>
                                         <a href="download_photo.php?id=<?= $app['id'] ?>" title="Download Student Photo" class="inline-block relative group">
-                                            <img src="<?= htmlspecialchars($photoUrl) ?>" class="w-8 h-8 object-cover rounded-full border border-slate-200 mx-auto shadow-sm group-hover:ring-2 group-hover:ring-brand-500 transition" alt="Student Photo">
-                                            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-brand-700 text-white text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-solid fa-arrow-down"></i></span>
+                                            <img src="<?= htmlspecialchars($photoUrl) ?>" class="w-8 h-8 object-cover rounded-full border border-slate-200 mx-auto shadow-sm group-hover:ring-2 group-hover:ring-slate-400 transition" alt="Student Photo">
+                                            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-slate-800 text-white text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-solid fa-arrow-down"></i></span>
                                         </a>
                                     <?php else: ?>
                                         <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm mx-auto"><i class="fa-solid fa-user-ninja"></i></span>
@@ -868,12 +868,12 @@ $msg = $_GET['msg'] ?? '';
                                 </td>
                                 <td class="px-2 py-2">
                                     <span class="block font-bold text-slate-800 leading-tight"><?= htmlspecialchars($app['firstname'].' '.$app['surname'].' '.$app['othernames']) ?></span>
-                                    <span class="block text-[10px] text-slate-400 uppercase mt-0.5"><?= htmlspecialchars($app['sex'].' · Age: '.$app['age']) ?></span>
+                                    <span class="block text-[10px] text-slate-500 uppercase mt-0.5"><?= htmlspecialchars($app['sex'].' · Age: '.$app['age']) ?></span>
                                 </td>
-                                <td class="px-1.5 py-2 text-center font-bold text-slate-700"><?= htmlspecialchars($app['class_of_entry']) ?></td>
+                                <td class="px-1.5 py-2 text-center font-bold text-slate-800"><?= htmlspecialchars($app['class_of_entry']) ?></td>
                                 <td class="px-2 py-2 text-center">
                                     <?php if(!empty($app['index_number'])): ?>
-                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-slate-700 hover:text-brand-700 font-mono text-[11px] transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['index_number'])) ?>', this)" title="Click to copy Index No">
+                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-slate-700 hover:text-slate-900 font-mono text-[11px] transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['index_number'])) ?>', this)" title="Click to copy Index No">
                                             <span><?= htmlspecialchars($app['index_number']) ?></span>
                                             <i class="fa-regular fa-copy text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                         </span>
@@ -881,30 +881,30 @@ $msg = $_GET['msg'] ?? '';
                                         <span class="text-slate-400 font-mono text-[11px]">N/A</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="px-1.5 py-2 text-center font-bold text-brand-700 whitespace-nowrap">
+                                <td class="px-1.5 py-2 text-center font-bold text-slate-800 whitespace-nowrap">
                                     <?php if(!empty($app['division'])): ?>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-brand-50 text-brand-800 border border-brand-200 block"><?= htmlspecialchars($app['division']) ?></span>
-                                        <span class="block text-[9px] text-slate-400 font-mono mt-0.5">Agg: <?= htmlspecialchars($app['aggregates'] ?? 'N/A') ?></span>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300 block"><?= htmlspecialchars($app['division']) ?></span>
+                                        <span class="block text-[9px] text-slate-500 font-mono mt-0.5">Agg: <?= htmlspecialchars($app['aggregates'] ?? 'N/A') ?></span>
                                     <?php else: ?>
                                         <span class="block font-black text-slate-800 text-xs"><?= htmlspecialchars($app['aggregates'] ?? 'N/A') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-2 py-2 max-w-[200px]">
-                                    <span class="block text-xs font-bold text-slate-700 truncate" title="<?= htmlspecialchars($app['former_school']) ?>"><?= htmlspecialchars($app['former_school']) ?></span>
+                                    <span class="block text-xs font-bold text-slate-800 truncate" title="<?= htmlspecialchars($app['former_school']) ?>"><?= htmlspecialchars($app['former_school']) ?></span>
                                     <?php if($app['class_of_entry'] === 'S1'): ?>
-                                        <span class="block text-[10px] text-slate-400 mt-0.5">Primary Leaving Examination (PLE)</span>
+                                        <span class="block text-[10px] text-slate-500 mt-0.5">Primary Leaving Examination (PLE)</span>
                                     <?php elseif($app['class_of_entry'] === 'S5' || $app['class_of_entry'] === 'S6'): ?>
-                                        <span class="block text-[10.5px] text-gold-700 font-bold mt-0.5">
-                                            <i class="fa-solid fa-graduation-cap text-gold-600"></i> <?= htmlspecialchars($app['combination']) ?>
+                                        <span class="block text-[10.5px] text-slate-900 font-bold mt-0.5">
+                                            <i class="fa-solid fa-graduation-cap text-slate-600"></i> <?= htmlspecialchars($app['combination']) ?>
                                         </span>
                                         <?php if(!empty($app['uce_project_work'])): ?>
-                                            <span class="inline-flex items-center gap-1 text-[10px] text-slate-500 font-semibold mt-0.5 whitespace-nowrap">
-                                                <span class="px-1.5 py-0.2 rounded bg-slate-100 font-mono font-bold text-slate-700">Project: <?= htmlspecialchars($app['uce_project_work']) ?></span>
-                                                <?= ($app['class_of_entry'] === 'S6') ? '<span class="text-emerald-700 font-bold">(S6 Transfer)</span>' : '' ?>
+                                            <span class="inline-flex items-center gap-1 text-[10px] text-slate-600 font-semibold mt-0.5 whitespace-nowrap">
+                                                <span class="px-1.5 py-0.2 rounded bg-slate-100 font-mono font-bold text-slate-800 border border-slate-200">Project: <?= htmlspecialchars($app['uce_project_work']) ?></span>
+                                                <?= ($app['class_of_entry'] === 'S6') ? '<span class="text-slate-800 font-bold">(S6 Transfer)</span>' : '' ?>
                                             </span>
                                         <?php endif; ?>
                                         <?php if(!empty($app['s6_former_school'])): ?>
-                                            <span class="block text-[9.5px] text-slate-400 truncate max-w-xs" title="Former S5: <?= htmlspecialchars($app['s6_former_school']) ?>">S5: <?= htmlspecialchars($app['s6_former_school']) ?></span>
+                                            <span class="block text-[9.5px] text-slate-500 truncate max-w-xs" title="Former S5: <?= htmlspecialchars($app['s6_former_school']) ?>">S5: <?= htmlspecialchars($app['s6_former_school']) ?></span>
                                         <?php endif; ?>
                                         <?php if(!empty($app['uce_subjects_json'])): ?>
                                             <button type="button" 
@@ -921,38 +921,38 @@ $msg = $_GET['msg'] ?? '';
                                                         "s6_report_file" => $app['s6_report_file'] ?? "",
                                                         "nlsc" => json_decode($app['uce_subjects_json'], true)
                                                     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)' 
-                                                    class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded bg-brand-50 text-brand-700 hover:bg-brand-100 text-[9.5px] font-bold border border-brand-200 transition cursor-pointer whitespace-nowrap">
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 text-[9.5px] font-bold border border-slate-300 transition cursor-pointer whitespace-nowrap">
                                                 <i class="fa-solid fa-table-list"></i> View NLSC Grades
                                             </button>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span class="block text-[10px] text-brand-700 font-semibold mt-0.5">Last Class: <?= htmlspecialchars($app['division']) ?></span>
+                                        <span class="block text-[10px] text-slate-800 font-bold mt-0.5">Last Class: <?= htmlspecialchars($app['division']) ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-2 py-2 max-w-[200px]">
                                     <span class="block text-xs font-bold text-slate-800 leading-tight"><?= htmlspecialchars($app['parent_name']) ?></span>
                                     <?php if(!empty($app['parent_phone'])): ?>
-                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-[11px] text-slate-600 hover:text-brand-700 mt-0.5 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_phone'])) ?>', this)" title="Click to copy Phone">
+                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-[11px] text-slate-600 hover:text-slate-900 mt-0.5 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_phone'])) ?>', this)" title="Click to copy Phone">
                                             <i class="fa-solid fa-phone text-[9px] text-slate-400"></i>
                                             <span><?= htmlspecialchars($app['parent_phone']) ?></span>
                                             <i class="fa-regular fa-copy text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                         </span>
                                     <?php endif; ?>
                                     <?php if(!empty($app['parent_email'])): ?>
-                                        <span class="flex items-center gap-1 group cursor-pointer text-[11px] text-slate-500 hover:text-brand-700 mt-0.5 truncate max-w-[190px] transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_email'])) ?>', this)" title="Click to copy Email: <?= htmlspecialchars($app['parent_email']) ?>">
+                                        <span class="flex items-center gap-1 group cursor-pointer text-[11px] text-slate-600 hover:text-slate-900 mt-0.5 truncate max-w-[190px] transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_email'])) ?>', this)" title="Click to copy Email: <?= htmlspecialchars($app['parent_email']) ?>">
                                             <i class="fa-solid fa-envelope text-[9px] text-slate-400 shrink-0"></i>
                                             <span class="truncate"><?= htmlspecialchars($app['parent_email']) ?></span>
                                             <i class="fa-regular fa-copy text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"></i>
                                         </span>
                                     <?php endif; ?>
                                     <?php if(!empty($app['parent_nin'])): ?>
-                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-[9.5px] font-mono text-slate-400 hover:text-brand-700 mt-0.5 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_nin'])) ?>', this)" title="Click to copy NIN">
+                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-[9.5px] font-mono text-slate-500 hover:text-slate-900 mt-0.5 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_nin'])) ?>', this)" title="Click to copy NIN">
                                             <span>NIN: <?= htmlspecialchars($app['parent_nin']) ?></span>
                                             <i class="fa-regular fa-copy text-[8px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                         </span>
                                     <?php endif; ?>
                                     <?php if(!empty($app['parent_id_file'])): ?>
-                                        <a href="../<?= htmlspecialchars(ltrim($app['parent_id_file'], './')) ?>" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-brand-700 hover:text-brand-900 mt-0.5">
+                                        <a href="../<?= htmlspecialchars(ltrim($app['parent_id_file'], './')) ?>" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-700 hover:text-slate-900 mt-0.5">
                                              <i class="fa-solid fa-id-card"></i> View ID
                                         </a>
                                     <?php endif; ?>
@@ -1013,7 +1013,7 @@ $msg = $_GET['msg'] ?? '';
                                         <button type="button" 
                                                 onclick="openAppModalById(<?= $app['id'] ?>)" 
                                                 class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="View Complete Application Details">
-                                            <i class="fa-solid fa-eye text-brand-700 mr-1 text-[9px]"></i> Details
+                                            <i class="fa-solid fa-eye text-slate-500 mr-1 text-[9px]"></i> Details
                                         </button>
 
                                         <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
@@ -1179,20 +1179,20 @@ $msg = $_GET['msg'] ?? '';
     </div>
 
     <!-- View UCE NLSC Subject Competencies Modal -->
-    <div id="nlscModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div id="nlscModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-gradient-to-r from-brand-900 to-brand-800 text-white flex items-center justify-between">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
                 <div class="flex items-center gap-3">
-                    <span class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-sm font-bold border border-white/20">
-                        <i class="fa-solid fa-graduation-cap text-gold-400"></i>
+                    <span class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-sm font-bold border border-white/20 text-white">
+                        <i class="fa-solid fa-graduation-cap"></i>
                     </span>
                     <div>
-                        <h3 class="text-sm font-bold uppercase tracking-wide">UCE NLSC Candidate Result Profile</h3>
-                        <p class="text-[11px] text-brand-200">Uganda National Examinations Board (New Lower Secondary Curriculum)</p>
+                        <h3 class="text-sm font-bold uppercase tracking-wide text-white">UCE NLSC Candidate Result Profile</h3>
+                        <p class="text-[11px] text-slate-300">Uganda National Examinations Board (New Lower Secondary Curriculum)</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeNlscModal()" class="text-white/70 hover:text-white p-1 cursor-pointer">
+                <button type="button" onclick="closeNlscModal()" class="text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -1448,11 +1448,11 @@ $msg = $_GET['msg'] ?? '';
                         </div>
 
                         <!-- S5/S6 A-Level Performance Box -->
-                        <div id="modalAlevelBox" class="hidden p-3.5 bg-white rounded-lg border border-slate-200 space-y-2.5">
+                        <div id="modalAlevelBox" class="hidden p-3.5 bg-white rounded-lg border border-slate-200 space-y-3">
                             <div class="flex items-center justify-between">
-                                <span class="font-bold text-slate-700 uppercase text-[11px] block">A-Level Subject Combination & UCE NLSC Competencies</span>
+                                <span class="font-bold text-slate-800 uppercase text-[11px] block">A-Level Subject Combination & UCE NLSC Performance</span>
                                 <div class="flex items-center gap-2">
-                                    <span id="modalCombination" class="px-2.5 py-0.5 rounded font-black text-xs bg-brand-100 text-brand-800 border border-brand-300"></span>
+                                    <span id="modalCombination" class="px-2.5 py-0.5 rounded font-black text-xs bg-slate-100 text-slate-800 border border-slate-300"></span>
                                     <button type="button" id="modalChangeCombBtn" class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300 transition">
                                         <i class="fa-solid fa-pen-to-square text-[10px]"></i> Change
                                     </button>
@@ -1465,22 +1465,45 @@ $msg = $_GET['msg'] ?? '';
                                 </div>
                                 <div class="p-2 bg-slate-50 rounded border border-slate-100">
                                     <span class="text-[10px] text-slate-400 uppercase block font-bold">Project Work</span>
-                                    <span id="modalProjectWork" class="font-black text-gold-700"></span>
+                                    <span id="modalProjectWork" class="font-black text-slate-800"></span>
                                 </div>
-                                <div class="p-2 bg-emerald-50 rounded border border-emerald-200">
-                                    <span class="text-[10px] text-emerald-600 uppercase block font-bold">Competency Score</span>
-                                    <span id="modalNlscScore" class="font-black text-emerald-800 font-mono"></span>
+                                <div class="p-2 bg-slate-50 rounded border border-slate-100">
+                                    <span class="text-[10px] text-slate-500 uppercase block font-bold">Competency Score</span>
+                                    <span id="modalNlscScore" class="font-black text-slate-800 font-mono"></span>
                                 </div>
-                                <div class="p-2 bg-sky-50 rounded border border-sky-200 flex items-center justify-center">
-                                    <button type="button" id="modalViewNlscDetailsBtn" class="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1">
-                                        <i class="fa-solid fa-list-check"></i> View Full NLSC Grid
+                                <div class="p-2 bg-slate-100 rounded border border-slate-200 flex items-center justify-center">
+                                    <button type="button" id="modalViewNlscDetailsBtn" class="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1 cursor-pointer">
+                                        <i class="fa-solid fa-list-check text-slate-500"></i> View Full NLSC Grid
                                     </button>
                                 </div>
                             </div>
 
+                            <!-- Embedded Full NLSC Subject Scores Table inside Details Modal -->
+                            <div id="modalAlevelSubjectsContainer" class="space-y-1.5 pt-2 border-t border-slate-100">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-slate-700 uppercase text-[10px] tracking-wider block">UCE NLSC Subject Scores & Competencies:</span>
+                                    <span id="modalAlevelSubjectCount" class="text-[10.5px] font-bold text-slate-500"></span>
+                                </div>
+                                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                                    <table class="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
+                                                <th class="px-3 py-1.5">Subject</th>
+                                                <th class="px-3 py-1.5 text-center w-24">Grade</th>
+                                                <th class="px-3 py-1.5 text-center w-20">Points</th>
+                                                <th class="px-3 py-1.5">Competency Level</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="modalAlevelSubjectsTbody" class="divide-y divide-slate-100 bg-white">
+                                            <!-- Dynamically populated via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <!-- S6 Transfer Specific Block -->
-                            <div id="modalS6TransferDetails" class="hidden p-3 bg-emerald-50/70 rounded-lg border border-emerald-200 space-y-1 text-xs">
-                                <span class="font-bold text-emerald-950 uppercase text-[10px] block">Senior Six Transfer Details</span>
+                            <div id="modalS6TransferDetails" class="hidden p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1 text-xs">
+                                <span class="font-bold text-slate-800 uppercase text-[10px] block">Senior Six Transfer Details</span>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                                     <div><strong class="text-slate-500">Former S5 School:</strong> <span id="modalS5FormerSchool" class="font-semibold text-slate-800"></span></div>
                                     <div><strong class="text-slate-500">S5 Passes:</strong> <span id="modalS5Passes" class="font-semibold text-slate-800"></span></div>
@@ -1493,7 +1516,7 @@ $msg = $_GET['msg'] ?? '';
                         <!-- S2-S4 Transfer Academic Standing Box -->
                         <div id="modalTransferBox" class="hidden p-3.5 bg-white rounded-lg border border-slate-200 space-y-1.5 text-xs">
                             <span class="font-bold text-slate-700 uppercase text-[11px] block">O-Level Transfer Details</span>
-                            <div><strong class="text-slate-500">Last Class Attended:</strong> <span id="modalLastClass" class="font-bold text-brand-700"></span></div>
+                            <div><strong class="text-slate-500">Last Class Attended:</strong> <span id="modalLastClass" class="font-bold text-slate-800"></span></div>
                         </div>
                     </div>
                 </div>
@@ -1752,7 +1775,6 @@ $msg = $_GET['msg'] ?? '';
                 };
             }
             document.getElementById('modalUceDivision').textContent = app.division || 'N/A';
-            document.getElementById('modalProjectWork').textContent = app.project_work ? ('Grade ' + app.project_work) : 'N/A';
 
             let nlscScore = 'N/A';
             let nlscData = null;
@@ -1766,6 +1788,50 @@ $msg = $_GET['msg'] ?? '';
             }
             document.getElementById('modalNlscScore').textContent = nlscScore;
 
+            const projWork = app.uce_project_work || app.project_work || (nlscData && (nlscData.project_work || nlscData.uce_project_work)) || '';
+            document.getElementById('modalProjectWork').textContent = projWork ? ('Grade ' + projWork) : '—';
+
+            // Populate embedded NLSC Subject Scores Table directly in Full Application Modal
+            const subjectTbody = document.getElementById('modalAlevelSubjectsTbody');
+            const subjectCountEl = document.getElementById('modalAlevelSubjectCount');
+            if (subjectTbody) {
+                subjectTbody.innerHTML = '';
+                const subjectsObj = (nlscData && nlscData.subjects) ? nlscData.subjects : null;
+                if (subjectsObj && Object.keys(subjectsObj).length > 0) {
+                    const pts = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1 };
+                    const badgeStyles = {
+                        'A': 'bg-slate-100 text-slate-900 border-slate-300',
+                        'B': 'bg-slate-100 text-slate-800 border-slate-200',
+                        'C': 'bg-slate-100 text-slate-800 border-slate-200',
+                        'D': 'bg-slate-100 text-slate-800 border-slate-200',
+                        'E': 'bg-slate-100 text-slate-800 border-slate-200'
+                    };
+                    let count = 0;
+                    for (let code in subjectsObj) {
+                        const s = subjectsObj[code];
+                        const g = (s.grade || '').toUpperCase();
+                        const p = pts[g] || 0;
+                        const bStyle = badgeStyles[g] || 'bg-slate-100 text-slate-800 border-slate-200';
+                        const desc = s.level || 'Standard Competency Level';
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-slate-50 transition';
+                        tr.innerHTML = 
+                            '<td class="px-3 py-1.5 font-bold text-slate-800">' + (s.name || code) + '</td>' +
+                            '<td class="px-3 py-1.5 text-center"><span class="px-2 py-0.5 rounded font-black text-xs border ' + bStyle + '">Grade ' + g + '</span></td>' +
+                            '<td class="px-3 py-1.5 text-center font-mono font-bold text-slate-800">' + p + '</td>' +
+                            '<td class="px-3 py-1.5 text-slate-600 font-medium text-[11px]">' + desc + '</td>';
+                        subjectTbody.appendChild(tr);
+                        count++;
+                    }
+                    if (subjectCountEl) subjectCountEl.textContent = count + ' subjects recorded';
+                } else {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td colspan="4" class="px-3 py-3 text-center text-slate-400 italic">No individual subject scores recorded for this candidate.</td>';
+                    subjectTbody.appendChild(tr);
+                    if (subjectCountEl) subjectCountEl.textContent = '0 subjects';
+                }
+            }
+
             const nlscBtn = document.getElementById('modalViewNlscDetailsBtn');
             if (nlscData) {
                 nlscBtn.parentElement.classList.remove('hidden');
@@ -1777,7 +1843,7 @@ $msg = $_GET['msg'] ?? '';
                         index: app.index_number,
                         former_school: app.former_school,
                         division: app.division,
-                        project_work: app.project_work,
+                        project_work: projWork,
                         result_slip: app.result_slip,
                         nlsc: nlscData,
                         s6_former_school: app.s6_former_school || (nlscData.s6_transfer ? nlscData.s6_transfer.former_s5_school : ''),
@@ -1911,7 +1977,8 @@ $msg = $_GET['msg'] ?? '';
         document.getElementById('nlscIndexNumber').textContent = data.index;
         document.getElementById('nlscFormerSchool').textContent = data.former_school;
         document.getElementById('nlscResultLevel').textContent = data.division || 'N/A';
-        document.getElementById('nlscProjectWork').textContent = 'Grade ' + (data.project_work || 'N/A');
+        const pw = (data.project_work || '').toString().trim();
+        document.getElementById('nlscProjectWork').textContent = pw && pw !== 'N/A' ? (pw.startsWith('Grade') ? pw : 'Grade ' + pw) : '—';
 
         const nlsc = data.nlsc || {};
         document.getElementById('nlscCompetencyScore').textContent = nlsc.competency_score || 0;

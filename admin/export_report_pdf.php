@@ -41,13 +41,6 @@ $accentRgb  = hex2rgb($accentHex, [181, 141, 47]);
 $logo_source = getSchoolLogoFilePath($pdo, __DIR__ . '/..');
 $signaturePath = getSchoolSignatureFilePath($pdo, __DIR__ . '/..');
 $hasSignature  = (!empty($signaturePath) && file_exists($signaturePath));
-$sigSrc = '';
-if ($hasSignature) {
-    $sigData = base64_encode(file_get_contents($signaturePath));
-    $sigExt = strtolower(pathinfo($signaturePath, PATHINFO_EXTENSION));
-    $sigMime = in_array($sigExt, ['jpg', 'jpeg']) ? 'image/jpeg' : 'image/png';
-    $sigSrc = 'data:' . $sigMime . ';base64,' . $sigData;
-}
 
 /* ================= QUERY DATA ================= */
 $query = "SELECT * FROM applications";
@@ -329,10 +322,10 @@ $tableHtml .= '
         <td width="50%" align="left" style="vertical-align: top;">
             <span style="font-weight: bold; color: #475569;">OFFICIAL REPORT APPROVED BY:</span><br>';
 
-if ($hasSignature && !empty($sigSrc)) {
+if ($hasSignature) {
     $tableHtml .= '
             <div style="margin: 2px 0 2px 0;">
-                <img src="' . $sigSrc . '" height="38" />
+                <img src="' . htmlspecialchars($signaturePath) . '" height="38" />
             </div>';
 } else {
     $tableHtml .= '

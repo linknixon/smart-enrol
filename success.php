@@ -104,6 +104,10 @@ $assignedComb       = htmlspecialchars($_GET['comb'] ?? '');
                 <a href="admin/admission_offer.php?id=<?= $appId ?>" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-md">
                     <i class="fa-solid fa-file-pdf"></i> Download Official Offer Letter (PDF)
                 </a>
+            <?php elseif ($appId > 0): ?>
+                <a href="admin/admission_offer.php?id=<?= $appId ?>" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition shadow-sm">
+                    <i class="fa-solid fa-file-lines text-slate-600"></i> Download Application Receipt & Review Slip (PDF)
+                </a>
             <?php endif; ?>
             <a href="track.php" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
                 <i class="fa-solid fa-location-crosshairs text-xs"></i> Track Admission Status
