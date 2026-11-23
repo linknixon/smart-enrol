@@ -89,6 +89,11 @@ if (!move_uploaded_file($_FILES['result_slip']['tmp_name'], $resultPath)) {
     die("Failed to upload UCE result slip");
 }
 
+if (function_exists('correctImageExifOrientation')) {
+    correctImageExifOrientation($passportPath);
+    correctImageExifOrientation($resultPath);
+}
+
 // -----------------------------
 // CALCULATE AGE
 // -----------------------------

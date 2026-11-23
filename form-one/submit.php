@@ -71,10 +71,18 @@ if (
     die("File upload failed");
 }
 
+if (function_exists('correctImageExifOrientation')) {
+    correctImageExifOrientation($passport);
+    correctImageExifOrientation($result);
+}
+
 $parentIdFile = null;
 if (isset($_FILES['parent_id_file']) && $_FILES['parent_id_file']['error'] === UPLOAD_ERR_OK) {
     $parentIdFile = './uploads/parent_ids/' . time() . '_' . basename($_FILES['parent_id_file']['name']);
     move_uploaded_file($_FILES['parent_id_file']['tmp_name'], $parentIdFile);
+    if (function_exists('correctImageExifOrientation')) {
+        correctImageExifOrientation($parentIdFile);
+    }
 }
 
 // Location fields

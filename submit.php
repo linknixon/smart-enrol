@@ -106,6 +106,10 @@ $passport = 'uploads/passports/' . time() . '_' . basename($_FILES['passport']['
 if (!move_uploaded_file($_FILES['passport']['tmp_name'], $passport)) {
     die("Failed to upload passport photo");
 }
+// Automatically correct camera orientation from phone EXIF data
+if (function_exists('correctImageExifOrientation')) {
+    correctImageExifOrientation($passport);
+}
 // Automatically normalize and whiten background for student passport photograph
 if (function_exists('processPassportPhotoBackground')) {
     processPassportPhotoBackground($passport);
@@ -129,6 +133,9 @@ $resultSlip = 'uploads/results/' . time() . '_' . preg_replace('/[^a-zA-Z0-9_\.-
 if (!move_uploaded_file($_FILES[$resultSlipInputName]['tmp_name'], $resultSlip)) {
     die("Failed to upload academic record attachment");
 }
+if (function_exists('correctImageExifOrientation')) {
+    correctImageExifOrientation($resultSlip);
+}
 
 // 2.B Process Senior Six (S6) Report Card Upload
 $s6ReportFile = null;
@@ -146,6 +153,9 @@ if ($class === 'S6') {
     if (!move_uploaded_file($_FILES['s6_report_file']['tmp_name'], $s6ReportFile)) {
         die("Failed to upload Senior Five report card");
     }
+    if (function_exists('correctImageExifOrientation')) {
+        correctImageExifOrientation($s6ReportFile);
+    }
 }
 
 // 3. Process Parent / Guardian National ID Document Upload (PDF, PNG, JPG, JPEG)
@@ -161,6 +171,9 @@ if (!in_array($idFileExt, $allowedIdExts)) {
 $parentIdFile = 'uploads/parent_ids/' . time() . '_' . basename($_FILES['parent_id_file']['name']);
 if (!move_uploaded_file($_FILES['parent_id_file']['tmp_name'], $parentIdFile)) {
     die("Failed to upload parent National ID document");
+}
+if (function_exists('correctImageExifOrientation')) {
+    correctImageExifOrientation($parentIdFile);
 }
 
 // Calculate age from Date of Birth

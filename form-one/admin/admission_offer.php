@@ -1,8 +1,8 @@
 <?php
-// Enable error reporting for development
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Suppress display errors in PDF output stream to prevent header corruption
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
+ob_start();
 
 require '../config/db.php';
 require_once('../tcpdf/tcpdf.php');
@@ -258,4 +258,8 @@ $pdf->SetTextColor(148, 163, 184);
 $pdf->Cell(182, 3.5, 'Generated: ' . $generatedTime . ' | Verification ID: ' . $student_number . ' | Official Admissions Document', 0, 1, 'C');
 
 /* ================= OUTPUT ================= */
+if (ob_get_length()) {
+    ob_end_clean();
+}
 $pdf->Output('Admission_Offer_' . $student_number . '.pdf', 'I');
+exit;

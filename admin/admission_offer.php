@@ -2,6 +2,7 @@
 // Suppress display errors in PDF output stream to prevent header corruption
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
+ob_start();
 
 require __DIR__ . '/../config/db.php';
 require_once(__DIR__ . '/../form-one/tcpdf/tcpdf.php');
@@ -433,6 +434,9 @@ $pdf->SetTextColor(100, 116, 139);
 $pdf->Cell(180, 3.5, 'Generated: ' . $generatedTime . ' | Verification ID: ' . $student_number . ' | Official Admissions Document', 0, 1, 'C');
 
 /* ================= OUTPUT ================= */
+if (ob_get_length()) {
+    ob_end_clean();
+}
 $outFilename = ($isAdmitted ? 'Admission_Offer_' : 'Application_Receipt_') . $student_number . '.pdf';
 $pdf->Output($outFilename, 'I');
 exit;

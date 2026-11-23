@@ -630,6 +630,10 @@ if (!function_exists('getBaseUrl')) {
 if (!function_exists('getAcademicYear')) {
     function getAcademicYear($pdo = null, $class = null) {
         if ($pdo) {
+            $yearSetting = getSetting($pdo, 'academic_year', '');
+            if (!empty($yearSetting) && is_numeric($yearSetting) && (int)$yearSetting > 2000) {
+                return trim((string)$yearSetting);
+            }
             $dateKey = 'admission_s1_start_date';
             if ($class) {
                 $norm = strtoupper(trim((string)$class));
@@ -654,7 +658,6 @@ if (!function_exists('getAcademicYear')) {
                     return $parsedYear;
                 }
             }
-            $yearSetting = getSetting($pdo, 'academic_year', '');
             if (!empty($yearSetting)) {
                 return $yearSetting;
             }
@@ -1017,7 +1020,6 @@ if (!function_exists('getStudentPhotoFilePath')) {
                     $img = @imagecreatefromwebp($found);
                     if ($img) {
                         @imagejpeg($img, $jpgCached, 90);
-                        @imagedestroy($img);
                     }
                 }
                 if (file_exists($jpgCached)) {
@@ -1070,7 +1072,6 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
                 imagefilledarc($pDst, (int)$pRadius, (int)($pRadius * 1.55), 140, 120, 180, 360, $pHead, IMG_ARC_PIE);
 
                 @imagepng($pDst, $placeholderFile, 6);
-                @imagedestroy($pDst);
             }
             return file_exists($placeholderFile) ? $placeholderFile : null;
         }
@@ -1111,7 +1112,6 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
 
         $square = imagecreatetruecolor($targetSize, $targetSize);
         imagecopyresampled($square, $src, 0, 0, $srcX, $srcY, $targetSize, $targetSize, $size, $size);
-        imagedestroy($src);
 
         $radius = $targetSize / 2;
         $borderWidth = 3;
@@ -1136,10 +1136,8 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
                 }
             }
         }
-        imagedestroy($square);
 
         @imagepng($dst, $cacheFile, 6);
-        @imagedestroy($dst);
 
         return file_exists($cacheFile) ? $cacheFile : $orig;
     }
@@ -1723,12 +1721,115 @@ if (!function_exists('renderTurnstileWidget')) {
 }
 
 // -------------------------------------------------------------
+// Auto-correct photo orientation from smartphone camera EXIF metadata
+// -------------------------------------------------------------
+if (!function_exists('correctImageExifOrientation')) {
+    function correctImageExifOrientation($filePath) {
+        if (!file_exists($filePath) || !is_file($filePath)) return false;
+        if (!extension_loaded('gd')) return false;
+
+        $info = @getimagesize($filePath);
+        if (!$info) return false;
+
+        $mime = $info['mime'] ?? '';
+        if ($mime !== 'image/jpeg' && $mime !== 'image/jpg') {
+            return false;
+        }
+
+        if (!function_exists('exif_read_data')) {
+            return false;
+        }
+
+        $exif = @exif_read_data($filePath);
+        if (!$exif || empty($exif['Orientation'])) {
+            return false;
+        }
+
+        $orientation = (int)$exif['Orientation'];
+        if ($orientation <= 1) {
+            return false;
+        }
+
+        $image = @imagecreatefromjpeg($filePath);
+        if (!$image) return false;
+
+        $rotated = false;
+        switch ($orientation) {
+            case 2:
+                if (function_exists('imageflip')) {
+                    imageflip($image, IMG_FLIP_HORIZONTAL);
+                    $rotated = true;
+                }
+                break;
+            case 3: // 180 degrees (upside down)
+                $rotatedImg = @imagerotate($image, 180, 0);
+                if ($rotatedImg) {
+                    $image = $rotatedImg;
+                    $rotated = true;
+                }
+                break;
+            case 4:
+                if (function_exists('imageflip')) {
+                    imageflip($image, IMG_FLIP_VERTICAL);
+                    $rotated = true;
+                }
+                break;
+            case 5:
+                if (function_exists('imageflip')) {
+                    imageflip($image, IMG_FLIP_VERTICAL);
+                    $rotatedImg = @imagerotate($image, -90, 0);
+                    if ($rotatedImg) {
+                        $image = $rotatedImg;
+                        $rotated = true;
+                    }
+                }
+                break;
+            case 6: // 90 CW (Standard phone portrait orientation)
+                $rotatedImg = @imagerotate($image, -90, 0);
+                if ($rotatedImg) {
+                    $image = $rotatedImg;
+                    $rotated = true;
+                }
+                break;
+            case 7:
+                if (function_exists('imageflip')) {
+                    imageflip($image, IMG_FLIP_HORIZONTAL);
+                    $rotatedImg = @imagerotate($image, -90, 0);
+                    if ($rotatedImg) {
+                        $image = $rotatedImg;
+                        $rotated = true;
+                    }
+                }
+                break;
+            case 8: // 90 CCW (Inverted phone portrait orientation)
+                $rotatedImg = @imagerotate($image, 90, 0);
+                if ($rotatedImg) {
+                    $image = $rotatedImg;
+                    $rotated = true;
+                }
+                break;
+        }
+
+        if ($rotated && $image) {
+            @imagejpeg($image, $filePath, 95);
+            return true;
+        }
+        return false;
+    }
+}
+
+// -------------------------------------------------------------
 // Automatic Passport Photo Background Processing (Pure White Canvas)
 // -------------------------------------------------------------
 if (!function_exists('processPassportPhotoBackground')) {
     function processPassportPhotoBackground($filePath) {
         if (!file_exists($filePath) || !is_file($filePath)) return false;
         if (!extension_loaded('gd')) return false;
+
+        // Auto-orient mobile phone photos first before processing background
+        if (function_exists('correctImageExifOrientation')) {
+            correctImageExifOrientation($filePath);
+        }
 
         $info = @getimagesize($filePath);
         if (!$info) return false;
@@ -1808,8 +1909,6 @@ if (!function_exists('processPassportPhotoBackground')) {
         } else {
             imagejpeg($whiteImg, $filePath, 92);
         }
-        imagedestroy($srcImg);
-        imagedestroy($whiteImg);
         return true;
     }
 }
@@ -2180,7 +2279,6 @@ if (!function_exists('verifyAcademicDocumentAuthenticity')) {
                             $luminances[] = 0.299 * $r + 0.587 * $g + 0.114 * $b;
                         }
                     }
-                    imagedestroy($sampleImg);
 
                     if (!empty($luminances)) {
                         $mean = array_sum($luminances) / count($luminances);

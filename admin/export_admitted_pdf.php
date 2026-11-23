@@ -1,8 +1,8 @@
 <?php
-// Enable error reporting for development
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Suppress display errors in PDF output stream to prevent header corruption
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
+ob_start();
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/../config/db.php';

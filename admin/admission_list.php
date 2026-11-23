@@ -356,7 +356,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         </header>
 
         <!-- Page Content -->
-        <div class="flex-1 px-8 py-6 space-y-6 print-container">
+        <div class="flex-1 px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-5 print-container">
 
             <!-- Print Banner Header -->
             <div class="hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6">
@@ -434,25 +434,101 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
             <!-- Admitted Table Card -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col print:border-none print:shadow-none">
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center no-print text-white" style="background-color: <?= $primary_color ?>;">
+                <div class="px-4 sm:px-6 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 no-print text-white" style="background-color: <?= $primary_color ?>;">
                     <div>
                         <h3 class="font-extrabold text-white text-sm uppercase tracking-wider">Official Admissions Register</h3>
                         <p class="text-xs text-white/80 mt-0.5">Showing 20 admitted students per page <?= !$isAdmin ? '· Active Cohort: ' . htmlspecialchars($currentAcademicYear) : ($filterYear !== 'all' ? '· Year: ' . htmlspecialchars($filterYear) : '· All Cohorts') ?></p>
                     </div>
-                    <span class="text-xs font-bold text-white bg-white/20 border border-white/30 px-3 py-1.5 rounded-xl">Total Admitted: <?= $totalAdmitted ?></span>
+                    <span class="text-xs font-bold text-white bg-white/20 border border-white/30 px-3 py-1 rounded-xl">Total Admitted: <?= $totalAdmitted ?></span>
                 </div>
 
-                <div class="w-full overflow-hidden">
-                    <table class="w-full table-fixed text-left border-collapse text-xs" id="admissionTable">
+                <!-- Responsive Mobile Card View (<640px) -->
+                <div class="block sm:hidden divide-y divide-slate-200 bg-slate-50/70 p-3 space-y-3 no-print">
+                    <?php 
+                    $idxM = 1;
+                    foreach ($students as $s): 
+                        $serialNo = $offset + $idxM;
+                        $sClass = $s['class_of_entry'];
+                        $admNum = getAdmissionNumber($s);
+                        $fullName = trim($s['surname'].' '.$s['firstname'].' '.($s['othernames'] ?? ''));
+                        $acad = ($sClass === 'S1') ? ('PLE Div ' . ($s['division'] ?? 'N/A')) : (($sClass === 'S5' || $sClass === 'S6') ? (($s['combination'] ?? 'N/A') . ' (' . ($s['division'] ?? '') . ')') : ('Div ' . ($s['division'] ?? 'N/A')));
+                        $isAutoAdm = (!empty($s['is_auto_admitted']) && $s['is_auto_admitted'] == 1) || (stripos($s['admitted_by'] ?? '', 'AI') !== false) || (stripos($s['admitted_by'] ?? '', 'Auto') !== false);
+                    ?>
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-2xs space-y-2.5">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-mono font-bold text-[11px] flex items-center justify-center">#<?= $serialNo ?></span>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-brand-50 text-brand-900 border border-brand-200"><?= htmlspecialchars($sClass) ?></span>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold capitalize bg-slate-100 text-slate-700"><?= htmlspecialchars($s['sex']) ?></span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-check text-[9px] text-emerald-600"></i> Admitted
+                            </span>
+                        </div>
+
+                        <div>
+                            <div class="text-sm font-bold text-slate-900 leading-snug break-words">
+                                <?= htmlspecialchars($fullName) ?>
+                            </div>
+                            <?php if ($isAutoAdm && ($s['auto_admit_review_status'] ?? 'needs_review') === 'needs_review'): ?>
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 text-[9px] font-bold mt-1">
+                                    <i class="fa-solid fa-robot text-amber-600"></i> Auto-Admitted (Needs Review)
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
+                            <div>
+                                <span class="block text-[9.5px] uppercase font-bold text-slate-400">Admission No</span>
+                                <span class="font-mono font-bold text-brand-900 text-[11px] inline-flex items-center gap-1 cursor-pointer" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($admNum)) ?>', this)" title="Tap to copy">
+                                    <span><?= htmlspecialchars($admNum) ?></span>
+                                    <i class="fa-regular fa-copy text-[9px] text-slate-400"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="block text-[9.5px] uppercase font-bold text-slate-400">Index Number</span>
+                                <span class="font-mono font-bold text-slate-700 text-[11px] inline-flex items-center gap-1 cursor-pointer" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($s['index_number'] ?? '')) ?>', this)" title="Tap to copy">
+                                    <span><?= htmlspecialchars($s['index_number'] ?? 'N/A') ?></span>
+                                    <i class="fa-regular fa-copy text-[9px] text-slate-400"></i>
+                                </span>
+                            </div>
+                            <div class="col-span-2 pt-1 border-t border-slate-200/60">
+                                <span class="block text-[9.5px] uppercase font-bold text-slate-400">Academic Merit</span>
+                                <span class="font-bold text-slate-800 text-xs"><?= htmlspecialchars($acad) ?></span>
+                            </div>
+                        </div>
+
+                        <div class="pt-1 flex items-center justify-end">
+                            <a href="admission_offer.php?id=<?= $s['id'] ?>" target="_blank" class="w-full text-center px-3 py-2 rounded-xl text-xs font-bold bg-brand-700 hover:bg-brand-800 text-white transition flex items-center justify-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> View / Download Offer Letter
+                            </a>
+                        </div>
+                    </div>
+                    <?php 
+                    $idxM++;
+                    endforeach; 
+                    ?>
+                    <?php if (count($students) === 0): ?>
+                    <div class="p-8 text-center text-slate-400 font-semibold bg-white rounded-xl">
+                        <i class="fa-solid fa-folder-open text-2xl block mb-2 text-slate-300"></i>
+                        No admitted students registered matching the selected criteria.
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Desktop / Tablet Table View (>=640px and print) -->
+                <div class="hidden sm:block overflow-x-auto print:block">
+                    <table class="w-full text-left border-collapse text-xs table-auto min-w-[700px]" id="admissionTable">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px] print:bg-white print:border-b-2 print:border-black">
-                                <th class="w-[4%] px-2 py-3 text-center">#</th>
-                                <th class="w-[14%] px-2 py-3 text-center">Admission No.</th>
-                                <th class="w-[30%] px-3 py-3">Student Full Name</th>
-                                <th class="w-[8%] px-2 py-3 text-center">Gender</th>
-                                <th class="w-[8%] px-2 py-3 text-center">Class</th>
-                                <th class="w-[16%] px-2 py-3 text-center">Index Number</th>
-                                <th class="w-[20%] px-3 py-3 text-center">Combination / Division</th>
+                                <th class="w-10 px-3 py-3 text-center">#</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">Admission No.</th>
+                                <th class="px-4 py-3">Student Full Name</th>
+                                <th class="w-16 px-2 py-3 text-center">Gender</th>
+                                <th class="w-16 px-2 py-3 text-center">Class</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">Index Number</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">Combination / Division</th>
+                                <th class="w-24 px-3 py-3 text-center no-print">Document</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-xs print:divide-y print:divide-slate-300">
@@ -461,17 +537,18 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                             foreach ($students as $s): 
                                 $serialNo = $offset + $idx;
                                 $sClass = $s['class_of_entry'];
+                                $admNum = getAdmissionNumber($s);
                                 $acad = ($sClass === 'S1') ? ('PLE Div ' . ($s['division'] ?? 'N/A')) : (($sClass === 'S5' || $sClass === 'S6') ? (($s['combination'] ?? 'N/A') . ' (' . ($s['division'] ?? '') . ')') : ('Div ' . ($s['division'] ?? 'N/A')));
                             ?>
                             <tr class="hover:bg-slate-50 transition duration-150">
-                                <td class="px-2 py-3 text-center font-bold text-slate-400 font-mono print:text-black"><?= $serialNo ?></td>
-                                <td class="px-2 py-3 text-center font-mono font-bold text-slate-700 print:text-black">
-                                    <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-slate-900 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes(getAdmissionNumber($s))) ?>', this)" title="Click to copy Student No">
-                                        <span><?= htmlspecialchars(getAdmissionNumber($s)) ?></span>
+                                <td class="px-3 py-3 text-center font-bold text-slate-400 font-mono print:text-black"><?= $serialNo ?></td>
+                                <td class="px-3 py-3 text-center font-mono font-bold text-slate-700 whitespace-nowrap print:text-black">
+                                    <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-slate-900 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($admNum)) ?>', this)" title="Click to copy Student No">
+                                        <span><?= htmlspecialchars($admNum) ?></span>
                                         <i class="fa-regular fa-copy text-[8.5px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                     </span>
                                 </td>
-                                <td class="px-3 py-3 font-bold text-slate-800 print:text-black leading-tight break-words">
+                                <td class="px-4 py-3 font-bold text-slate-800 print:text-black leading-tight break-words">
                                     <?= htmlspecialchars(trim($s['surname'].' '.$s['firstname'].' '.($s['othernames'] ?? ''))) ?>
                                     <?php 
                                     $isAutoAdm = (!empty($s['is_auto_admitted']) && $s['is_auto_admitted'] == 1) || (stripos($s['admitted_by'] ?? '', 'AI') !== false) || (stripos($s['admitted_by'] ?? '', 'Auto') !== false);
@@ -483,13 +560,18 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                 </td>
                                 <td class="px-2 py-3 text-center capitalize text-slate-600 print:text-black"><?= htmlspecialchars($s['sex']) ?></td>
                                 <td class="px-2 py-3 text-center font-bold text-slate-800 print:text-black"><?= htmlspecialchars($sClass) ?></td>
-                                <td class="px-2 py-3 text-center font-mono text-slate-600 print:text-black">
+                                <td class="px-3 py-3 text-center font-mono text-slate-600 whitespace-nowrap print:text-black">
                                     <span class="inline-flex items-center gap-1 group cursor-pointer hover:text-slate-900 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($s['index_number'] ?? '')) ?>', this)" title="Click to copy Index No">
                                         <span><?= htmlspecialchars($s['index_number'] ?? 'N/A') ?></span>
                                         <i class="fa-regular fa-copy text-[8.5px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                     </span>
                                 </td>
-                                <td class="px-3 py-3 text-center font-medium text-slate-700 print:text-black truncate" title="<?= htmlspecialchars($acad) ?>"><?= htmlspecialchars($acad) ?></td>
+                                <td class="px-3 py-3 text-center font-medium text-slate-700 print:text-black whitespace-nowrap" title="<?= htmlspecialchars($acad) ?>"><?= htmlspecialchars($acad) ?></td>
+                                <td class="px-3 py-3 text-center no-print whitespace-nowrap">
+                                    <a href="admission_offer.php?id=<?= $s['id'] ?>" target="_blank" class="px-2.5 py-1 bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition" title="View Official Offer Letter">
+                                        <i class="fa-solid fa-file-pdf text-brand-700"></i> Offer
+                                    </a>
+                                </td>
                             </tr>
                             <?php 
                             $idx++;
@@ -498,7 +580,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
                             <?php if (count($students) === 0): ?>
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-slate-400 font-semibold print:text-black">
+                                <td colspan="8" class="px-6 py-12 text-center text-slate-400 font-semibold print:text-black">
                                     <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300 print:hidden"></i>
                                     No admitted students registered matching the selected criteria.
                                 </td>
@@ -510,11 +592,11 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
                 <!-- 20 Rows Per Page Pagination -->
                 <?php if ($totalPages > 1): ?>
-                <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between no-print">
-                    <span class="text-xs text-slate-500">
+                <div class="px-4 sm:px-6 py-3.5 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 no-print">
+                    <span class="text-xs text-slate-500 text-center sm:text-left">
                         Showing <span class="font-bold text-slate-700"><?= min($offset + 1, $totalAdmitted) ?></span> to <span class="font-bold text-slate-700"><?= min($offset + $perPage, $totalAdmitted) ?></span> of <span class="font-bold text-slate-700"><?= $totalAdmitted ?></span> students (20 per page)
                     </span>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 flex-wrap justify-center">
                         <?php if ($page > 1): ?>
                             <a href="?class=<?= urlencode($classFilter) ?>&sex=<?= urlencode($filterSex) ?>&q=<?= urlencode($searchQuery) ?>&page=<?= $page - 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
                                 <i class="fa-solid fa-chevron-left me-1"></i> Prev

@@ -81,7 +81,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
         ");
 
+        $checkboxKeys = ['ai_auto_admit_enabled', 'ai_auto_combination_enabled', 'smtp_enabled'];
+        foreach ($checkboxKeys as $cbKey) {
+            if (in_array($cbKey, $settingsKeys)) {
+                $val = isset($_POST[$cbKey]) ? '1' : '0';
+                $saveStmt->execute([$cbKey, $val]);
+            }
+        }
+
         foreach ($settingsKeys as $key) {
+            if (in_array($key, $checkboxKeys)) {
+                continue;
+            }
             // Strictly enforce: Only Super Admin can change school gender admission policy
             if ($key === 'school_gender_type' && ($_SESSION['admin_role'] ?? '') !== 'super_admin') {
                 continue;
@@ -228,7 +239,7 @@ $head_teacher_name  = getSetting($pdo, 'head_teacher_name', 'MRS. PEACE RUZAZA')
 $head_teacher_title = getSetting($pdo, 'head_teacher_title', 'Head Teacher');
 $school_code        = getSetting($pdo, 'school_code', '011');
 $student_number_format = getSetting($pdo, 'student_number_format', '{YY}{CLASS}{CODE}{SERIAL}');
-$academic_year      = getAcademicYear($pdo);
+$academic_year      = getSetting($pdo, 'academic_year', date('Y'));
 $school_gender_type = getSchoolGenderType($pdo);
 
 $admin_email        = getSetting($pdo, 'admin_email', 'info@ncedges.com');
@@ -549,6 +560,7 @@ if (empty($current_slider_images)) {
             <?php endif; ?>
 
             <form id="mainSettingsForm" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="active_tab" id="activeTabInput" value="<?= htmlspecialchars($_POST['active_tab'] ?? ($canAllSettings ? 'profile' : 'admissions')) ?>">
 
                 <!-- TAB 1: SCHOOL PROFILE & BRANDING (Super Admin Only) -->
                 <?php if ($canAllSettings): ?>
@@ -585,7 +597,7 @@ if (empty($current_slider_images)) {
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Current Academic Intake Year</label>
-                                <input type="text" name="academic_year" value="<?= htmlspecialchars($academic_year) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. 2026">
+                                <input type="text" id="academic_year_branding" value="<?= htmlspecialchars($academic_year) ?>" class="sync-academic-year w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. 2026">
                             </div>
                         </div>
 
@@ -906,7 +918,7 @@ if (empty($current_slider_images)) {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Active Academic Year *</label>
-                                <input type="text" name="academic_year" value="<?= htmlspecialchars($academic_year) ?>" required class="w-full px-3 py-2 border-2 border-brand-700/60 rounded-xl text-sm font-bold font-mono text-brand-900 bg-brand-50/20 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. 2026">
+                                <input type="text" name="academic_year" id="academic_year_admissions" value="<?= htmlspecialchars($academic_year) ?>" required class="sync-academic-year w-full px-3 py-2 border-2 border-brand-700/60 rounded-xl text-sm font-bold font-mono text-brand-900 bg-brand-50/20 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. 2026">
                                 <p class="text-[10px] text-slate-400 mt-1">Populates public forms, offer letters, and admission lists.</p>
                             </div>
                             <div class="md:col-span-2 p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900 space-y-1">
@@ -1413,18 +1425,49 @@ if (empty($current_slider_images)) {
             activePill.classList.add('bg-brand-700', 'text-white', 'shadow-sm');
         }
         window.location.hash = tabId;
+        const tabInput = document.getElementById('activeTabInput');
+        if (tabInput) {
+            tabInput.value = tabId;
+        }
     }
 
-    // Auto load tab from URL hash if available or default tab
+    // Auto load tab from URL hash if available or preserved POST tab
     window.addEventListener('DOMContentLoaded', () => {
-        const defaultTab = '<?= $canAllSettings ? "profile" : "admissions" ?>';
+        const postTab = '<?= !empty($_POST['active_tab']) ? htmlspecialchars($_POST['active_tab']) : "" ?>';
         const hash = window.location.hash.replace('#', '');
-        if (hash && document.getElementById('tab-' + hash)) {
-            switchTab(hash);
+        const defaultTab = '<?= $canAllSettings ? "profile" : "admissions" ?>';
+        const targetTab = hash || postTab || defaultTab;
+        if (targetTab && document.getElementById('tab-' + targetTab)) {
+            switchTab(targetTab);
         } else {
             switchTab(defaultTab);
         }
     });
+
+    // Sync academic year across Branding & Admissions tabs
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.classList.contains('sync-academic-year')) {
+            document.querySelectorAll('.sync-academic-year').forEach(el => {
+                if (el !== e.target) el.value = e.target.value;
+            });
+        }
+    });
+
+    const settingsForm = document.getElementById('mainSettingsForm');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', function() {
+            const brandVal = document.getElementById('academic_year_branding')?.value;
+            const admInput = document.getElementById('academic_year_admissions');
+            if (brandVal && admInput) {
+                admInput.value = brandVal;
+            }
+            const activeTab = window.location.hash.replace('#', '') || '<?= $canAllSettings ? "profile" : "admissions" ?>';
+            const tabInput = document.getElementById('activeTabInput');
+            if (tabInput) {
+                tabInput.value = activeTab;
+            }
+        });
+    }
 
     // Logo Selection Preview
     function previewSelectedLogo(event) {
