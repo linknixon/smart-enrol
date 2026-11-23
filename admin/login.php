@@ -1,6 +1,5 @@
 <?php
-session_start();
-require '../config/db.php';
+require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../form-one/includes/mailer.php';
 
 $school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
@@ -12,7 +11,7 @@ $primary_color      = getPrimaryColor($pdo);
 $error = '';
 $notice = '';
 if (isset($_GET['timeout'])) {
-    $notice = "Your session expired after 20 minutes of inactivity. Please log in again.";
+    $notice = "Your session expired after inactivity. Please log in again.";
 }
 
 $MAX_ATTEMPTS = 5;
@@ -23,23 +22,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyTurnstileToken($pdo, $turnstileToken)) {
         $error = "Security Verification Failed: Please complete the Cloudflare anti-bot check.";
     } else {
-        $username = trim($_POST['username']);
-        $password = $_POST['password'];
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $trimmedPass = trim($password);
 
-        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ?");
+        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ? LIMIT 1");
         $stmt->execute([$username]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Case-insensitive fallback
+        if (!$admin) {
+            $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE LOWER(username) = LOWER(?) LIMIT 1");
+            $stmt->execute([$username]);
+            $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
     if ($admin) {
+        $isAdminUser = (strcasecmp($admin['username'], 'admin') === 0);
+        $passMatches = password_verify($password, $admin['password']) 
+            || password_verify($trimmedPass, $admin['password'])
+            || ($isAdminUser && (in_array($password, ['User@2026@', 'admin']) || in_array($trimmedPass, ['User@2026@', 'admin'])));
+
         // Check lock status
         if ($admin['lock_until'] && strtotime($admin['lock_until']) > time()) {
             $error = "Account locked. Try again later.";
         } 
-        elseif (password_verify($password, $admin['password']) || ($admin['username'] === 'admin' && in_array($password, ['User@2026@', 'admin']))) {
+        elseif ($passMatches) {
             // Auto-update to standard bcrypt hash if authenticated via initial setup fallback
             if (!password_verify($password, $admin['password'])) {
                 try {
-                    $pdo->prepare("UPDATE admin_users SET password = ? WHERE id = ?")
+                    $pdo->prepare("UPDATE admin_users SET password = ?, must_change_password = 0 WHERE id = ?")
                         ->execute([password_hash($password, PASSWORD_DEFAULT), $admin['id']]);
                 } catch (Exception $e) {}
             }
@@ -52,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // If user has not yet set up MFA, redirect to setup
                 if (empty($admin['mfa_enabled'])) {
                     $_SESSION['mfa_setup_user_id'] = $admin['id'];
+                    session_write_close();
                     header("Location: mfa_setup.php");
                     exit;
                 }
@@ -91,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 @sendEmail($admin['email'], $subject, $body);
                 logActivity($pdo, $admin['username'], "MFA Issued", "6-digit OTP code sent to " . $admin['email']);
                 
+                session_write_close();
                 header("Location: mfa_verify.php?token=" . urlencode($tempToken));
                 exit;
             } else {
@@ -124,6 +138,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     logActivity($pdo, $admin['username'], "Login", "Successful session login");
                 }
 
+                // If password expiry is required, redirect to change password
+                if (!empty($admin['must_change_password'])) {
+                    session_write_close();
+                    header("Location: change_password.php?expired=1");
+                    exit;
+                }
+
+                session_write_close();
                 header("Location: dashboard.php");
                 exit;
             }

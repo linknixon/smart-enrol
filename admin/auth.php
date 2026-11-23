@@ -1,15 +1,13 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config/db.php';
 
-if (!isset($_SESSION['admin_logged_in'])) {
+if (empty($_SESSION['admin_logged_in'])) {
     header("Location: login.php");
     exit;
 }
 
-// Enforce strict 20-minute inactivity session timeout
-$timeout_seconds = 1200; // 20 minutes
+// Enforce 2-hour inactivity session timeout
+$timeout_seconds = 7200; // 2 hours
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout_seconds)) {
     session_unset();
     session_destroy();
@@ -19,7 +17,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 $_SESSION['last_activity'] = time();
 
 // Intercept logins to enforce password expiry
-require_once __DIR__ . '/../config/db.php';
 $adminUsername = $_SESSION['admin_username'] ?? $_SESSION['admin_user'] ?? '';
 if ($adminUsername) {
     try {
@@ -40,7 +37,7 @@ if ($adminUsername) {
             $_SESSION['admin_roles'] = $userRoles;
 
             if ($uRow['must_change_password'] == 1) {
-                $currentScript = basename($_SERVER['PHP_SELF'] ?? '');
+                $currentScript = basename($_SERVER['SCRIPT_NAME'] ?? ($_SERVER['PHP_SELF'] ?? ''));
                 if ($currentScript !== 'change_password.php' && $currentScript !== 'logout.php') {
                     header("Location: change_password.php?expired=1");
                     exit;

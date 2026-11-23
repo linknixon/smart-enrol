@@ -2,6 +2,44 @@
 // Enforce official Uganda / East Africa Time (EAT - UTC+3) system-wide
 date_default_timezone_set('Africa/Kampala');
 
+// Unified Session Initializer with domain-wide cookie and directory permissions fallback
+if (!function_exists('initSession')) {
+    function initSession() {
+        if (session_status() === PHP_SESSION_NONE) {
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+                || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+
+            // Fallback session save directory if system directory is not writable
+            $sysSavePath = @session_save_path();
+            if (empty($sysSavePath) || !@is_writable($sysSavePath)) {
+                $customSess = __DIR__ . '/../uploads/sessions';
+                if (!is_dir($customSess)) {
+                    @mkdir($customSess, 0775, true);
+                }
+                if (@is_writable($customSess)) {
+                    @session_save_path($customSess);
+                }
+            }
+
+            // Always enforce cookie availability on the entire domain (path = /)
+            @session_set_cookie_params([
+                'lifetime' => 86400 * 7,
+                'path'     => '/',
+                'domain'   => '',
+                'secure'   => $isHttps,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+
+            @session_start();
+        }
+    }
+}
+
+// Ensure session is active
+initSession();
+
 $host = getenv('DB_HOST') ?: "localhost";
 $db   = getenv('DB_NAME') ?: "mutolere_admissions";
 $user = getenv('DB_USER') ?: "webadmin";
