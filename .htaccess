@@ -6,3 +6,9 @@ DirectoryIndex index.php index.html
 </IfModule>
 
 Options +FollowSymLinks
+
+# Seamless backward compatibility: redirect legacy /admin/ requests to /app/
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^admin/(.*)$ app/$1 [R=301,L]
+</IfModule>

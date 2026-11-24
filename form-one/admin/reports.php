@@ -104,7 +104,7 @@ $count = count($applications);
             </a>
             <?php endif; ?>
             <?php if ($_SESSION['admin_role'] === 'super_admin'): ?>
-            <a href="../../admin/settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+            <a href="../../app/settings.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
                 <i class="fa-solid fa-gear text-lg text-gold-500"></i> System Settings
             </a>
             <?php endif; ?>

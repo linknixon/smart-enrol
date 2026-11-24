@@ -71,7 +71,8 @@ $combLog = !empty($applicant['combination']) ? " - Assigned Combination: " . $ap
 logActivity($pdo, $_SESSION['admin_username'], "Admit Student", "Admitted applicant: " . $applicant['firstname'] . " " . $applicant['surname'] . " (" . $applicant['class_of_entry'] . "){$combLog}");
 
 /* ================= PDF & REPORTING DETAILS ================= */
-$pdfLink = getBaseUrl($pdo) . "/admin/admission_offer.php?id=" . $id;
+$student_number = getAdmissionNumber($applicant, $pdo);
+$pdfLink = getBaseUrl($pdo) . "/app/admission_offer.php?id=" . $id;
 $reportingDate = getReportingDate($pdo, $applicant['class_of_entry'] ?? 'S1');
 $primary_color = getPrimaryColor($pdo);
 $accent_color  = getAccentColor($pdo);
@@ -175,6 +176,36 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             
             {$reportingNotice}
             {$combinationNotice}
+
+            <!-- Official Payment Code Box -->
+            <div class='inner-box' style='background-color: #f0fdf4; border: 2px solid #86efac; border-radius: 12px; padding: 18px 16px; margin: 20px 0; text-align: left;'>
+                <div style='font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 1px;'>
+                    <span style='background-color: #dcfce7; padding: 3px 8px; border-radius: 6px;'>Official School Fees Payment Reference Code</span>
+                </div>
+                <div style='font-size: 24px; font-weight: 900; font-family: monospace; color: #15803d; letter-spacing: 1px; margin: 8px 0 10px 0;'>
+                    {$student_number}
+                </div>
+                <p style='margin: 0 0 8px 0; font-size: 13.5px; font-weight: 700; color: #0f172a;'>
+                    How to Pay School Fees Using This Code:
+                </p>
+                <ul style='margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6;'>
+                    <li><strong>SchoolPay via Mobile Money:</strong> Dial <strong>*165#</strong> (MTN) or <strong>*185#</strong> (Airtel) &rarr; Select <em>School Fees / SchoolPay</em> &rarr; Enter Payment Code: <strong>{$student_number}</strong>.</li>
+                    <li><strong>Partner Bank Branches:</strong> Present this payment code (<strong>{$student_number}</strong>) across Uganda at any <strong>Stanbic, Centenary, PostBank, or DFCU Bank</strong> branch.</li>
+                    <li><strong>School Bursar's Office:</strong> Present your printed Admission Offer Letter at the school bursary desk upon reporting.</li>
+                </ul>
+            </div>
+
+            <!-- What to do next instructions -->
+            <div class='inner-box' style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$primary_color}; padding: 16px 14px; border-radius: 10px; margin: 20px 0;'>
+                <h4 style='margin-top: 0; color: {$primary_color}; font-size: 14.5px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;'>
+                    What to Do Next:
+                </h4>
+                <ol style='margin: 8px 0 0 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.65;'>
+                    <li><strong>Download and Print:</strong> Click the button below to download and print the official Provisional Admission Offer Letter (PDF).</li>
+                    <li><strong>Secure Vacancy:</strong> Pay the admission commitment fee or full term fees using your SchoolPay Payment Code <strong>{$student_number}</strong>.</li>
+                    <li><strong>Reporting Day:</strong> Arrive at school on <strong>" . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : "the official reporting date") . "</strong> with this printed offer letter, original UNEB result slips, bank/mobile money deposit receipt, 2 physical passport-size photographs, and student requirements.</li>
+                </ol>
+            </div>
 
             <p style='margin-top: 18px;'>Please click the button below to download and print the official Provisional Admission Offer Letter (PDF):</p>
             

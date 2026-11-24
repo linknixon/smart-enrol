@@ -26,9 +26,24 @@ $currentRole        = $_SESSION['admin_role'] ?? '';
 $currentAcademicYear = getSetting($pdo, 'academic_year', date('Y'));
 $primary_color       = getPrimaryColor($pdo);
 
+// Check if academic_year column exists in applications; self-heal if missing
+$hasAcademicYearCol = false;
+try {
+    $chkCol = $pdo->query("SHOW COLUMNS FROM applications LIKE 'academic_year'");
+    if ($chkCol && $chkCol->rowCount() > 0) {
+        $hasAcademicYearCol = true;
+    } else {
+        $pdo->exec("ALTER TABLE applications ADD academic_year VARCHAR(20) DEFAULT NULL");
+        $pdo->exec("UPDATE applications SET academic_year = '{$currentAcademicYear}' WHERE academic_year IS NULL OR academic_year = ''");
+        $hasAcademicYearCol = true;
+    }
+} catch (Exception $e) {
+    $hasAcademicYearCol = false;
+}
+
 // Available academic years for admin filter
 $availableYears = [];
-if ($isAdmin) {
+if ($isAdmin && $hasAcademicYearCol) {
     try {
         $availableYears = $pdo->query("SELECT DISTINCT academic_year FROM applications WHERE academic_year IS NOT NULL AND academic_year != '' ORDER BY academic_year DESC")->fetchAll(PDO::FETCH_COLUMN);
     } catch (Exception $e) {}
@@ -45,14 +60,16 @@ $searchQuery = trim($_GET['q'] ?? '');
 $where = ["application_status IN ('admitted', 'reported')"];
 $params = [];
 
-if (!$isAdmin) {
-    // Public view strictly shows the active academic year; older historical years are archived
-    $where[] = "academic_year = ?";
-    $params[] = $currentAcademicYear;
-} else {
-    if ($filterYear !== 'all') {
+if ($hasAcademicYearCol) {
+    if (!$isAdmin) {
+        // Public view strictly shows the active academic year; older historical years are archived
         $where[] = "academic_year = ?";
-        $params[] = $filterYear;
+        $params[] = $currentAcademicYear;
+    } else {
+        if ($filterYear !== 'all') {
+            $where[] = "academic_year = ?";
+            $params[] = $filterYear;
+        }
     }
 }
 

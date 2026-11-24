@@ -45,39 +45,56 @@ $assignedComb       = htmlspecialchars($_GET['comb'] ?? '');
             </p>
         </div>
 
-        <!-- Prominent Notification Advice Callout -->
-        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left text-xs text-amber-950 space-y-1.5">
-            <div class="flex items-center gap-2 font-black text-amber-900">
-                <i class="fa-solid fa-bell text-amber-600 text-sm"></i>
-                <span class="uppercase tracking-wider text-[11px]">Important Applicant Advice</span>
+        <!-- Next Steps & School Fees Payment Code Guidance Callout -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs text-emerald-950 space-y-3 shadow-xs">
+            <div class="flex items-center gap-2 font-black text-emerald-900 border-b border-emerald-200/80 pb-2">
+                <i class="fa-solid fa-receipt text-emerald-600 text-sm"></i>
+                <span class="uppercase tracking-wider text-[11px]">School Fees Payment Code & What Happens Next</span>
             </div>
-            <p class="text-[11.5px] leading-relaxed text-amber-900/90 font-medium">
-                Please <strong>regularly check your registered email address and phone messages (SMS)</strong> for real-time status updates, admissions committee decisions, and official downloadable provisional admission offer letters.
-            </p>
+
+            <div class="space-y-2 text-[11.5px] leading-relaxed text-emerald-900">
+                <div class="flex items-start gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-200 text-emerald-900 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
+                    <div>
+                        <strong class="text-emerald-950">Admissions Committee Review:</strong> Your uploaded result slip and bio-data are currently undergoing evaluation. <em>No payments are required or accepted until admission is officially approved.</em>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-200 text-emerald-900 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
+                    <div>
+                        <strong class="text-emerald-950">How & When You Receive Your Payment Code:</strong> Once approved, the system generates your official <strong>Provisional Admission Letter</strong> containing your unique <strong>Student SchoolPay Payment Reference Code</strong>. This code will be sent to your registered email and mobile phone via SMS.
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-200 text-emerald-900 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
+                    <div>
+                        <strong class="text-emerald-950">Official Payment Channels:</strong> With your assigned code, fees can be settled via <strong>SchoolPay Mobile Money</strong> (dial *165# for MTN or *185# for Airtel &rarr; SchoolPay), at any partner bank branch (Stanbic, Centenary, PostBank), or at the School Bursary.
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Next Steps Summary -->
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-left text-xs text-slate-600 space-y-2">
-            <div class="flex items-center gap-2 font-bold text-slate-800">
-                <i class="fa-solid fa-circle-info text-brand-700"></i>
-                <span>Next Steps:</span>
+        <!-- Notification Advice Callout -->
+        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-left text-xs text-amber-950 space-y-1">
+            <div class="flex items-center gap-2 font-black text-amber-900">
+                <i class="fa-solid fa-bell text-amber-600 text-xs"></i>
+                <span class="uppercase tracking-wider text-[10.5px]">Important Applicant Advice</span>
             </div>
-            <ul class="list-disc list-inside space-y-1.5 text-[11px] text-slate-500">
-                <li>An automated submission confirmation has been recorded and sent to your parent/guardian.</li>
-                <li>The School Admissions Committee is reviewing your academic credentials and uploaded documents.</li>
-                <li>For Senior Five candidates, the committee will evaluate your UCE competencies and assign your official A-Level combination.</li>
-                <li>Once officially admitted by the committee, you will receive an admission offer notification and your name will appear on the school's Admitted Register.</li>
-            </ul>
+            <p class="text-[11px] leading-relaxed text-amber-900/90 font-medium">
+                Please <strong>regularly check your registered email address and phone messages (SMS)</strong> for real-time status updates and official admission announcements.
+            </p>
         </div>
 
         <!-- Action Buttons -->
         <div class="pt-1 flex flex-col gap-2">
             <?php if ($isAutoAdmitted && $appId > 0): ?>
-                <a href="admin/admission_offer.php?id=<?= $appId ?>" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-md">
+                <a href="app/admission_offer.php?id=<?= $appId ?>" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-md">
                     <i class="fa-solid fa-file-pdf"></i> Download Official Offer Letter (PDF)
                 </a>
             <?php elseif ($appId > 0): ?>
-                <a href="admin/admission_offer.php?id=<?= $appId ?>" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition shadow-sm">
+                <a href="app/admission_offer.php?id=<?= $appId ?>" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition shadow-sm">
                     <i class="fa-solid fa-file-lines text-slate-600"></i> Download Application Receipt & Review Slip (PDF)
                 </a>
             <?php endif; ?>
@@ -88,7 +105,7 @@ $assignedComb       = htmlspecialchars($_GET['comb'] ?? '');
                 <a href="index.php" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
                     <i class="fa-solid fa-house text-xs"></i> Home
                 </a>
-                <a href="admin/admission_list.php" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                <a href="app/admission_list.php" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
                     <i class="fa-solid fa-list-check text-xs"></i> Admitted Lists
                 </a>
             </div>

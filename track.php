@@ -428,7 +428,7 @@ if ($searched) {
                                             The Admissions Committee of <?= htmlspecialchars($school_name) ?> has offered you admission into <strong><?= htmlspecialchars($classCode) ?></strong> for Academic Year <strong><?= htmlspecialchars($appYear) ?></strong>.
                                         </p>
                                     </div>
-                                    <a href="admin/admission_offer.php?id=<?= $application['id'] ?>" target="_blank" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-black text-white bg-emerald-700 hover:bg-emerald-800 shadow-md shadow-emerald-700/20 transition flex items-center gap-2 shrink-0">
+                                    <a href="app/admission_offer.php?id=<?= $application['id'] ?>" target="_blank" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-black text-white bg-emerald-700 hover:bg-emerald-800 shadow-md shadow-emerald-700/20 transition flex items-center gap-2 shrink-0">
                                         <i class="fa-solid fa-file-pdf"></i>
                                         <span>Download Official Offer Letter (PDF)</span>
                                     </a>
@@ -558,7 +558,7 @@ if ($searched) {
                         <span>·</span>
                         <a href="apply.php" class="hover:text-white transition underline-offset-4 hover:underline">Apply Now</a>
                         <span>·</span>
-                        <a href="admin/login.php" class="hover:text-white transition underline-offset-4 hover:underline">Staff Login</a>
+                        <a href="app/login.php" class="hover:text-white transition underline-offset-4 hover:underline">Staff Login</a>
                     </div>
                 </div>
 

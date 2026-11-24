@@ -66,7 +66,13 @@ if ($filterSex !== 'all') {
     $params[] = $filterSex;
 }
 
-if ($filterYear !== 'all') {
+$hasAcademicYearCol = false;
+try {
+    $chkCol = $pdo->query("SHOW COLUMNS FROM applications LIKE 'academic_year'");
+    $hasAcademicYearCol = ($chkCol && $chkCol->rowCount() > 0);
+} catch (Exception $e) {}
+
+if ($hasAcademicYearCol && $filterYear !== 'all') {
     $where[] = "academic_year = ?";
     $params[] = $filterYear;
 }

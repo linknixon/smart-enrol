@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'academic_year',
                 'a_level_combinations',
                 'ai_auto_admit_enabled', 'ai_auto_combination_enabled',
+                'show_parent_id_upload', 'show_passport_photo_upload',
                 'admission_s1_start_date', 'admission_s1_end_date',
                 'admission_s5_start_date', 'admission_s5_end_date',
                 'admission_trans_start_date', 'admission_trans_end_date',
@@ -40,7 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'fees_s4_tuition', 'fees_s4_admission', 'fees_s4_functional',
                 'fees_s5_tuition', 'fees_s5_admission', 'fees_s5_functional',
                 'fees_s6_tuition', 'fees_s6_admission', 'fees_s6_functional',
-                'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional'
+                'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional',
+                'fees_structure_matrix'
             ];
         } else {
             $settingsKeys = [
@@ -51,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'school_gender_type',
                 'a_level_combinations',
                 'ai_auto_admit_enabled', 'ai_auto_combination_enabled',
+                'show_parent_id_upload', 'show_passport_photo_upload',
                 'cf_turnstile_enabled', 'cf_turnstile_site_key', 'cf_turnstile_secret_key',
                 'staff_mfa_enabled',
                 'primary_color', 'accent_color',
@@ -71,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'fees_s4_tuition', 'fees_s4_admission', 'fees_s4_functional',
                 'fees_s5_tuition', 'fees_s5_admission', 'fees_s5_functional',
                 'fees_s6_tuition', 'fees_s6_admission', 'fees_s6_functional',
-                'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional'
+                'fees_trans_tuition', 'fees_trans_admission', 'fees_trans_functional',
+                'fees_structure_matrix'
             ];
         }
 
@@ -81,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
         ");
 
-        $checkboxKeys = ['ai_auto_admit_enabled', 'ai_auto_combination_enabled', 'smtp_enabled'];
+        $checkboxKeys = ['ai_auto_admit_enabled', 'ai_auto_combination_enabled', 'show_parent_id_upload', 'show_passport_photo_upload', 'smtp_enabled'];
         foreach ($checkboxKeys as $cbKey) {
             if (in_array($cbKey, $settingsKeys)) {
                 $val = isset($_POST[$cbKey]) ? '1' : '0';
@@ -99,10 +103,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if (isset($_POST[$key])) {
                 $val = trim($_POST[$key]);
-                if (strpos($key, 'fees_') === 0) {
+                if (strpos($key, 'fees_') === 0 && $key !== 'fees_structure_matrix') {
                     $val = preg_replace('/[^\d]/', '', $val);
                 }
                 $saveStmt->execute([$key, $val]);
+            }
+        }
+
+        // Automatic synchronization of legacy fee keys from fees_structure_matrix
+        if (!empty($_POST['fees_structure_matrix'])) {
+            $parsedMatrix = json_decode($_POST['fees_structure_matrix'], true);
+            if (is_array($parsedMatrix) && !empty($parsedMatrix['rows'])) {
+                foreach ($parsedMatrix['rows'] as $r) {
+                    $rawCls = strtoupper(str_replace(['.', ' ', '-'], '', $r['class'] ?? ''));
+                    $keyCls = strtolower($rawCls);
+                    if (in_array($keyCls, ['s1', 's2', 's3', 's4', 's5', 's6'])) {
+                        $tNum = preg_replace('/[^\d]/', '', $r['tuition_boarding'] ?? $r['tuition_day'] ?? '');
+                        $aNum = preg_replace('/[^\d]/', '', $r['admission_fee'] ?? '');
+                        $fNum = preg_replace('/[^\d]/', '', $r['functional'] ?? '');
+                        if ($tNum !== '') $saveStmt->execute(["fees_{$keyCls}_tuition", $tNum]);
+                        if ($aNum !== '') $saveStmt->execute(["fees_{$keyCls}_admission", $aNum]);
+                        if ($fNum !== '') $saveStmt->execute(["fees_{$keyCls}_functional", $fNum]);
+                    }
+                }
             }
         }
 
@@ -280,6 +303,8 @@ $admission_letter_custom_note = getSetting($pdo, 'admission_letter_custom_note',
 
 $ai_auto_admit_enabled       = getSetting($pdo, 'ai_auto_admit_enabled', '0');
 $ai_auto_combination_enabled = getSetting($pdo, 'ai_auto_combination_enabled', '0');
+$show_parent_id_upload       = getSetting($pdo, 'show_parent_id_upload', '1');
+$show_passport_photo_upload  = getSetting($pdo, 'show_passport_photo_upload', '1');
 
 $doc_school_rules           = getSetting($pdo, 'doc_school_rules', '');
 $doc_admission_circular     = getSetting($pdo, 'doc_admission_circular', '');
@@ -313,6 +338,7 @@ $fees_s5_functional = getSetting($pdo, 'fees_s5_functional', '180000');
 $fees_s6_tuition    = getSetting($pdo, 'fees_s6_tuition', '620000');
 $fees_s6_admission  = getSetting($pdo, 'fees_s6_admission', '120000');
 $fees_s6_functional = getSetting($pdo, 'fees_s6_functional', '185000');
+$currentFeesMatrix  = getFeesStructureMatrix($pdo);
 
 // Logo and Signature preview URLs
 $logo_source = getSchoolLogoSrc($pdo, '../');
@@ -904,6 +930,48 @@ if (empty($current_slider_images)) {
                         </div>
                     </div>
 
+                    <!-- Applicant Document Upload Requirements Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-file-shield text-brand-700"></i> Public Form Document Upload Requirements
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Control which optional identification documents are required from applicants on the public admission form.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Parent National ID Upload Requirement -->
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-800">Require Parent National ID Upload</span>
+                                        <span class="block text-[11px] text-slate-500">Require parents to upload a copy of their National ID / NIN card.</span>
+                                    </div>
+                                    <input type="checkbox" name="show_parent_id_upload" value="1" <?= ($show_parent_id_upload === '1') ? 'checked' : '' ?> class="w-5 h-5 rounded text-brand-700 focus:ring-brand-700">
+                                </label>
+                                <p class="text-[10px] text-slate-400 leading-relaxed">
+                                    <i class="fa-solid fa-circle-info mr-1 text-brand-700"></i> If unchecked, this field is completely hidden on the public portal. Many parents prefer not to share ID photos online; they can present physical ID on reporting day.
+                                </p>
+                            </div>
+
+                            <!-- Student Passport Photo Upload Requirement -->
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-800">Require Student Passport Photo Upload</span>
+                                        <span class="block text-[11px] text-slate-500">Require candidates to upload a digital passport photograph.</span>
+                                    </div>
+                                    <input type="checkbox" name="show_passport_photo_upload" value="1" <?= ($show_passport_photo_upload === '1') ? 'checked' : '' ?> class="w-5 h-5 rounded text-brand-700 focus:ring-brand-700">
+                                </label>
+                                <p class="text-[10px] text-slate-400 leading-relaxed">
+                                    <i class="fa-solid fa-circle-info mr-1 text-brand-700"></i> If unchecked, passport photo upload is skipped to make applying faster and easier on mobile phones. Physical photos will be collected upon arrival.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Academic Year Cohort Archival & Active Intake Card -->
                     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -987,88 +1055,93 @@ if (empty($current_slider_images)) {
                 <!-- TAB 3: O & A-LEVEL FEES MATRIX -->
                 <div id="tab-fees" class="tab-content hidden space-y-6">
                     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                             <div>
                                 <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                                    <i class="fa-solid fa-coins text-brand-700"></i> Class-by-Class Fee Structures
+                                    <i class="fa-solid fa-coins text-brand-700"></i> Flexible Fees Structure Matrix (2026 Schedule & Custom Items)
                                 </h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Figures auto-format with comma separators. Live totals compute automatically.</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Customize table title, fee components, payment intervals, and amounts per class tier. Syncs live to public portal & admission letters.</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                <button type="button" onclick="addFeeColumn()" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+                                    <i class="fa-solid fa-table-columns mr-1 text-brand-700"></i> Add Column
+                                </button>
+                                <button type="button" onclick="addClassRow()" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+                                    <i class="fa-solid fa-plus mr-1 text-brand-700"></i> Add Class Row
+                                </button>
+                                <button type="button" onclick="resetDefaultFeesMatrix()" class="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition" title="Reset back to official 2026 table layout">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset to 2026 Format
+                                </button>
+                                <button type="button" onclick="toggleJsonFeesEditor()" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+                                    <i class="fa-solid fa-code mr-1"></i> JSON View
+                                </button>
                             </div>
                         </div>
 
-                        <!-- O-Level -->
-                        <div>
-                            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-brand-50 text-brand-800 border border-brand-200 uppercase tracking-wider inline-block mb-3">
-                                Ordinary Level Classes (S1 - S4)
-                            </span>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <?php
-                                $oClasses = [
-                                    's1' => ['Senior One (S1)', $fees_s1_tuition, $fees_s1_admission, $fees_s1_functional],
-                                    's2' => ['Senior Two (S2)', $fees_s2_tuition, $fees_s2_admission, $fees_s2_functional],
-                                    's3' => ['Senior Three (S3)', $fees_s3_tuition, $fees_s3_admission, $fees_s3_functional],
-                                    's4' => ['Senior Four (S4)', $fees_s4_tuition, $fees_s4_admission, $fees_s4_functional],
-                                ];
-                                foreach ($oClasses as $key => $info):
-                                    $tot = (int)$info[1] + (int)$info[2] + (int)$info[3];
-                                ?>
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
-                                    <div class="flex justify-between items-center border-b border-slate-200 pb-1.5">
-                                        <span class="font-bold text-brand-700 text-xs"><?= $info[0] ?></span>
-                                        <span class="text-[10px] font-bold text-slate-600 font-mono" id="total_<?= $key ?>_preview">UGX <?= formatMoney($tot) ?></span>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Tuition</label>
-                                        <input type="text" name="fees_<?= $key ?>_tuition" value="<?= formatMoney($info[1]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Admission Fee</label>
-                                        <input type="text" name="fees_<?= $key ?>_admission" value="<?= formatMoney($info[2]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Functional Fee</label>
-                                        <input type="text" name="fees_<?= $key ?>_functional" value="<?= formatMoney($info[3]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
-                                    </div>
-                                </div>
-                                <?php endforeach; ?>
+                        <!-- Schedule Display Title Input -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div class="flex-1 max-w-lg">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Fees Structure Table Title</label>
+                                <input type="text" id="feesMatrixTitleInput" oninput="updateFeesMatrixTitle(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-brand-700" value="<?= htmlspecialchars($currentFeesMatrix['title'] ?? ('Fees structure for ' . $academic_year)) ?>" placeholder="e.g. Fees structure for 2026">
+                                <p class="text-[10px] text-slate-400 mt-1">Displayed directly above the fees table on the public homepage and admission portal.</p>
+                            </div>
+                            <div class="text-[11px] text-slate-500 font-medium">
+                                <span class="font-bold text-slate-700 block"><i class="fa-solid fa-circle-info text-brand-700 mr-1"></i> Formatting Guide:</span>
+                                <span>Amounts can be entered with commas and /= (e.g. <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200">1,265,000/=</code>). Leave blank for exempt classes.</span>
                             </div>
                         </div>
 
-                        <!-- A-Level -->
-                        <div class="pt-4 border-t border-slate-100">
-                            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-gold-50 text-gold-800 border border-gold-200 uppercase tracking-wider inline-block mb-3">
-                                Advanced Level Classes (S5 - S6)
-                            </span>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <?php
-                                $aClasses = [
-                                    's5' => ['Senior Five (S5)', $fees_s5_tuition, $fees_s5_admission, $fees_s5_functional],
-                                    's6' => ['Senior Six (S6)', $fees_s6_tuition, $fees_s6_admission, $fees_s6_functional],
-                                ];
-                                foreach ($aClasses as $key => $info):
-                                    $tot = (int)$info[1] + (int)$info[2] + (int)$info[3];
-                                ?>
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
-                                    <div class="flex justify-between items-center border-b border-slate-200 pb-1.5">
-                                        <span class="font-bold text-brand-700 text-xs"><?= $info[0] ?></span>
-                                        <span class="text-[10px] font-bold text-slate-600 font-mono" id="total_<?= $key ?>_preview">UGX <?= formatMoney($tot) ?></span>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Tuition</label>
-                                        <input type="text" name="fees_<?= $key ?>_tuition" value="<?= formatMoney($info[1]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Admission Fee</label>
-                                        <input type="text" name="fees_<?= $key ?>_admission" value="<?= formatMoney($info[2]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Functional Fee</label>
-                                        <input type="text" name="fees_<?= $key ?>_functional" value="<?= formatMoney($info[3]) ?>" data-class="<?= $key ?>" class="currency-input fee-calc w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white">
-                                    </div>
-                                </div>
-                                <?php endforeach; ?>
+                        <!-- Interactive Table Editor -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs bg-white">
+                            <table class="w-full text-xs text-left border-collapse min-w-[780px]" id="feesMatrixEditorTable">
+                                <thead id="feesMatrixTableHead">
+                                    <!-- Rendered dynamically by JavaScript -->
+                                </thead>
+                                <tbody id="feesMatrixTableBody" class="divide-y divide-slate-200 bg-white">
+                                    <!-- Rendered dynamically by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Advanced JSON Editor (Collapsible) -->
+                        <div id="feesJsonEditorContainer" class="hidden p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                                    <i class="fa-solid fa-code text-brand-700"></i> Direct Matrix JSON Payload
+                                </span>
+                                <button type="button" onclick="applyFeesJson()" class="px-3 py-1 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-xs">
+                                    Apply JSON Changes
+                                </button>
+                            </div>
+                            <textarea id="feesJsonTextarea" rows="8" class="w-full font-mono text-xs p-3 rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-brand-700"></textarea>
+                            <p class="text-[10px] text-slate-400">Advanced: You can directly copy/paste full JSON payloads or edit custom keys.</p>
+                        </div>
+
+                        <!-- Hidden Data Inputs -->
+                        <input type="hidden" name="fees_structure_matrix" id="fees_structure_matrix_input" value="<?= htmlspecialchars(json_encode($currentFeesMatrix, JSON_UNESCAPED_UNICODE)) ?>">
+
+                        <!-- Hidden Legacy Fee Inputs for Full Backwards Compatibility -->
+                        <div class="hidden">
+                            <?php foreach (['s1', 's2', 's3', 's4', 's5', 's6', 'trans'] as $k): ?>
+                            <input type="hidden" name="fees_<?= $k ?>_tuition" id="hidden_fees_<?= $k ?>_tuition" value="<?= htmlspecialchars(${'fees_' . $k . '_tuition'} ?? '') ?>">
+                            <input type="hidden" name="fees_<?= $k ?>_admission" id="hidden_fees_<?= $k ?>_admission" value="<?= htmlspecialchars(${'fees_' . $k . '_admission'} ?? '') ?>">
+                            <input type="hidden" name="fees_<?= $k ?>_functional" id="hidden_fees_<?= $k ?>_functional" value="<?= htmlspecialchars(${'fees_' . $k . '_functional'} ?? '') ?>">
+                            <?php endforeach; ?>
+                        </div>
+
+                        <!-- Public Portal Preview Card -->
+                        <div class="pt-4 border-t border-slate-100 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-eye text-brand-700"></i> Live Public Portal Display Preview
+                                </span>
+                                <span class="text-[10px] text-slate-400">Updates live as you type above</span>
+                            </div>
+                            <div class="overflow-x-auto rounded-xl border border-slate-200 p-4 bg-slate-50/50">
+                                <div id="feesMatrixLivePreview"></div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -1501,6 +1574,282 @@ if (empty($current_slider_images)) {
             }
         });
     }
+
+    // ========================================================
+    // Flexible Fees Structure Matrix Editor (2026 Format & Custom)
+    // ========================================================
+    let feesMatrixData = <?= json_encode($currentFeesMatrix, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    if (!feesMatrixData || !feesMatrixData.columns || !feesMatrixData.rows) {
+        feesMatrixData = {
+            title: "Fees structure for <?= htmlspecialchars($academic_year) ?>",
+            columns: [
+                { id: "admission_fee",    label: "ADMISSION FEE",           sub: "(paid once)" },
+                { id: "uniforms",         label: "UNIFORMS",                sub: "(paid once)" },
+                { id: "vocational",       label: "VOCATIONAL SKILLS",       sub: "(termly)" },
+                { id: "tuition_boarding", label: "TUITION AND BOARDING",   sub: "(termly)" },
+                { id: "tuition_day",      label: "TUITION FOR DAY SCHOLARS",sub: "(termly)" },
+                { id: "functional",       label: "FUNCTIONAL FEES",         sub: "(termly)" }
+            ],
+            rows: [
+                { class: "S.1", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "150,000/=" },
+                { class: "S.2", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "100,000/=" },
+                { class: "S.3", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "100,000/=" },
+                { class: "S.4", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "", tuition_boarding: "2,065,000/=", tuition_day: "750,000/=", functional: "100,000/=" },
+                { class: "S.5", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "150,000/=" },
+                { class: "S.6", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "", tuition_boarding: "1,965,000/=", tuition_day: "750,000/=", functional: "100,000/=" }
+            ]
+        };
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderFeesMatrixEditor() {
+        const tableHead = document.getElementById('feesMatrixTableHead');
+        const tableBody = document.getElementById('feesMatrixTableBody');
+        if (!tableHead || !tableBody) return;
+
+        let headHtml = '<tr class="bg-slate-100 border-b border-slate-300 text-slate-800 text-[11px] font-bold uppercase">';
+        headHtml += '<th class="p-3 border-r border-slate-300 text-center w-24">CLASS</th>';
+
+        feesMatrixData.columns.forEach((col, cIdx) => {
+            headHtml += `<th class="p-2 border-r border-slate-300 text-center relative min-w-[150px]">
+                <div class="flex items-center justify-between gap-1 mb-1">
+                    <input type="text" value="${escapeHtml(col.label)}" onchange="updateColProp(${cIdx}, 'label', this.value)" class="w-full text-center text-[11px] font-black uppercase text-slate-900 border border-slate-200 rounded px-1.5 py-1 bg-white focus:border-brand-700 focus:outline-none" placeholder="COL TITLE">
+                    <button type="button" onclick="removeFeeColumn(${cIdx})" title="Delete Column" class="text-slate-400 hover:text-rose-600 p-1 text-xs transition"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+                <input type="text" value="${escapeHtml(col.sub || '')}" onchange="updateColProp(${cIdx}, 'sub', this.value)" class="w-full text-center text-[10px] text-slate-500 lowercase border border-slate-200 rounded px-1 py-0.5 bg-white/90 focus:border-brand-700 focus:outline-none" placeholder="(frequency)">
+            </th>`;
+        });
+        headHtml += '<th class="p-2 text-center w-14">ACTION</th></tr>';
+        tableHead.innerHTML = headHtml;
+
+        let bodyHtml = '';
+        feesMatrixData.rows.forEach((row, rIdx) => {
+            bodyHtml += `<tr class="hover:bg-slate-50 border-b border-slate-200 transition">`;
+            bodyHtml += `<td class="p-2 border-r border-slate-300 font-bold text-center text-slate-900 bg-slate-50/80">
+                <input type="text" value="${escapeHtml(row.class)}" onchange="updateRowClass(${rIdx}, this.value)" class="w-20 text-center font-bold text-xs uppercase text-slate-900 border border-slate-200 rounded px-2 py-1 bg-white focus:border-brand-700 focus:outline-none">
+            </td>`;
+
+            feesMatrixData.columns.forEach(col => {
+                const val = row[col.id] !== undefined ? row[col.id] : '';
+                bodyHtml += `<td class="p-2 border-r border-slate-300 text-center">
+                    <input type="text" value="${escapeHtml(val)}" oninput="updateRowCell(${rIdx}, '${col.id}', this.value)" class="w-full text-center font-mono font-medium text-xs text-slate-800 border border-slate-200 rounded px-2 py-1 bg-white hover:border-slate-300 focus:border-brand-700 focus:outline-none" placeholder="-">
+                </td>`;
+            });
+
+            bodyHtml += `<td class="p-2 text-center">
+                <button type="button" onclick="removeFeeRow(${rIdx})" title="Delete Class Row" class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition inline-flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </td>`;
+            bodyHtml += `</tr>`;
+        });
+        tableBody.innerHTML = bodyHtml;
+
+        syncFeesMatrixHidden();
+        renderFeesMatrixPreview();
+    }
+
+    function updateColProp(cIdx, prop, val) {
+        if (feesMatrixData.columns[cIdx]) {
+            feesMatrixData.columns[cIdx][prop] = val.trim();
+            syncFeesMatrixHidden();
+            renderFeesMatrixPreview();
+        }
+    }
+
+    function updateRowClass(rIdx, val) {
+        if (feesMatrixData.rows[rIdx]) {
+            feesMatrixData.rows[rIdx].class = val.trim().toUpperCase();
+            syncFeesMatrixHidden();
+            renderFeesMatrixPreview();
+        }
+    }
+
+    function updateRowCell(rIdx, colId, val) {
+        if (feesMatrixData.rows[rIdx]) {
+            feesMatrixData.rows[rIdx][colId] = val.trim();
+            syncFeesMatrixHidden();
+            renderFeesMatrixPreview();
+        }
+    }
+
+    function updateFeesMatrixTitle(val) {
+        feesMatrixData.title = val.trim();
+        syncFeesMatrixHidden();
+        renderFeesMatrixPreview();
+    }
+
+    function addFeeColumn() {
+        const label = prompt("Enter Column Header Name (e.g. VOCATIONAL SKILLS, UNIFORMS, SWIMMING):");
+        if (!label || !label.trim()) return;
+        const sub = prompt("Enter Payment Frequency / Subtitle (e.g. (termly), (paid once), or leave blank):", "(termly)");
+        const colId = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        feesMatrixData.columns.push({
+            id: colId,
+            label: label.trim().toUpperCase(),
+            sub: sub ? sub.trim() : ''
+        });
+        feesMatrixData.rows.forEach(r => {
+            if (r[colId] === undefined) r[colId] = '';
+        });
+        renderFeesMatrixEditor();
+    }
+
+    function removeFeeColumn(cIdx) {
+        if (feesMatrixData.columns.length <= 1) {
+            alert("At least one fee column is required.");
+            return;
+        }
+        const col = feesMatrixData.columns[cIdx];
+        if (confirm(`Are you sure you want to delete column "${col.label}"?`)) {
+            const colId = col.id;
+            feesMatrixData.columns.splice(cIdx, 1);
+            feesMatrixData.rows.forEach(r => {
+                delete r[colId];
+            });
+            renderFeesMatrixEditor();
+        }
+    }
+
+    function addClassRow() {
+        const clsName = prompt("Enter Class Name (e.g. S.7, P.7, Pre-Primary):");
+        if (!clsName || !clsName.trim()) return;
+        const newRow = { class: clsName.trim().toUpperCase() };
+        feesMatrixData.columns.forEach(c => {
+            newRow[c.id] = '';
+        });
+        feesMatrixData.rows.push(newRow);
+        renderFeesMatrixEditor();
+    }
+
+    function removeFeeRow(rIdx) {
+        if (feesMatrixData.rows.length <= 1) {
+            alert("At least one class row is required.");
+            return;
+        }
+        const r = feesMatrixData.rows[rIdx];
+        if (confirm(`Are you sure you want to delete row "${r.class}"?`)) {
+            feesMatrixData.rows.splice(rIdx, 1);
+            renderFeesMatrixEditor();
+        }
+    }
+
+    function resetDefaultFeesMatrix() {
+        if (confirm("Reset fees structure matrix back to official standards? (Matches attached schedule)")) {
+            feesMatrixData = {
+                title: "Fees structure for <?= htmlspecialchars($academic_year) ?>",
+                columns: [
+                    { id: "admission_fee",    label: "ADMISSION FEE",           sub: "(paid once)" },
+                    { id: "uniforms",         label: "UNIFORMS",                sub: "(paid once)" },
+                    { id: "vocational",       label: "VOCATIONAL SKILLS",       sub: "(termly)" },
+                    { id: "tuition_boarding", label: "TUITION AND BOARDING",   sub: "(termly)" },
+                    { id: "tuition_day",      label: "TUITION FOR DAY SCHOLARS",sub: "(termly)" },
+                    { id: "functional",       label: "FUNCTIONAL FEES",         sub: "(termly)" }
+                ],
+                rows: [
+                    { class: "S.1", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "150,000/=" },
+                    { class: "S.2", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "100,000/=" },
+                    { class: "S.3", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "100,000/=" },
+                    { class: "S.4", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "", tuition_boarding: "2,065,000/=", tuition_day: "750,000/=", functional: "100,000/=" },
+                    { class: "S.5", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "100,000/=", tuition_boarding: "1,265,000/=", tuition_day: "750,000/=", functional: "150,000/=" },
+                    { class: "S.6", admission_fee: "100,000/=", uniforms: "400,000/=", vocational: "", tuition_boarding: "1,965,000/=", tuition_day: "750,000/=", functional: "100,000/=" }
+                ]
+            };
+            const titleInput = document.getElementById('feesMatrixTitleInput');
+            if (titleInput) titleInput.value = feesMatrixData.title;
+            renderFeesMatrixEditor();
+        }
+    }
+
+    function toggleJsonFeesEditor() {
+        const box = document.getElementById('feesJsonEditorContainer');
+        if (box) box.classList.toggle('hidden');
+    }
+
+    function applyFeesJson() {
+        const textarea = document.getElementById('feesJsonTextarea');
+        try {
+            const parsed = JSON.parse(textarea.value);
+            if (parsed.columns && parsed.rows) {
+                feesMatrixData = parsed;
+                const titleInput = document.getElementById('feesMatrixTitleInput');
+                if (titleInput && parsed.title) titleInput.value = parsed.title;
+                renderFeesMatrixEditor();
+                alert("Fees matrix JSON applied successfully!");
+            } else {
+                alert("Invalid matrix format: columns and rows arrays required.");
+            }
+        } catch (e) {
+            alert("JSON Syntax Error: " + e.message);
+        }
+    }
+
+    function syncFeesMatrixHidden() {
+        const jsonStr = JSON.stringify(feesMatrixData);
+        const hiddenInput = document.getElementById('fees_structure_matrix_input');
+        if (hiddenInput) hiddenInput.value = jsonStr;
+
+        const jsonArea = document.getElementById('feesJsonTextarea');
+        if (jsonArea && document.activeElement !== jsonArea) {
+            jsonArea.value = JSON.stringify(feesMatrixData, null, 2);
+        }
+
+        // Sync legacy inputs in background
+        if (feesMatrixData && feesMatrixData.rows) {
+            feesMatrixData.rows.forEach(r => {
+                const rawCls = (r.class || '').replace(/[\.\s\-]/g, '').toLowerCase();
+                if (['s1', 's2', 's3', 's4', 's5', 's6'].includes(rawCls)) {
+                    const tInp = document.getElementById(`hidden_fees_${rawCls}_tuition`);
+                    const aInp = document.getElementById(`hidden_fees_${rawCls}_admission`);
+                    const fInp = document.getElementById(`hidden_fees_${rawCls}_functional`);
+                    if (tInp) tInp.value = (r.tuition_boarding || r.tuition_day || '').replace(/[^\d]/g, '');
+                    if (aInp) aInp.value = (r.admission_fee || '').replace(/[^\d]/g, '');
+                    if (fInp) fInp.value = (r.functional || '').replace(/[^\d]/g, '');
+                }
+            });
+        }
+    }
+
+    function renderFeesMatrixPreview() {
+        const previewBox = document.getElementById('feesMatrixLivePreview');
+        if (!previewBox) return;
+
+        let html = `<div class="mb-2"><span class="text-xs font-black text-slate-800 uppercase tracking-wide">${escapeHtml(feesMatrixData.title || 'Fees structure')}</span></div>`;
+        html += '<table class="w-full text-xs text-left border-collapse min-w-[700px] bg-white rounded-lg border border-slate-300 overflow-hidden">';
+        html += '<thead><tr class="bg-slate-100/90 border-b border-slate-300 text-[10.5px] font-bold text-slate-800 uppercase">';
+        html += '<th class="p-2.5 border-r border-slate-300 text-center w-20">CLASS</th>';
+        feesMatrixData.columns.forEach(col => {
+            html += `<th class="p-2.5 border-r border-slate-300 text-center last:border-r-0">
+                <div class="font-extrabold text-slate-900 leading-tight">${escapeHtml(col.label)}</div>
+                ${col.sub ? `<div class="text-[9px] font-normal text-slate-500 lowercase mt-0.5">${escapeHtml(col.sub)}</div>` : ''}
+            </th>`;
+        });
+        html += '</tr></thead><tbody class="divide-y divide-slate-200 font-mono text-xs">';
+        feesMatrixData.rows.forEach(r => {
+            html += `<tr class="hover:bg-brand-50/30 transition">`;
+            html += `<td class="p-2.5 border-r border-slate-300 font-bold text-center text-slate-900 bg-slate-50 font-sans">${escapeHtml(r.class)}</td>`;
+            feesMatrixData.columns.forEach(col => {
+                const val = r[col.id] || '';
+                html += `<td class="p-2.5 border-r border-slate-300 text-right pr-4 text-slate-700 last:border-r-0 font-medium tabular-nums whitespace-nowrap">${val ? escapeHtml(val) : '<div class="text-center font-sans text-slate-300 font-light">-</div>'}</td>`;
+            });
+            html += `</tr>`;
+        });
+        html += '</tbody></table>';
+        previewBox.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderFeesMatrixEditor();
+    });
 
     document.querySelectorAll('.currency-input').forEach(input => {
         if (input.value) input.value = formatCurrency(input.value);

@@ -134,27 +134,35 @@ if (($class === 'S5' || $class === 'S6') && !empty($student['combination'])) {
 $classNameLong = "Senior " . substr($class, 1) . " (" . $class . ")";
 $clsKey = strtolower($class); // 's1', 's2', 's3', 's4', 's5', 's6'
 
-$tuition    = (int)getSetting($pdo, "fees_{$clsKey}_tuition", 0);
-$admission  = (int)getSetting($pdo, "fees_{$clsKey}_admission", 0);
-$functional = (int)getSetting($pdo, "fees_{$clsKey}_functional", 0);
-
-// Fallbacks if not configured individually
-if ($tuition === 0 && $admission === 0 && $functional === 0) {
-    if ($class === 'S1') {
-        $tuition    = (int)getSetting($pdo, 'fees_s1_tuition', 550000);
-        $admission  = (int)getSetting($pdo, 'fees_s1_admission', 100000);
-        $functional = (int)getSetting($pdo, 'fees_s1_functional', 150000);
-    } elseif ($class === 'S5') {
-        $tuition    = (int)getSetting($pdo, 'fees_s5_tuition', 600000);
-        $admission  = (int)getSetting($pdo, 'fees_s5_admission', 120000);
-        $functional = (int)getSetting($pdo, 'fees_s5_functional', 180000);
-    } else {
-        $tuition    = (int)getSetting($pdo, 'fees_trans_tuition', 570000);
-        $admission  = (int)getSetting($pdo, 'fees_trans_admission', 110000);
-        $functional = (int)getSetting($pdo, 'fees_trans_functional', 170000);
+$feesMatrix = getFeesStructureMatrix($pdo);
+$cleanClass = strtoupper(str_replace(['.', ' ', '-'], '', $class));
+$matchedRow = null;
+if (!empty($feesMatrix['rows']) && is_array($feesMatrix['rows'])) {
+    foreach ($feesMatrix['rows'] as $r) {
+        $rowClass = strtoupper(str_replace(['.', ' ', '-'], '', $r['class'] ?? ''));
+        if ($rowClass === $cleanClass) {
+            $matchedRow = $r;
+            break;
+        }
     }
 }
-$totalFees = $tuition + $admission + $functional;
+
+if ($matchedRow) {
+    $admission   = (int)preg_replace('/[^\d]/', '', $matchedRow['admission_fee'] ?? '100000');
+    $uniforms    = (int)preg_replace('/[^\d]/', '', $matchedRow['uniforms'] ?? '400000');
+    $vocational  = (int)preg_replace('/[^\d]/', '', $matchedRow['vocational'] ?? '0');
+    $tuition     = (int)preg_replace('/[^\d]/', '', $matchedRow['tuition_boarding'] ?? '1265000');
+    $tuition_day = (int)preg_replace('/[^\d]/', '', $matchedRow['tuition_day'] ?? '750000');
+    $functional  = (int)preg_replace('/[^\d]/', '', $matchedRow['functional'] ?? '150000');
+} else {
+    $tuition     = (int)getSetting($pdo, "fees_{$clsKey}_tuition", 1265000);
+    $admission   = (int)getSetting($pdo, "fees_{$clsKey}_admission", 100000);
+    $uniforms    = 400000;
+    $vocational  = in_array($cleanClass, ['S4', 'S6']) ? 0 : 100000;
+    $tuition_day = 750000;
+    $functional  = (int)getSetting($pdo, "fees_{$clsKey}_functional", 150000);
+}
+$totalFees = $tuition + $admission + $uniforms + $vocational + $functional;
 
 /* ================= PDF SETUP (STRICTLY 1-PAGE A4 STANDARD) ================= */
 $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -243,7 +251,9 @@ if ($hasStudentPhoto) {
     </td>';
 } else {
     $photoCellHtml = '<td width="18%" align="center" style="vertical-align: middle; padding: 0px;">
-        <span style="font-size: 6.5pt; color: #64748b; font-weight: bold; line-height: 1.3;">PASSPORT<br>PHOTO</span>
+        <div style="border: 1px dashed #64748b; background-color: #f8fafc; padding: 8px 2px; text-align: center;">
+            <span style="font-size: 5.8pt; color: #475569; font-weight: bold; line-height: 1.2;">AFFIX STUDENT<br>PASSPORT PHOTO<br>UPON REPORTING</span>
+        </div>
     </td>';
 }
 
@@ -285,17 +295,22 @@ if ($isAdmitted) {
     $admissionParagraph = "On behalf of the Admissions Registry of <strong>" . htmlspecialchars($school_name) . "</strong>, this certifies that your online application for admission to <strong>" . $classNameLong . "</strong> for the <strong>" . htmlspecialchars($academic_year) . " Academic Year</strong> has been successfully received and registered. Your submitted academic credentials and attachments are currently undergoing active evaluation and verification by the Admissions Committee.";
 }
 
-// Build Reporting Instructions Content Flush to Margin
+// Build Reporting Instructions & Official Payment Code Details Flush to Margin
 if ($isAdmitted) {
-    $instructionsBody = '<div style="font-size: 7.4pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;"><strong style="color: #0c4a24;">Reporting Instructions:</strong> The admitted student is expected to report on <strong>' . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'the official school reporting date') . '</strong>. <strong>Bring a physical copy of this offer letter on the reporting date</strong> alongside original UNEB result slips, 2 recent passport photographs, and all student requirements listed in the school prospectus.</div>';
+    $instructionsBody = '<div style="font-size: 7.1pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;">' .
+        '<strong style="color: #0c4a24;">Official School Fees Payment Code: ' . $student_number . '</strong> (SchoolPay / Bank Reference)<br>' .
+        '<strong>How to Settle Fees:</strong> (1) <strong>SchoolPay Mobile Money:</strong> Dial *165# (MTN) or *185# (Airtel) &rarr; Select School Fees &rarr; Enter Student Payment Code: <strong>' . $student_number . '</strong>. (2) <strong>Bank Deposit:</strong> Present code ' . $student_number . ' at any Stanbic, Centenary, or PostBank branch. (3) <strong>School Bursary:</strong> Direct payment at school desk.<br>' .
+        '<strong>Reporting Instructions:</strong> The admitted student is expected to report on <strong>' . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'the official opening date') . '</strong>. Bring a physical copy of this offer letter, deposit receipt, original UNEB slips, and 2 passport photos.</div>';
     if (!empty($schoolRequirements)) {
-        $reqSummary = htmlspecialchars(substr($schoolRequirements, 0, 160));
-        $instructionsBody .= '<div style="font-size: 6.8pt; color: #334155; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>School Requirements:</strong> ' . $reqSummary . '... (Refer to attached School Prospectus for full checklist).</div>';
+        $reqSummary = htmlspecialchars(substr($schoolRequirements, 0, 130));
+        $instructionsBody .= '<div style="font-size: 6.6pt; color: #334155; margin-top: 1.5px; text-indent: 0; text-align: justify;"><strong>Requirements:</strong> ' . $reqSummary . '... (Refer to School Prospectus for full checklist).</div>';
     }
-    $instructionsBody .= '<div style="font-size: 6.8pt; color: #475569; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>Official Enclosures:</strong> (1) School Rules & Regulations (2) Term Admissions Circular (3) Medical Examination Form.</div>';
+    $instructionsBody .= '<div style="font-size: 6.6pt; color: #475569; margin-top: 1.5px; text-indent: 0; text-align: justify;"><strong>Official Enclosures:</strong> (1) School Rules & Regulations (2) Term Admissions Circular (3) Medical Examination Form.</div>';
 } else {
-    $instructionsBody = '<div style="font-size: 7.4pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;"><strong style="color: #b45309;">Application Review Notice:</strong> Your application has been logged in the admissions registry under Verification ID <strong>' . $student_number . '</strong>. Official admissions decisions and downloadable provisional offer letters are dispatched via SMS and parent email. You may also track real-time admission decisions online using your registered Index/Phone number.</div>';
-    $instructionsBody .= '<div style="font-size: 6.8pt; color: #475569; margin-top: 2px; text-indent: 0; text-align: justify;"><strong>Requirements for Physical Verification:</strong> Upon admission approval, applicants must present original UNEB result slips, birth certificate, 2 passport photographs, and parent National ID copy.</div>';
+    $instructionsBody = '<div style="font-size: 7.1pt; color: #0f172a; text-indent: 0; text-align: justify; margin: 0; padding: 0;">' .
+        '<strong style="color: #b45309;">Application Review Notice & Verification ID: ' . $student_number . '</strong><br>' .
+        'Your online application is registered and undergoing evaluation by the Admissions Committee. <em>No payment is required before official admission approval.</em> Once admitted, your SchoolPay Payment Code will be activated and dispatched via SMS and parent email. You may track real-time admission decisions online using your registered Index/Phone number.</div>';
+    $instructionsBody .= '<div style="font-size: 6.6pt; color: #475569; margin-top: 1.5px; text-indent: 0; text-align: justify;"><strong>Requirements for Physical Verification:</strong> Upon admission approval, applicants must present original UNEB result slips, birth certificate, 2 passport photographs, and parent National ID copy.</div>';
 }
 
 $feeMatrixTitle = $isAdmitted ? 'TERM I TUITION & FEES MATRIX (UGX)' : 'PROSPECTIVE TERM I TUITION & FEES MATRIX (UGX)';
@@ -335,24 +350,29 @@ $detailsHtml = '<div style="font-family: \'trebuchetms\', \'Trebuchet MS\', Aria
     '</thead>' .
     '<tbody>' .
         '<tr>' .
-            '<td style="border: 1px solid #cbd5e1; text-align: left;">Tuition & Instructional Fees (Termly)</td>' .
+            '<td style="border: 1px solid #cbd5e1; text-align: left;">Tuition and Boarding Fees (Termly)</td>' .
             '<td align="right" style="border: 1px solid #cbd5e1; font-family: helvetica; text-align: right;">' . number_format($tuition) . '</td>' .
         '</tr>' .
         '<tr>' .
-            '<td style="border: 1px solid #cbd5e1; text-align: left;">Admission, Enrolment & Registration Fees</td>' .
+            '<td style="border: 1px solid #cbd5e1; text-align: left;">Admission & Enrolment Fee (Paid Once)</td>' .
             '<td align="right" style="border: 1px solid #cbd5e1; font-family: helvetica; text-align: right;">' . number_format($admission) . '</td>' .
         '</tr>' .
         '<tr>' .
-            '<td style="border: 1px solid #cbd5e1; text-align: left;">Functional Fees (Development, ICT, Library, Medical & Identity Card)</td>' .
+            '<td style="border: 1px solid #cbd5e1; text-align: left;">School Uniforms (Paid Once)</td>' .
+            '<td align="right" style="border: 1px solid #cbd5e1; font-family: helvetica; text-align: right;">' . number_format($uniforms) . '</td>' .
+        '</tr>' .
+        ($vocational > 0 ? ('<tr><td style="border: 1px solid #cbd5e1; text-align: left;">Vocational Skills Training (Termly)</td><td align="right" style="border: 1px solid #cbd5e1; font-family: helvetica; text-align: right;">' . number_format($vocational) . '</td></tr>') : '') .
+        '<tr>' .
+            '<td style="border: 1px solid #cbd5e1; text-align: left;">Functional Fees (ICT, Laboratory, Library & Identity Card)</td>' .
             '<td align="right" style="border: 1px solid #cbd5e1; font-family: helvetica; text-align: right;">' . number_format($functional) . '</td>' .
         '</tr>' .
         '<tr style="font-weight: bold; background-color: #ecfdf5; color: #064e3b;">' .
-            '<td style="border: 1px solid #0c4a24; font-weight: bold; color: #064e3b; text-align: left;">Total Term I Fees Payable</td>' .
+            '<td style="border: 1px solid #0c4a24; font-weight: bold; color: #064e3b; text-align: left;">Total Term I Fees Payable (Boarding)</td>' .
             '<td align="right" style="border: 1px solid #0c4a24; font-weight: bold; font-family: helvetica; color: #064e3b; text-align: right;">' . number_format($totalFees) . '</td>' .
         '</tr>' .
     '</tbody>' .
 '</table>' .
-'<div style="font-size: 6.6pt; color: #475569; font-style: italic; margin: 1px 0 3px 0; padding: 0; text-align: left; text-indent: 0;">* Note: The Admission commitment fee of UGX ' . number_format($admission) . ' secures the student\'s vacancy upon receipt and is deductible from total Term I tuition upon reporting.</div>' .
+'<div style="font-size: 6.6pt; color: #475569; font-style: italic; margin: 1px 0 3px 0; padding: 0; text-align: left; text-indent: 0;">* Note: Admission Fee (UGX ' . number_format($admission) . ') and Uniforms (UGX ' . number_format($uniforms) . ') are paid once upon enrolment. Tuition for Day Scholars is UGX ' . number_format($tuition_day) . '/term.</div>' .
 '<div style="border: 1px solid #16a34a; border-left: 3px solid #0c4a24; background-color: #f8fafc; padding: 4px 6px; margin: 0 0 3px 0; text-align: justify; line-height: 1.35; text-indent: 0;">' . $instructionsBody . '</div>' .
 '</div>';
 
@@ -414,7 +434,7 @@ $qrStyle = [
     'fgcolor' => [15, 23, 42],
     'bgcolor' => false
 ];
-$qrLink = getBaseUrl($pdo) . ($isAdmitted ? ('/admin/admission_list.php?class=' . urlencode($class)) : ('/track.php?identifier=' . urlencode($student['index_number'] ?: $student['parent_phone'])));
+$qrLink = getBaseUrl($pdo) . ($isAdmitted ? ('/app/admission_list.php?class=' . urlencode($class)) : ('/track.php?identifier=' . urlencode($student['index_number'] ?: $student['parent_phone'])));
 $pdf->write2DBarcode($qrLink, 'QRCODE,H', 16, $sigY + 2.5, 16, 16, $qrStyle, 'N');
 
 /* ================= FOOTER PROVISIONAL OFFER NOTICE ================= */

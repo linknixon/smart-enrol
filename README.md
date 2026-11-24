@@ -182,11 +182,11 @@ server {
 
 Upon completing the database import or initial startup, the default Super Administrator account is seeded with the following credentials:
 
-- Login URL: `http://your-server-domain/admin/login.php`
+- Login URL: `http://your-server-domain/app/login.php`
 - Default Username: `admin`
 - Default Password: `User@2026@` (or `admin` if imported via legacy dump)
 
-Security Notice: Immediately upon first login, navigate to Profile Settings (`admin/profile.php`), update your password, and activate Multi-Factor Authentication (MFA).
+Security Notice: Immediately upon first login, navigate to Profile Settings (`app/profile.php`), update your password, and activate Multi-Factor Authentication (MFA).
 
 ---
 
@@ -209,7 +209,7 @@ Multi-Role Assignment: Individual users can be granted secondary roles via their
 
 ## School Configuration and Customization
 
-Access the Administrative Settings page at `admin/settings.php` to customize:
+Access the Administrative Settings page at `app/settings.php` to customize:
 
 1. School Identity:
    - Full School Name, Short Code, and Official School Motto.
@@ -248,7 +248,7 @@ Access the Administrative Settings page at `admin/settings.php` to customize:
 ├── mutolere_admissions.sql         # Base database schema and seed data
 ├── config/
 │   └── db.php                      # PDO connection handler, auto-migrations, and helper functions
-├── admin/
+├── app/
 │   ├── admission_letter.php        # Print-ready A4 admission letter generator
 │   ├── admission_list.php          # Admitted candidates list and batch operations
 │   ├── dashboard.php               # Administrative analytics and KPI dashboard
@@ -276,7 +276,7 @@ Access the Administrative Settings page at `admin/settings.php` to customize:
 
 ## Maintenance and Archiving
 
-- Archiving Previous Years: When transitioning to a new academic year, update the Academic Year in `admin/settings.php`. Prior cohorts remain safely indexed in the database and accessible via the Admin Dashboard and Custom Reports with historical year filters, while being automatically shielded from the public portal.
+- Archiving Previous Years: When transitioning to a new academic year, update the Academic Year in `app/settings.php`. Prior cohorts remain safely indexed in the database and accessible via the Admin Dashboard and Custom Reports with historical year filters, while being automatically shielded from the public portal.
 - Data Backups: Regular MySQL dumps of the `mutolere_admissions` database combined with backups of the `uploads/` folder provide complete disaster recovery protection.
 
 ---

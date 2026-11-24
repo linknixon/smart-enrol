@@ -250,7 +250,9 @@ try {
       age INT NOT NULL,
       religion VARCHAR(50) DEFAULT '',
       class_of_entry VARCHAR(10) NOT NULL,
-      passport_photo VARCHAR(255) NOT NULL,
+      academic_year VARCHAR(20) DEFAULT NULL,
+      lin VARCHAR(50) DEFAULT NULL,
+      passport_photo VARCHAR(255) DEFAULT NULL,
       former_school VARCHAR(150) NOT NULL,
       index_number VARCHAR(50) DEFAULT NULL,
       english VARCHAR(10) DEFAULT NULL,
@@ -378,13 +380,19 @@ try {
                 if ($checkAdmittedAt && $checkAdmittedAt->rowCount() === 0) {
                     $pdo->exec("ALTER TABLE $t ADD admitted_at DATETIME DEFAULT NULL");
                 }
-                // Ensure physical address subfields exist
+                // Ensure academic year, LIN, and extended subfields exist
                 $addressFields = [
+                    'academic_year'             => "VARCHAR(20) DEFAULT NULL",
+                    'lin'                       => "VARCHAR(50) DEFAULT NULL",
                     'parent_village'            => "VARCHAR(100) DEFAULT NULL",
                     'parent_parish'             => "VARCHAR(100) DEFAULT NULL",
                     'parent_subcounty'          => "VARCHAR(100) DEFAULT NULL",
                     'parent_district'           => "VARCHAR(100) DEFAULT NULL",
                     'parent_id_file'            => "VARCHAR(255) DEFAULT NULL",
+                    'uce_project_work'          => "VARCHAR(50) DEFAULT NULL",
+                    'uce_subjects_json'         => "TEXT DEFAULT NULL",
+                    's6_former_school'          => "VARCHAR(150) DEFAULT NULL",
+                    's6_report_file'            => "VARCHAR(255) DEFAULT NULL",
                     'is_auto_admitted'          => "TINYINT DEFAULT 0",
                     'auto_admit_review_status'  => "VARCHAR(50) DEFAULT NULL",
                     'reviewed_by'               => "VARCHAR(150) DEFAULT NULL",
@@ -396,9 +404,28 @@ try {
                         $pdo->exec("ALTER TABLE $t ADD $fld $fldDef");
                     }
                 }
+                // Allow passport_photo and parent_nin to be NULL for schools skipping online photo / parent ID
+                try {
+                    $pdo->exec("ALTER TABLE $t MODIFY passport_photo VARCHAR(255) DEFAULT NULL");
+                    $pdo->exec("ALTER TABLE $t MODIFY parent_nin VARCHAR(50) DEFAULT NULL");
+                } catch (Exception $e) {}
             }
         } catch (Exception $e) {}
     }
+
+    // Auto-backfill academic_year for existing records based on active academic_year setting
+    try {
+        $curYear = getSetting($pdo, 'academic_year', date('Y'));
+        foreach (['applications', 's1_applications', 's5_applications'] as $t) {
+            $checkTbl = $pdo->query("SHOW TABLES LIKE '$t'");
+            if ($checkTbl && $checkTbl->rowCount() > 0) {
+                $checkYearCol = $pdo->query("SHOW COLUMNS FROM $t LIKE 'academic_year'");
+                if ($checkYearCol && $checkYearCol->rowCount() > 0) {
+                    $pdo->exec("UPDATE $t SET academic_year = '$curYear' WHERE academic_year IS NULL OR academic_year = ''");
+                }
+            }
+        }
+    } catch (Exception $e) {}
 
     // Auto-backfill admitted_by and admitted_at for historical records
     try {
@@ -490,6 +517,7 @@ try {
         'fees_trans_tuition'    => '570000',
         'fees_trans_admission'  => '110000',
         'fees_trans_functional' => '170000',
+        'fees_structure_matrix' => '',
         // SMTP Gateway Settings
         'smtp_enabled'          => '1',
         'smtp_host'             => 'mail-gw.ncedges.com',
@@ -579,6 +607,9 @@ if (!function_exists('logActivity')) {
 // System Settings Helper Function
 if (!function_exists('getSetting')) {
     function getSetting($pdo, $key, $default = '', $reload = false) {
+        if (!$pdo) {
+            return $default;
+        }
         static $settings = null;
         if ($settings === null || $reload) {
             try {
@@ -595,6 +626,9 @@ if (!function_exists('getSetting')) {
 // Retrieve all settings as associative key-value array
 if (!function_exists('getAllSettings')) {
     function getAllSettings($pdo, $reload = false) {
+        if (!$pdo) {
+            return [];
+        }
         static $allSettings = null;
         if ($allSettings === null || $reload) {
             try {
@@ -747,6 +781,98 @@ if (!function_exists('getPrimaryColor')) {
 if (!function_exists('getAccentColor')) {
     function getAccentColor($pdo = null) {
         return $pdo ? getSetting($pdo, 'accent_color', '#b58d2f') : '#b58d2f';
+    }
+}
+
+// Official Fees Structure Matrix Helpers (Dynamic & Flexible Table Format)
+if (!function_exists('getDefaultFeesStructureMatrix')) {
+    function getDefaultFeesStructureMatrix($academicYear = '2026') {
+        return [
+            'title' => "Fees structure for " . $academicYear,
+            'columns' => [
+                ['id' => 'admission_fee',    'label' => 'ADMISSION FEE',           'sub' => '(paid once)'],
+                ['id' => 'uniforms',         'label' => 'UNIFORMS',                'sub' => '(paid once)'],
+                ['id' => 'vocational',       'label' => 'VOCATIONAL SKILLS',       'sub' => '(termly)'],
+                ['id' => 'tuition_boarding', 'label' => 'TUITION AND BOARDING',   'sub' => '(termly)'],
+                ['id' => 'tuition_day',      'label' => 'TUITION FOR DAY SCHOLARS','sub' => '(termly)'],
+                ['id' => 'functional',       'label' => 'FUNCTIONAL FEES',         'sub' => '(termly)'],
+            ],
+            'rows' => [
+                [
+                    'class' => 'S.1',
+                    'admission_fee' => '100,000/=',
+                    'uniforms' => '400,000/=',
+                    'vocational' => '100,000/=',
+                    'tuition_boarding' => '1,265,000/=',
+                    'tuition_day' => '750,000/=',
+                    'functional' => '150,000/=',
+                ],
+                [
+                    'class' => 'S.2',
+                    'admission_fee' => '100,000/=',
+                    'uniforms' => '400,000/=',
+                    'vocational' => '100,000/=',
+                    'tuition_boarding' => '1,265,000/=',
+                    'tuition_day' => '750,000/=',
+                    'functional' => '100,000/=',
+                ],
+                [
+                    'class' => 'S.3',
+                    'admission_fee' => '100,000/=',
+                    'uniforms' => '400,000/=',
+                    'vocational' => '100,000/=',
+                    'tuition_boarding' => '1,265,000/=',
+                    'tuition_day' => '750,000/=',
+                    'functional' => '100,000/=',
+                ],
+                [
+                    'class' => 'S.4',
+                    'admission_fee' => '100,000/=',
+                    'uniforms' => '400,000/=',
+                    'vocational' => '',
+                    'tuition_boarding' => '2,065,000/=',
+                    'tuition_day' => '750,000/=',
+                    'functional' => '100,000/=',
+                ],
+                [
+                    'class' => 'S.5',
+                    'admission_fee' => '100,000/=',
+                    'uniforms' => '400,000/=',
+                    'vocational' => '100,000/=',
+                    'tuition_boarding' => '1,265,000/=',
+                    'tuition_day' => '750,000/=',
+                    'functional' => '150,000/=',
+                ],
+                [
+                    'class' => 'S.6',
+                    'admission_fee' => '100,000/=',
+                    'uniforms' => '400,000/=',
+                    'vocational' => '',
+                    'tuition_boarding' => '1,965,000/=',
+                    'tuition_day' => '750,000/=',
+                    'functional' => '100,000/=',
+                ],
+            ]
+        ];
+    }
+}
+
+if (!function_exists('getFeesStructureMatrix')) {
+    function getFeesStructureMatrix($pdo = null) {
+        $year = $pdo ? getAcademicYear($pdo) : date('Y');
+        if (empty($year)) $year = '2027';
+        if ($pdo) {
+            $raw = getSetting($pdo, 'fees_structure_matrix', '');
+            if (!empty($raw)) {
+                $decoded = is_array($raw) ? $raw : json_decode($raw, true);
+                if (is_array($decoded) && !empty($decoded['columns']) && !empty($decoded['rows'])) {
+                    // Dynamically capture academic year from the database
+                    $decoded['title'] = "Fees structure for " . $year;
+                    return $decoded;
+                }
+            }
+        }
+        return getDefaultFeesStructureMatrix($year);
     }
 }
 
@@ -1930,7 +2056,7 @@ if (!function_exists('dispatchAdmissionOfferNotification')) {
         $school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
         $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
         $academic_year     = getAcademicYear($pdo, $applicant['class_of_entry'] ?? 'S1');
-        $pdfLink           = getBaseUrl($pdo) . "/admin/admission_offer.php?id=" . $appId;
+        $pdfLink           = getBaseUrl($pdo) . "/app/admission_offer.php?id=" . $appId;
         $reportingDate     = getReportingDate($pdo, $applicant['class_of_entry'] ?? 'S1');
         $primary_color     = getPrimaryColor($pdo);
         $accent_color      = getAccentColor($pdo);

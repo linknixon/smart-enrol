@@ -83,11 +83,19 @@ if ($schoolGender === 'boys' && $applicantSex !== 'Male') {
     die("Ineligible Application: This institution is classified as a Girls-Only school. Only female candidates are eligible.");
 }
 
+// Check configurable document upload requirements
+$showParentIdSetting = getSetting($pdo, 'show_parent_id_upload', '1');
+$showPassportSetting = getSetting($pdo, 'show_passport_photo_upload', '1');
+
 // Validate Uganda NIN format (14 characters starting with CM, CF, RM, RF)
 $parent_nin = strtoupper(trim($_POST['parent_nin'] ?? ''));
-if (!preg_match('/^(CM|CF|RM|RF)[0-9A-Z]{12}$/', $parent_nin)) {
-    logActivity($pdo, 'Public Portal', 'Submission Blocked (Invalid NIN)', "Invalid NIN '{$parent_nin}' for candidate {$studentName}");
-    die("Invalid NIN: Please provide a valid Ugandan 14-character National Identification Number (e.g. CM89012345ABCD).");
+if ($showParentIdSetting === '1' || !empty($parent_nin)) {
+    if (!preg_match('/^(CM|CF|RM|RF)[0-9A-Z]{12}$/', $parent_nin)) {
+        logActivity($pdo, 'Public Portal', 'Submission Blocked (Invalid NIN)', "Invalid NIN '{$parent_nin}' for candidate {$studentName}");
+        die("Invalid NIN: Please provide a valid Ugandan 14-character National Identification Number (e.g. CM89012345ABCD).");
+    }
+} else {
+    $parent_nin = null;
 }
 
 // Validate Uganda Telephone Number
@@ -98,21 +106,23 @@ if (!preg_match('/^(?:\+256|256|0)[37][0-9]{8}$/', $parent_phone)) {
 }
 
 // 1. Process Passport Photo Upload
-if (!isset($_FILES['passport']) || $_FILES['passport']['error'] !== UPLOAD_ERR_OK) {
+$passport = null;
+if (isset($_FILES['passport']) && $_FILES['passport']['error'] === UPLOAD_ERR_OK) {
+    $passport = 'uploads/passports/' . time() . '_' . basename($_FILES['passport']['name']);
+    if (!move_uploaded_file($_FILES['passport']['tmp_name'], $passport)) {
+        die("Failed to upload passport photo");
+    }
+    // Automatically correct camera orientation from phone EXIF data
+    if (function_exists('correctImageExifOrientation')) {
+        correctImageExifOrientation($passport);
+    }
+    // Automatically normalize and whiten background for student passport photograph
+    if (function_exists('processPassportPhotoBackground')) {
+        processPassportPhotoBackground($passport);
+    }
+} elseif ($showPassportSetting === '1') {
     logActivity($pdo, 'Public Portal', 'Submission Blocked (Missing Passport)', "Passport photo upload missing for {$studentName}");
     die("Passport photo is required");
-}
-$passport = 'uploads/passports/' . time() . '_' . basename($_FILES['passport']['name']);
-if (!move_uploaded_file($_FILES['passport']['tmp_name'], $passport)) {
-    die("Failed to upload passport photo");
-}
-// Automatically correct camera orientation from phone EXIF data
-if (function_exists('correctImageExifOrientation')) {
-    correctImageExifOrientation($passport);
-}
-// Automatically normalize and whiten background for student passport photograph
-if (function_exists('processPassportPhotoBackground')) {
-    processPassportPhotoBackground($passport);
 }
 
 // 2. Process Result Slip/Transcript Upload
@@ -159,21 +169,23 @@ if ($class === 'S6') {
 }
 
 // 3. Process Parent / Guardian National ID Document Upload (PDF, PNG, JPG, JPEG)
-if (!isset($_FILES['parent_id_file']) || $_FILES['parent_id_file']['error'] !== UPLOAD_ERR_OK) {
+$parentIdFile = null;
+if (isset($_FILES['parent_id_file']) && $_FILES['parent_id_file']['error'] === UPLOAD_ERR_OK) {
+    $allowedIdExts = ['pdf', 'png', 'jpg', 'jpeg'];
+    $idFileExt = strtolower(pathinfo($_FILES['parent_id_file']['name'], PATHINFO_EXTENSION));
+    if (!in_array($idFileExt, $allowedIdExts)) {
+        die("Invalid file format for Parent National ID. Allowed formats: PDF, PNG, JPG, JPEG.");
+    }
+    $parentIdFile = 'uploads/parent_ids/' . time() . '_' . basename($_FILES['parent_id_file']['name']);
+    if (!move_uploaded_file($_FILES['parent_id_file']['tmp_name'], $parentIdFile)) {
+        die("Failed to upload parent National ID document");
+    }
+    if (function_exists('correctImageExifOrientation')) {
+        correctImageExifOrientation($parentIdFile);
+    }
+} elseif ($showParentIdSetting === '1') {
     logActivity($pdo, 'Public Portal', 'Submission Blocked (Missing Parent ID)', "Parent ID upload missing for {$studentName}");
     die("Parent/Guardian National ID document upload is required");
-}
-$allowedIdExts = ['pdf', 'png', 'jpg', 'jpeg'];
-$idFileExt = strtolower(pathinfo($_FILES['parent_id_file']['name'], PATHINFO_EXTENSION));
-if (!in_array($idFileExt, $allowedIdExts)) {
-    die("Invalid file format for Parent National ID. Allowed formats: PDF, PNG, JPG, JPEG.");
-}
-$parentIdFile = 'uploads/parent_ids/' . time() . '_' . basename($_FILES['parent_id_file']['name']);
-if (!move_uploaded_file($_FILES['parent_id_file']['tmp_name'], $parentIdFile)) {
-    die("Failed to upload parent National ID document");
-}
-if (function_exists('correctImageExifOrientation')) {
-    correctImageExifOrientation($parentIdFile);
 }
 
 // Calculate age from Date of Birth
@@ -484,7 +496,7 @@ if (strpos($logo_source, 'http') === false) {
     $logo_source = getBaseUrl($pdo) . '/' . ltrim($logo_source, '/');
 }
 
-$adminDashboardUrl = getBaseUrl($pdo) . '/admin/dashboard.php';
+$adminDashboardUrl = getBaseUrl($pdo) . '/app/dashboard.php';
 
 $studentName = htmlspecialchars($_POST['firstname'] . ' ' . $_POST['surname']);
 $parentName = htmlspecialchars($_POST['parent_name']);
@@ -577,8 +589,24 @@ $parentMessage .= "
                 </table>
             </div>
 
-            <p>No further action is required from you at this time. Once the admissions committee completes the evaluation, a formal notification letter detailing the final decision will be sent to this email address.</p>
-            <p>For any inquiries regarding your application, please reach out to the admissions office at <strong>{$school_email}</strong> or call <strong>{$school_phone}</strong>.</p>
+            <div class='inner-box' style='background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; padding: 16px 14px; border-radius: 10px; margin: 20px 0;'>
+                <h4 style='margin-top: 0; color: #166534; font-size: 15px; font-weight: 700; border-bottom: 1px solid #bbf7d0; padding-bottom: 8px;'>
+                    What to Do Next & School Fees Payment Code Guidance
+                </h4>
+                <p style='margin: 8px 0; font-size: 13.5px; color: #1e293b; line-height: 1.6;'>
+                    <strong>1. Application Review:</strong> The School Admissions Committee is currently reviewing your academic documents and credentials. <em>No payments are required during this evaluation phase.</em>
+                </p>
+                <p style='margin: 8px 0; font-size: 13.5px; color: #1e293b; line-height: 1.6;'>
+                    <strong>2. When & How You Receive Your Payment Code:</strong> As soon as the Admissions Committee approves your child's application, an official <strong>Provisional Admission Offer Letter</strong> will be issued. Your unique <strong>Student SchoolPay / Bank Payment Reference Code</strong> will be generated automatically and printed prominently on the admission letter, as well as sent to this email address and via SMS.
+                </p>
+                <p style='margin: 8px 0; font-size: 13.5px; color: #1e293b; line-height: 1.6;'>
+                    <strong>3. Authorized Payment Channels:</strong> Once you receive your official payment code, school fees can be paid via <strong>SchoolPay Mobile Money</strong> (dial *165# for MTN or *185# for Airtel under School Fees), at any commercial bank branch across Uganda (Stanbic, Centenary, PostBank, DFCU), or at the School Bursar's Office.
+                </p>
+            </div>
+
+            <p style='font-size: 13.5px; color: #334155; line-height: 1.6;'>
+                You may also track your application's review status at any time via our online tracking portal using your registered phone number or index number. For any inquiries, please contact the admissions registry at <strong>{$school_email}</strong> or call <strong>{$school_phone}</strong>.
+            </p>
             
             <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;'>
             

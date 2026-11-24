@@ -22,12 +22,30 @@ $filterStatus = $_GET['status'] ?? 'all';
 $filterSex   = $_GET['sex'] ?? 'all';
 $search      = trim($_GET['search'] ?? '');
 
+$curYear = getSetting($pdo, 'academic_year', date('Y'));
+
+// Check if academic_year column exists in applications; self-heal if missing
+$hasAcademicYearCol = false;
+try {
+    $chkCol = $pdo->query("SHOW COLUMNS FROM applications LIKE 'academic_year'");
+    if ($chkCol && $chkCol->rowCount() > 0) {
+        $hasAcademicYearCol = true;
+    } else {
+        $pdo->exec("ALTER TABLE applications ADD academic_year VARCHAR(20) DEFAULT NULL");
+        $pdo->exec("UPDATE applications SET academic_year = '{$curYear}' WHERE academic_year IS NULL OR academic_year = ''");
+        $hasAcademicYearCol = true;
+    }
+} catch (Exception $e) {
+    $hasAcademicYearCol = false;
+}
+
 // Available academic years
 $availableYears = [];
-try {
-    $availableYears = $pdo->query("SELECT DISTINCT academic_year FROM applications WHERE academic_year IS NOT NULL AND academic_year != '' ORDER BY academic_year DESC")->fetchAll(PDO::FETCH_COLUMN);
-} catch (Exception $e) {}
-$curYear = getSetting($pdo, 'academic_year', date('Y'));
+if ($hasAcademicYearCol) {
+    try {
+        $availableYears = $pdo->query("SELECT DISTINCT academic_year FROM applications WHERE academic_year IS NOT NULL AND academic_year != '' ORDER BY academic_year DESC")->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Exception $e) {}
+}
 if (!in_array($curYear, $availableYears)) {
     array_unshift($availableYears, $curYear);
 }
@@ -57,7 +75,7 @@ if ($filterSex !== 'all') {
     $params[] = $filterSex;
 }
 
-if ($filterYear !== 'all') {
+if ($hasAcademicYearCol && $filterYear !== 'all') {
     $where[] = "academic_year = ?";
     $params[] = $filterYear;
 }

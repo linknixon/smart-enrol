@@ -34,6 +34,50 @@ $passmark_s1        = getPassMark($pdo, 'S1');
 $passmark_s5        = getPassMark($pdo, 'S5');
 $primary_color      = getPrimaryColor($pdo);
 
+// Document upload requirement policies
+$show_parent_id_upload      = getSetting($pdo, 'show_parent_id_upload', '1');
+$show_passport_photo_upload = getSetting($pdo, 'show_passport_photo_upload', '1');
+
+// Fees Matrices for Public Verification
+$fees_classes = [
+    'S1' => [
+        'name' => 'Senior One (S1)',
+        'tuition' => (int)getSetting($pdo, 'fees_s1_tuition', 550000),
+        'admission' => (int)getSetting($pdo, 'fees_s1_admission', 100000),
+        'functional' => (int)getSetting($pdo, 'fees_s1_functional', 150000),
+    ],
+    'S2' => [
+        'name' => 'Senior Two (S2)',
+        'tuition' => (int)getSetting($pdo, 'fees_s2_tuition', 560000),
+        'admission' => (int)getSetting($pdo, 'fees_s2_admission', 100000),
+        'functional' => (int)getSetting($pdo, 'fees_s2_functional', 155000),
+    ],
+    'S3' => [
+        'name' => 'Senior Three (S3)',
+        'tuition' => (int)getSetting($pdo, 'fees_s3_tuition', 570000),
+        'admission' => (int)getSetting($pdo, 'fees_s3_admission', 100000),
+        'functional' => (int)getSetting($pdo, 'fees_s3_functional', 160000),
+    ],
+    'S4' => [
+        'name' => 'Senior Four (S4)',
+        'tuition' => (int)getSetting($pdo, 'fees_s4_tuition', 580000),
+        'admission' => (int)getSetting($pdo, 'fees_s4_admission', 110000),
+        'functional' => (int)getSetting($pdo, 'fees_s4_functional', 165000),
+    ],
+    'S5' => [
+        'name' => 'Senior Five (S5)',
+        'tuition' => (int)getSetting($pdo, 'fees_s5_tuition', 600000),
+        'admission' => (int)getSetting($pdo, 'fees_s5_admission', 120000),
+        'functional' => (int)getSetting($pdo, 'fees_s5_functional', 180000),
+    ],
+    'S6' => [
+        'name' => 'Senior Six (S6)',
+        'tuition' => (int)getSetting($pdo, 'fees_s6_tuition', 620000),
+        'admission' => (int)getSetting($pdo, 'fees_s6_admission', 120000),
+        'functional' => (int)getSetting($pdo, 'fees_s6_functional', 185000),
+    ],
+];
+
 // Cloudflare Turnstile anti-bot settings
 $cf_turnstile_enabled  = getSetting($pdo, 'cf_turnstile_enabled', '0');
 $cf_turnstile_site_key = getSetting($pdo, 'cf_turnstile_site_key', '');
@@ -129,6 +173,19 @@ html, body {
     color: var(--primary-color) !important;
     font-weight: 700 !important;
 }
+@keyframes feesAttentionPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+    }
+}
+.fees-attention-pulse {
+    animation: feesAttentionPulse 1.5s infinite ease-in-out;
+}
 </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col py-6 sm:py-10 px-4">
@@ -191,6 +248,67 @@ html, body {
                     <button type="button" id="tabTransfers" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('OTHER')">
                         Transfers (S2-S6) <?= !$statusTrans['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fees Structure Review Card (Check Before Applying) -->
+        <?php 
+        $feesMatrix = getFeesStructureMatrix($pdo); 
+        $feesYear   = !empty($academic_year) ? $academic_year : getAcademicYear($pdo);
+        ?>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between gap-3 cursor-pointer" onclick="toggleFeesStructure()">
+                <div>
+                    <h4 class="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wide">
+                        Fees structure for <?= htmlspecialchars($feesYear) ?>
+                    </h4>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Review the approved fees structure breakdown before submitting your application below.</p>
+                </div>
+                <button type="button" id="feesToggleBtn" class="fees-attention-pulse px-4 py-2 rounded-xl text-xs font-black text-white bg-red-600 hover:bg-red-700 shadow-md ring-2 ring-red-400/60 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-300"></span>
+                    </span>
+                    <span id="feesToggleLabel">View Fees</span>
+                    <i class="fa-solid fa-chevron-down transition-transform duration-200 text-[11px]" id="feesToggleIcon"></i>
+                </button>
+            </div>
+
+            <!-- Fees Table Content (Collapsed by default) -->
+            <div id="feesStructureContent" class="hidden mt-4 pt-4 border-t border-slate-100">
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs">
+                    <table class="w-full text-xs text-left border-collapse min-w-[720px]">
+                        <thead>
+                            <tr class="bg-slate-100/80 border-b border-slate-300 text-slate-800 text-[11px] font-extrabold uppercase">
+                                <th class="p-3 border-r border-slate-300 text-center w-20">CLASS</th>
+                                <?php foreach ($feesMatrix['columns'] as $col): ?>
+                                <th class="p-3 border-r border-slate-300 text-center last:border-r-0">
+                                    <div class="font-extrabold text-slate-900 leading-tight"><?= htmlspecialchars($col['label']) ?></div>
+                                    <?php if (!empty($col['sub'])): ?>
+                                    <div class="text-[9.5px] font-medium text-slate-500 lowercase mt-0.5"><?= htmlspecialchars($col['sub']) ?></div>
+                                    <?php endif; ?>
+                                </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white font-mono text-[11px]">
+                            <?php foreach ($feesMatrix['rows'] as $row): ?>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="p-3 border-r border-slate-300 font-bold text-center text-slate-900 bg-slate-50/60 font-sans">
+                                    <?= htmlspecialchars($row['class']) ?>
+                                </td>
+                                <?php foreach ($feesMatrix['columns'] as $col): 
+                                    $val = trim($row[$col['id']] ?? '');
+                                ?>
+                                <td class="p-3 border-r border-slate-300 text-right pr-4 sm:pr-6 text-slate-700 last:border-r-0 font-medium tabular-nums whitespace-nowrap">
+                                    <?= !empty($val) ? htmlspecialchars($val) : '<div class="text-center font-sans text-slate-300 font-light">-</div>' ?>
+                                </td>
+                                <?php endforeach; ?>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -276,7 +394,7 @@ html, body {
                     <a href="index.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
                         <i class="fa-solid fa-arrow-left"></i> Return to Main Portal
                     </a>
-                    <a href="admin/admission_list.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
+                    <a href="app/admission_list.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
                         <i class="fa-solid fa-list-check"></i> View Admitted Register
                     </a>
                 </div>
@@ -368,13 +486,15 @@ html, body {
                         </div>
                     </div>
 
-                    <div class="pt-2">
+                    <?php if ($show_passport_photo_upload === '1'): ?>
+                    <div class="pt-2" id="passportPhotoContainer">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-bold text-slate-700 uppercase">Student Passport Photograph <span class="text-rose-500 font-bold">*</span></label>
                         </div>
                         <input type="file" name="passport" id="passportFile" accept="image/*" required class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer">
                         <p class="text-[10px] text-slate-400 mt-1">Upload from camera, photo gallery, downloads or files. The system automatically formats with a pure white background.</p>
                     </div>
+                    <?php endif; ?>
 
                     <div class="pt-6 border-t border-slate-100 flex justify-end">
                         <button type="button" class="next-btn w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(2)">
@@ -1103,8 +1223,8 @@ html, body {
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parent NIRA NIN (National ID) <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="text" inputmode="text" name="parent_nin" id="parentNin" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium uppercase text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. CM89012345ABCD">
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parent NIRA NIN (National ID) <?= ($show_parent_id_upload === '1') ? '<span class="text-rose-500 font-bold">*</span>' : '<span class="text-slate-400 font-normal">(Optional)</span>' ?></label>
+                            <input type="text" inputmode="text" name="parent_nin" id="parentNin" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" <?= ($show_parent_id_upload === '1') ? 'required' : '' ?> class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium uppercase text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. CM89012345ABCD">
                             <p class="text-[10px] text-slate-400 mt-1">14-character Ugandan National Identification Number.</p>
                         </div>
                         <div>
@@ -1142,8 +1262,9 @@ html, body {
                         <input type="hidden" name="parent_address" id="parentAddress">
                     </div>
 
+                    <?php if ($show_parent_id_upload === '1'): ?>
                     <!-- Parent / Guardian National ID Document Upload -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5" id="parentIdContainer">
                         <div class="flex items-center justify-between">
                             <label class="block text-xs font-bold text-slate-700 uppercase">
                                 <i class="fa-solid fa-id-card text-brand-700 mr-1"></i> Upload Parent / Guardian National ID <span class="text-rose-500 font-bold">*</span>
@@ -1152,6 +1273,7 @@ html, body {
                         <input type="file" name="parent_id_file" id="parentIdFile" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer">
                         <p class="text-[10px] text-slate-400">Upload from camera, photo gallery, downloads or files (PDF/PNG/JPG copy of Parent/Guardian National ID or valid passport).</p>
                     </div>
+                    <?php endif; ?>
 
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                         <label class="flex items-start gap-3 cursor-pointer">
@@ -1203,7 +1325,7 @@ html, body {
                         Track Status
                     </a>
                     <span>·</span>
-                    <a href="admin/login.php" class="hover:text-white transition underline-offset-4 hover:underline">
+                    <a href="app/login.php" class="hover:text-white transition underline-offset-4 hover:underline">
                         Staff Login
                     </a>
                 </div>
@@ -1633,19 +1755,22 @@ html, body {
                 return false;
             }
 
-            const passInp = document.getElementById('passportFile');
-            if (!passInp || !passInp.files || passInp.files.length === 0) {
-                showFieldWarning(passInp, "You have not uploaded the candidate's Passport Photograph.");
-                return false;
-            }
-            const passExt = passInp.files[0].name.split('.').pop().toLowerCase();
-            if (!['png', 'jpg', 'jpeg', 'webp'].includes(passExt)) {
-                showFieldWarning(passInp, "Invalid passport photo format. Please upload a PNG, JPG, JPEG, or WEBP image.");
-                return false;
-            }
-            if (passInp.files[0].size > 5 * 1024 * 1024) {
-                showFieldWarning(passInp, "Passport photo file size must not exceed 5MB.");
-                return false;
+            const showPassportPhoto = <?= json_encode($show_passport_photo_upload === '1') ?>;
+            if (showPassportPhoto) {
+                const passInp = document.getElementById('passportFile');
+                if (!passInp || !passInp.files || passInp.files.length === 0) {
+                    showFieldWarning(passInp, "You have not uploaded the candidate's Passport Photograph.");
+                    return false;
+                }
+                const passExt = passInp.files[0].name.split('.').pop().toLowerCase();
+                if (!['png', 'jpg', 'jpeg', 'webp'].includes(passExt)) {
+                    showFieldWarning(passInp, "Invalid passport photo format. Please upload a PNG, JPG, JPEG, or WEBP image.");
+                    return false;
+                }
+                if (passInp.files[0].size > 5 * 1024 * 1024) {
+                    showFieldWarning(passInp, "Passport photo file size must not exceed 5MB.");
+                    return false;
+                }
             }
         }
 
@@ -1856,13 +1981,16 @@ html, body {
                 return false;
             }
 
+            const showParentId = <?= json_encode($show_parent_id_upload === '1') ?>;
             const pNin = document.querySelector("input[name='parent_nin']");
             if (pNin) {
                 pNin.value = pNin.value.trim().toUpperCase();
-                const ninRegex = /^(CM|CF|RM|RF)[0-9A-Z]{12}$/;
-                if (!ninRegex.test(pNin.value)) {
-                    showFieldWarning(pNin, "Please enter a valid Ugandan 14-character NIN starting with CM, CF, RM, or RF (e.g. CM89012345ABCD).");
-                    return false;
+                if (showParentId || pNin.value.length > 0) {
+                    const ninRegex = /^(CM|CF|RM|RF)[0-9A-Z]{12}$/;
+                    if (!ninRegex.test(pNin.value)) {
+                        showFieldWarning(pNin, "Please enter a valid Ugandan 14-character NIN starting with CM, CF, RM, or RF (e.g. CM89012345ABCD).");
+                        return false;
+                    }
                 }
             }
 
@@ -1896,15 +2024,17 @@ html, body {
                 return false;
             }
 
-            const parentIdInp = document.getElementById('parentIdFile');
-            if (!parentIdInp || !parentIdInp.files || parentIdInp.files.length === 0) {
-                showFieldWarning(parentIdInp, "You have not uploaded the Parent / Guardian National ID Document.");
-                return false;
-            }
-            const idExt = parentIdInp.files[0].name.split('.').pop().toLowerCase();
-            if (!['pdf', 'png', 'jpg', 'jpeg'].includes(idExt)) {
-                showFieldWarning(parentIdInp, "Please upload your Parent National ID in PDF, PNG, JPG, or JPEG format.");
-                return false;
+            if (showParentId) {
+                const parentIdInp = document.getElementById('parentIdFile');
+                if (!parentIdInp || !parentIdInp.files || parentIdInp.files.length === 0) {
+                    showFieldWarning(parentIdInp, "You have not uploaded the Parent / Guardian National ID Document.");
+                    return false;
+                }
+                const idExt = parentIdInp.files[0].name.split('.').pop().toLowerCase();
+                if (!['pdf', 'png', 'jpg', 'jpeg'].includes(idExt)) {
+                    showFieldWarning(parentIdInp, "Please upload your Parent National ID in PDF, PNG, JPG, or JPEG format.");
+                    return false;
+                }
             }
 
             const declCheck = document.getElementById('declarationCheck');
@@ -1923,6 +2053,31 @@ html, body {
         }
 
         return true;
+    }
+
+    function toggleFeesStructure() {
+        const content = document.getElementById('feesStructureContent');
+        const btn = document.getElementById('feesToggleBtn');
+        const icon = document.getElementById('feesToggleIcon');
+        const label = document.getElementById('feesToggleLabel');
+        if (!content) return;
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            if (icon) icon.className = 'fa-solid fa-chevron-up transition-transform duration-200 text-[11px]';
+            if (label) label.textContent = 'Hide Fees';
+            if (btn) {
+                btn.classList.remove('fees-attention-pulse', 'bg-red-600', 'hover:bg-red-700', 'ring-red-400/60');
+                btn.classList.add('bg-slate-700', 'hover:bg-slate-800', 'ring-slate-300');
+            }
+        } else {
+            content.classList.add('hidden');
+            if (icon) icon.className = 'fa-solid fa-chevron-down transition-transform duration-200 text-[11px]';
+            if (label) label.textContent = 'View Fees';
+            if (btn) {
+                btn.classList.remove('bg-slate-700', 'hover:bg-slate-800', 'ring-slate-300');
+                btn.classList.add('fees-attention-pulse', 'bg-red-600', 'hover:bg-red-700', 'ring-red-400/60');
+            }
+        }
     }
 
     // Clear custom validity and validation error highlight on input

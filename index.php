@@ -22,6 +22,70 @@ $status_s1    = getAdmissionStatus($pdo, 'S1');
 $status_s5    = getAdmissionStatus($pdo, 'S5');
 $status_trans = getAdmissionStatus($pdo, 'trans');
 
+// Fees Structure matrices
+$fees_classes = [
+    's1' => [
+        'name' => 'Senior One (S1)',
+        'subtitle' => 'PLE Entry',
+        'level' => 'O-Level',
+        'tuition' => (int)getSetting($pdo, 'fees_s1_tuition', 550000),
+        'admission' => (int)getSetting($pdo, 'fees_s1_admission', 100000),
+        'functional' => (int)getSetting($pdo, 'fees_s1_functional', 150000),
+        'apply_url' => 'apply.php?class=S1',
+        'is_open' => $status_s1['is_open']
+    ],
+    's2' => [
+        'name' => 'Senior Two (S2)',
+        'subtitle' => 'O-Level Transfer',
+        'level' => 'O-Level',
+        'tuition' => (int)getSetting($pdo, 'fees_s2_tuition', 560000),
+        'admission' => (int)getSetting($pdo, 'fees_s2_admission', 100000),
+        'functional' => (int)getSetting($pdo, 'fees_s2_functional', 155000),
+        'apply_url' => 'apply.php?class=S2',
+        'is_open' => $status_trans['is_open']
+    ],
+    's3' => [
+        'name' => 'Senior Three (S3)',
+        'subtitle' => 'O-Level Transfer',
+        'level' => 'O-Level',
+        'tuition' => (int)getSetting($pdo, 'fees_s3_tuition', 570000),
+        'admission' => (int)getSetting($pdo, 'fees_s3_admission', 100000),
+        'functional' => (int)getSetting($pdo, 'fees_s3_functional', 160000),
+        'apply_url' => 'apply.php?class=S3',
+        'is_open' => $status_trans['is_open']
+    ],
+    's4' => [
+        'name' => 'Senior Four (S4)',
+        'subtitle' => 'Candidate Transfer',
+        'level' => 'O-Level',
+        'tuition' => (int)getSetting($pdo, 'fees_s4_tuition', 580000),
+        'admission' => (int)getSetting($pdo, 'fees_s4_admission', 110000),
+        'functional' => (int)getSetting($pdo, 'fees_s4_functional', 165000),
+        'apply_url' => 'apply.php?class=S4',
+        'is_open' => $status_trans['is_open']
+    ],
+    's5' => [
+        'name' => 'Senior Five (S5)',
+        'subtitle' => 'UCE NLSC Entry',
+        'level' => 'A-Level',
+        'tuition' => (int)getSetting($pdo, 'fees_s5_tuition', 600000),
+        'admission' => (int)getSetting($pdo, 'fees_s5_admission', 120000),
+        'functional' => (int)getSetting($pdo, 'fees_s5_functional', 180000),
+        'apply_url' => 'apply.php?class=S5',
+        'is_open' => $status_s5['is_open']
+    ],
+    's6' => [
+        'name' => 'Senior Six (S6)',
+        'subtitle' => 'A-Level Transfer',
+        'level' => 'A-Level',
+        'tuition' => (int)getSetting($pdo, 'fees_s6_tuition', 620000),
+        'admission' => (int)getSetting($pdo, 'fees_s6_admission', 120000),
+        'functional' => (int)getSetting($pdo, 'fees_s6_functional', 185000),
+        'apply_url' => 'apply.php?class=S6',
+        'is_open' => $status_trans['is_open']
+    ]
+];
+
 // Fetch Hero Slider Images
 $slider_images_json = getSetting($pdo, 'hero_slider_images', '');
 $slider_images = [];
@@ -87,6 +151,7 @@ if (empty($slider_images)) {
                 <!-- Navigation Links (Concise single-word items without wrapping) -->
                 <nav class="hidden md:flex items-center gap-5 text-sm font-semibold text-slate-600">
                     <a href="#pathways" class="hover:text-brand-700 transition whitespace-nowrap">Pathways</a>
+                    <a href="#fees-structure" class="hover:text-brand-700 transition whitespace-nowrap flex items-center gap-1"><i class="fa-solid fa-coins text-gold-500 text-xs"></i> Fees</a>
                     <a href="#requirements" class="hover:text-brand-700 transition whitespace-nowrap">Requirements</a>
                     <a href="#registers" class="hover:text-brand-700 transition whitespace-nowrap">Registers</a>
                     <a href="track.php" class="hover:text-brand-700 transition whitespace-nowrap flex items-center gap-1.5"><i class="fa-solid fa-location-crosshairs text-brand-700"></i> Track</a>
@@ -98,7 +163,7 @@ if (empty($slider_images)) {
 
                 <!-- Action Buttons & Mobile Toggle -->
                 <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <a href="admin/login.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
+                    <a href="app/login.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
                         <i class="fa-solid fa-user-lock text-xs text-brand-700"></i> Staff
                     </a>
                     <a href="apply.php" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
@@ -116,6 +181,10 @@ if (empty($slider_images)) {
                 <a href="#pathways" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
                     <i class="fa-solid fa-layer-group text-gold-500 w-5 text-center"></i>
                     <span>Entry Pathways</span>
+                </a>
+                <a href="#fees-structure" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
+                    <i class="fa-solid fa-coins text-gold-500 w-5 text-center"></i>
+                    <span>Fees Structure</span>
                 </a>
                 <a href="#requirements" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
                     <i class="fa-solid fa-list-check text-gold-500 w-5 text-center"></i>
@@ -139,7 +208,7 @@ if (empty($slider_images)) {
                     <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 ml-auto"></i>
                 </a>
                 <div class="pt-2 border-t border-slate-100 flex gap-2">
-                    <a href="admin/login.php" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+                    <a href="app/login.php" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
                         <i class="fa-solid fa-user-lock text-brand-700"></i>
                         <span>Staff Login</span>
                     </a>
@@ -454,6 +523,73 @@ if (empty($slider_images)) {
         </div>
     </section>
 
+    <!-- Official Approved Fees Structure Section -->
+    <?php 
+    $feesMatrix = getFeesStructureMatrix($pdo); 
+    $feesYear   = !empty($academic_year) ? $academic_year : getAcademicYear($pdo);
+    ?>
+    <section id="fees-structure" class="py-14 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-10">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Fees structure for <?= htmlspecialchars($feesYear) ?>
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                    Review the approved termly tuition and functional fees matrix before submitting your application. All figures are in Ugandan Shillings (UGX).
+                </p>
+            </div>
+
+            <!-- Official Fees Table Container -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs">
+                    <table class="w-full text-xs text-left border-collapse min-w-[760px]">
+                        <thead>
+                            <tr class="bg-slate-100/90 border-b border-slate-300 text-slate-800 text-[11px] font-extrabold uppercase">
+                                <th class="p-3.5 border-r border-slate-300 text-center w-24">CLASS</th>
+                                <?php foreach ($feesMatrix['columns'] as $col): ?>
+                                <th class="p-3.5 border-r border-slate-300 text-center last:border-r-0">
+                                    <div class="font-extrabold text-slate-900 leading-tight"><?= htmlspecialchars($col['label']) ?></div>
+                                    <?php if (!empty($col['sub'])): ?>
+                                    <div class="text-[9.5px] font-medium text-slate-500 lowercase mt-0.5"><?= htmlspecialchars($col['sub']) ?></div>
+                                    <?php endif; ?>
+                                </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white font-mono text-xs">
+                            <?php foreach ($feesMatrix['rows'] as $row): ?>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="p-3.5 border-r border-slate-300 font-bold text-center text-slate-900 bg-slate-50/70 font-sans">
+                                    <?= htmlspecialchars($row['class']) ?>
+                                </td>
+                                <?php foreach ($feesMatrix['columns'] as $col): 
+                                    $val = trim($row[$col['id']] ?? '');
+                                ?>
+                                <td class="p-3.5 border-r border-slate-300 text-right pr-5 sm:pr-7 text-slate-700 last:border-r-0 font-medium tabular-nums whitespace-nowrap">
+                                    <?= !empty($val) ? htmlspecialchars($val) : '<div class="text-center font-sans text-slate-300 font-light">-</div>' ?>
+                                </td>
+                                <?php endforeach; ?>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                    <div class="text-[11px] text-slate-500 font-sans">
+                        <i class="fa-solid fa-circle-check text-brand-700 mr-1"></i> Official fee breakdown approved by the School Board of Governors.
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <a href="apply.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
+                            Proceed to Online Application <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
     <!-- Step-by-Step Guide Section -->
     <section id="requirements" class="py-16 bg-white border-y border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -518,13 +654,13 @@ if (empty($slider_images)) {
                 </p>
 
                 <div class="pt-3 flex flex-wrap gap-2.5">
-                    <a href="admin/admission_list.php?class=S1" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-slate-900 hover:bg-slate-100 transition shadow-sm">
+                    <a href="app/admission_list.php?class=S1" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-slate-900 hover:bg-slate-100 transition shadow-sm">
                         <i class="fa-solid fa-list-ol text-brand-700"></i> Senior One List
                     </a>
-                    <a href="admin/admission_list.php?class=S5" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gold-500 text-slate-900 hover:bg-gold-400 transition shadow-sm">
+                    <a href="app/admission_list.php?class=S5" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gold-500 text-slate-900 hover:bg-gold-400 transition shadow-sm">
                         <i class="fa-solid fa-graduation-cap"></i> Senior Five List
                     </a>
-                    <a href="admin/admission_list.php?class=S2" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition">
+                    <a href="app/admission_list.php?class=S2" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition">
                         <i class="fa-solid fa-users"></i> Transfers List
                     </a>
                 </div>
@@ -602,7 +738,7 @@ if (empty($slider_images)) {
                         Track Application
                     </a>
                     <span>·</span>
-                    <a href="admin/login.php" class="hover:text-white transition underline-offset-4 hover:underline">
+                    <a href="app/login.php" class="hover:text-white transition underline-offset-4 hover:underline">
                         Staff Login
                     </a>
                 </div>

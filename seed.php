@@ -197,5 +197,5 @@ try {
 
 output("Database seeding completed successfully!", "success");
 if (!$isCli) {
-    echo "<p><a href='admin/login.php' style='display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;'>Proceed to Admin Login</a></p>";
+    echo "<p><a href='app/login.php' style='display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;'>Proceed to Admin Login</a></p>";
 }
