@@ -415,7 +415,11 @@ try {
 
     // Auto-backfill academic_year for existing records based on active academic_year setting
     try {
-        $curYear = getSetting($pdo, 'academic_year', date('Y'));
+        $curYear = date('Y');
+        $yrStmt = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'academic_year' LIMIT 1");
+        if ($yrStmt && ($val = $yrStmt->fetchColumn())) {
+            $curYear = trim($val);
+        }
         foreach (['applications', 's1_applications', 's5_applications'] as $t) {
             $checkTbl = $pdo->query("SHOW TABLES LIKE '$t'");
             if ($checkTbl && $checkTbl->rowCount() > 0) {
