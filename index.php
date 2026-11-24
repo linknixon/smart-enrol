@@ -541,7 +541,10 @@ if (empty($slider_images)) {
 
             <!-- Official Fees Table Container -->
             <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs">
+                <div class="md:hidden flex items-center justify-end gap-1.5 text-[11px] text-slate-500 mb-2 font-medium">
+                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all fees
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full text-xs text-left border-collapse min-w-[760px]">
                         <thead>
                             <tr class="bg-slate-100/90 border-b border-slate-300 text-slate-800 text-[11px] font-extrabold uppercase">

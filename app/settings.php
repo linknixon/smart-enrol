@@ -1092,7 +1092,10 @@ if (empty($current_slider_images)) {
                         </div>
 
                         <!-- Interactive Table Editor -->
-                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs bg-white">
+                        <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 mb-1.5 font-medium">
+                            <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to edit columns
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs bg-white" style="-webkit-overflow-scrolling: touch;">
                             <table class="w-full text-xs text-left border-collapse min-w-[780px]" id="feesMatrixEditorTable">
                                 <thead id="feesMatrixTableHead">
                                     <!-- Rendered dynamically by JavaScript -->
@@ -1824,7 +1827,8 @@ if (empty($current_slider_images)) {
         if (!previewBox) return;
 
         let html = `<div class="mb-2"><span class="text-xs font-black text-slate-800 uppercase tracking-wide">${escapeHtml(feesMatrixData.title || 'Fees structure')}</span></div>`;
-        html += '<table class="w-full text-xs text-left border-collapse min-w-[700px] bg-white rounded-lg border border-slate-300 overflow-hidden">';
+        html += '<div class="overflow-x-auto w-full rounded-xl border border-slate-300 shadow-xs" style="-webkit-overflow-scrolling: touch;">';
+        html += '<table class="w-full text-xs text-left border-collapse min-w-[700px] bg-white">';
         html += '<thead><tr class="bg-slate-100/90 border-b border-slate-300 text-[10.5px] font-bold text-slate-800 uppercase">';
         html += '<th class="p-2.5 border-r border-slate-300 text-center w-20">CLASS</th>';
         feesMatrixData.columns.forEach(col => {
@@ -1843,7 +1847,7 @@ if (empty($current_slider_images)) {
             });
             html += `</tr>`;
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         previewBox.innerHTML = html;
     }
 

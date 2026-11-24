@@ -253,8 +253,11 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium">
+                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways
+                </div>
+                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider">
                                 <th class="px-4 py-3 text-center">ID</th>

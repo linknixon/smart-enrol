@@ -239,13 +239,13 @@ html, body {
                     <i class="fa-solid fa-layer-group text-brand-700"></i> Admission Category:
                 </span>
                 <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto max-w-full">
-                    <button type="button" id="tabS1" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('S1')">
+                    <button type="button" id="tabS1" class="class-tab-btn px-1.5 sm:px-4 py-2 rounded-xl text-[10.5px] sm:text-xs font-bold transition text-center leading-tight" onclick="selectClassCategory('S1')">
                         Senior One (S1) <?= !$statusS1['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
-                    <button type="button" id="tabS5" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('S5')">
+                    <button type="button" id="tabS5" class="class-tab-btn px-1.5 sm:px-4 py-2 rounded-xl text-[10.5px] sm:text-xs font-bold transition text-center leading-tight" onclick="selectClassCategory('S5')">
                         Senior Five (S5) <?= !$statusS5['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
-                    <button type="button" id="tabTransfers" class="class-tab-btn px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center" onclick="selectClassCategory('OTHER')">
+                    <button type="button" id="tabTransfers" class="class-tab-btn px-1.5 sm:px-4 py-2 rounded-xl text-[10.5px] sm:text-xs font-bold transition text-center leading-tight" onclick="selectClassCategory('OTHER')">
                         Transfers (S2-S6) <?= !$statusTrans['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
                 </div>
@@ -277,7 +277,10 @@ html, body {
 
             <!-- Fees Table Content (Collapsed by default) -->
             <div id="feesStructureContent" class="hidden mt-4 pt-4 border-t border-slate-100">
-                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs">
+                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 mb-1.5 font-medium">
+                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all fees
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full text-xs text-left border-collapse min-w-[720px]">
                         <thead>
                             <tr class="bg-slate-100/80 border-b border-slate-300 text-slate-800 text-[11px] font-extrabold uppercase">
@@ -344,19 +347,19 @@ html, body {
                     <!-- Step 1 -->
                     <div class="step-item relative z-10 text-center flex-1 active" id="stepIndicator1">
                         <div class="step-circle w-9 h-9 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mx-auto transition">1</div>
-                        <span class="step-title block text-[11px] font-semibold text-slate-500 mt-1.5">Student Bio Data</span>
+                        <span class="step-title block text-[10px] sm:text-[11px] font-semibold text-slate-500 mt-1.5 px-0.5 leading-tight">Student Bio Data</span>
                     </div>
 
                     <!-- Step 2 -->
                     <div class="step-item relative z-10 text-center flex-1" id="stepIndicator2">
                         <div class="step-circle w-9 h-9 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mx-auto transition">2</div>
-                        <span class="step-title block text-[11px] font-semibold text-slate-500 mt-1.5">Academic Credentials</span>
+                        <span class="step-title block text-[10px] sm:text-[11px] font-semibold text-slate-500 mt-1.5 px-0.5 leading-tight">Academic Credentials</span>
                     </div>
 
                     <!-- Step 3 -->
                     <div class="step-item relative z-10 text-center flex-1" id="stepIndicator3">
                         <div class="step-circle w-9 h-9 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mx-auto transition">3</div>
-                        <span class="step-title block text-[11px] font-semibold text-slate-500 mt-1.5">Parent & Submit</span>
+                        <span class="step-title block text-[10px] sm:text-[11px] font-semibold text-slate-500 mt-1.5 px-0.5 leading-tight">Parent & Submit</span>
                     </div>
                 </div>
             </div>
@@ -1013,7 +1016,7 @@ html, body {
                                             <span class="text-[11px] font-bold text-slate-800 uppercase">Elective Subject 1 <span class="text-rose-500 font-bold">*</span></span>
                                             <span class="text-[10px] text-slate-400">e.g. Agriculture / ICT</span>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-2">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             <select name="uce_elec1_name" id="uce_elec1_name" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
                                                 <option value="Agriculture (AGR)" selected>Agriculture (AGR)</option>
                                                 <option value="Information & Comm. Tech (ICT)">Information & Comm. Tech (ICT)</option>
@@ -1044,7 +1047,7 @@ html, body {
                                             <span class="text-[11px] font-bold text-slate-800 uppercase">Elective Subject 2 (Optional)</span>
                                             <span class="text-[10px] text-slate-400">If 10 subjects taken</span>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-2">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             <select name="uce_elec2_name" id="uce_elec2_name" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
                                                 <option value="">None / Not Applicable</option>
                                                 <option value="Information & Comm. Tech (ICT)">Information & Comm. Tech (ICT)</option>
@@ -1271,11 +1274,11 @@ html, body {
                                 <p class="text-[11px] text-slate-500">Choose whether applicant details are submitted by parents or by a legal guardian / sponsor.</p>
                             </div>
                         </div>
-                        <div class="bg-slate-100 p-1 rounded-2xl flex gap-1 max-w-md border border-slate-200">
-                            <button type="button" id="btnCaregiverParents" onclick="selectCaregiverType('parents')" class="flex-1 py-2 px-3 rounded-xl text-xs font-black transition shadow-xs bg-white text-brand-900 border border-slate-200 flex items-center justify-center gap-1.5">
+                        <div class="bg-slate-100 p-1 rounded-2xl flex flex-col sm:flex-row gap-1 max-w-md border border-slate-200">
+                            <button type="button" id="btnCaregiverParents" onclick="selectCaregiverType('parents')" class="flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-black transition shadow-xs bg-white text-brand-900 border border-slate-200 flex items-center justify-center gap-1.5">
                                 <i class="fa-solid fa-people-roof text-brand-700"></i> Parents (Father & Mother)
                             </button>
-                            <button type="button" id="btnCaregiverGuardian" onclick="selectCaregiverType('guardian')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+                            <button type="button" id="btnCaregiverGuardian" onclick="selectCaregiverType('guardian')" class="flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
                                 <i class="fa-solid fa-hands-holding-child text-gold-600"></i> Guardian / Sponsor Only
                             </button>
                         </div>

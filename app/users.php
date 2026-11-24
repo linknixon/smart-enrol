@@ -378,7 +378,7 @@ if (!$isSuperAdmin) {
             </div>
         </header>
 
-        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+        <div class="p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-4 sm:space-y-6">
 
             <!-- Alerts -->
             <?php if ($error): ?>
@@ -398,7 +398,7 @@ if (!$isSuperAdmin) {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- Form Section (Add / Edit User) -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-fit">
+                <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-fit">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                         <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">
                             <?= $editUser ? 'Edit User Credentials' : 'Create Staff Account' ?>
@@ -516,8 +516,11 @@ if (!$isSuperAdmin) {
                         <span class="text-xs text-slate-500 font-semibold"><?= count($users) ?> registered</span>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                    <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium">
+                        <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways
+                    </div>
+                    <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                        <table class="w-full text-left border-collapse min-w-[640px]">
                             <thead>
                                 <tr class="bg-slate-100/70 border-b border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider">
                                     <th class="px-4 py-3">Full Name</th>

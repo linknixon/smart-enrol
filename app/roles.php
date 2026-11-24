@@ -410,8 +410,8 @@ try {
     </main>
 
     <!-- Create Role Modal -->
-    <div id="newRoleModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+    <div id="newRoleModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="text-base font-bold text-slate-900">Define New System Role</h3>
                 <button type="button" onclick="document.getElementById('newRoleModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-sm">
@@ -497,8 +497,8 @@ try {
     </div>
 
     <!-- Edit Role Modal -->
-    <div id="editRoleModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+    <div id="editRoleModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="text-base font-bold text-slate-900">Edit Role Privileges</h3>
                 <button type="button" onclick="document.getElementById('editRoleModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-sm">

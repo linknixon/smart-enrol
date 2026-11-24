@@ -438,13 +438,16 @@ $count = count($applications);
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center no-print">
                     <div>
                         <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider">Report Records</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Showing 20 report records per page (fit to screen, no horizontal scroll)</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Showing 20 report records per page</p>
                     </div>
                     <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded">Total Records: <?= $totalRecords ?></span>
                 </div>
 
-                <div class="w-full overflow-hidden">
-                    <table class="w-full table-fixed text-left border-collapse text-sm">
+                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium no-print">
+                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table horizontally to view all report columns
+                </div>
+                <div class="w-full overflow-x-auto print:overflow-visible" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full min-w-[980px] print:min-w-0 print:table-fixed text-left border-collapse text-xs sm:text-sm">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-700 font-black uppercase tracking-wider text-xs print:bg-white print:border-b-2 print:border-black">
                                 <th class="w-[3.5%] px-1.5 py-3 text-center">#</th>

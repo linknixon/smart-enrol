@@ -534,7 +534,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 </div>
 
                 <!-- Desktop / Tablet Table View (>=640px and print) -->
-                <div class="hidden sm:block overflow-x-auto print:block">
+                <div class="hidden sm:block overflow-x-auto print:block" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full text-left border-collapse text-xs table-auto min-w-[700px]" id="admissionTable">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px] print:bg-white print:border-b-2 print:border-black">

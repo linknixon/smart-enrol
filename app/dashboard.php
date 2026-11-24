@@ -574,7 +574,7 @@ $msg = $_GET['msg'] ?? '';
                     </div>
                 </div>
                 <!-- Rejected -->
-                <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="col-span-2 sm:col-span-1 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <span class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Rejected</span>
                         <span class="block text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $rejectedCount ?></span>
@@ -844,14 +844,17 @@ $msg = $_GET['msg'] ?? '';
                     <span class="text-xs font-bold text-slate-800 bg-slate-100 border border-slate-300 px-2.5 py-1 rounded">Filtered Total: <?= $filteredCount ?></span>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium">
+                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all columns
+                </div>
+                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
                     <?php
                     $applicationsById = [];
                     foreach ($applications as $a) {
                         $applicationsById[$a['id']] = $a;
                     }
                     ?>
-                    <table class="w-full text-left border-collapse text-xs table-auto">
+                    <table class="w-full text-left border-collapse text-xs table-auto min-w-[760px]">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                                 <th class="px-2 py-2 text-center w-8">#</th>
@@ -1137,9 +1140,9 @@ $msg = $_GET['msg'] ?? '';
     </main>
 
     <!-- Reject Application with Reason Modal -->
-    <div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between">
+            <div class="px-4 sm:px-6 py-3.5 sm:py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-sm font-bold">
                         <i class="fa-solid fa-triangle-exclamation"></i>
@@ -1207,10 +1210,10 @@ $msg = $_GET['msg'] ?? '';
     </div>
 
     <!-- View UCE NLSC Subject Competencies Modal -->
-    <div id="nlscModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 hidden">
+    <div id="nlscModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-2 sm:p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div class="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
                 <div class="flex items-center gap-3">
                     <span class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-sm font-bold border border-white/20 text-white">
                         <i class="fa-solid fa-graduation-cap"></i>
@@ -1280,8 +1283,8 @@ $msg = $_GET['msg'] ?? '';
                         <span class="font-bold text-slate-800 uppercase tracking-wide">Subject Achievement Levels & Descriptors</span>
                         <div id="nlscGradeSummaryBadges" class="flex items-center gap-1.5"></div>
                     </div>
-                    <div class="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-                        <table class="w-full text-xs text-left">
+                    <div class="border border-slate-200 rounded-xl overflow-x-auto shadow-2xs" style="-webkit-overflow-scrolling: touch;">
+                        <table class="w-full text-xs text-left min-w-[500px]">
                             <thead class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
                                 <tr>
                                     <th class="px-3.5 py-2">Subject Name</th>
@@ -1307,10 +1310,10 @@ $msg = $_GET['msg'] ?? '';
     </div>
 
     <!-- View Complete Application Details Modal -->
-    <div id="fullApplicationModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div id="fullApplicationModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 text-white flex items-center justify-between shrink-0">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 text-white flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-3">
                     <span class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg border border-white/20 text-gold-400">
                         <i class="fa-solid fa-id-card-clip"></i>
@@ -1329,7 +1332,7 @@ $msg = $_GET['msg'] ?? '';
             </div>
 
             <!-- Modal Scrollable Content -->
-            <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+            <div class="p-3.5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 text-xs text-slate-700">
 
                 <!-- Rejection Banner (Conditional) -->
                 <div id="modalRejectionBanner" class="hidden p-3.5 bg-rose-50 border-l-4 border-rose-500 rounded-r-xl space-y-1">
@@ -1532,8 +1535,8 @@ $msg = $_GET['msg'] ?? '';
                                     <span class="font-bold text-slate-700 uppercase text-[10px] tracking-wider block">UCE NLSC Subject Scores & Competencies:</span>
                                     <span id="modalAlevelSubjectCount" class="text-[10.5px] font-bold text-slate-500"></span>
                                 </div>
-                                <div class="overflow-x-auto rounded-lg border border-slate-200">
-                                    <table class="w-full text-left text-xs border-collapse">
+                                <div class="overflow-x-auto rounded-lg border border-slate-200" style="-webkit-overflow-scrolling: touch;">
+                                    <table class="w-full text-left text-xs border-collapse min-w-[480px]">
                                         <thead>
                                             <tr class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
                                                 <th class="px-3 py-1.5">Subject</th>
@@ -1593,11 +1596,11 @@ $msg = $_GET['msg'] ?? '';
             </div>
 
             <!-- Modal Action Footer -->
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-                <button type="button" onclick="closeFullAppModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition shadow-2xs cursor-pointer">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
+                <button type="button" onclick="closeFullAppModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition shadow-2xs cursor-pointer text-center">
                     Close
                 </button>
-                <div id="modalActionButtons" class="flex items-center gap-2"></div>
+                <div id="modalActionButtons" class="flex flex-wrap items-center justify-end gap-2"></div>
             </div>
         </div>
     </div>
@@ -1992,7 +1995,7 @@ $msg = $_GET['msg'] ?? '';
                 if (canAdmitStudents) {
                     const admitBtn = document.createElement('button');
                     admitBtn.type = 'button';
-                    admitBtn.className = 'px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer';
+                    admitBtn.className = 'w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer text-center';
                     admitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Admit Candidate';
                     admitBtn.onclick = function() {
                         closeFullAppModal();
@@ -2009,7 +2012,7 @@ $msg = $_GET['msg'] ?? '';
                 if (canRejectStudents) {
                     const rejectBtn = document.createElement('button');
                     rejectBtn.type = 'button';
-                    rejectBtn.className = 'px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer';
+                    rejectBtn.className = 'w-full sm:w-auto px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer text-center';
                     rejectBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject Candidate';
                     rejectBtn.onclick = function() {
                         closeFullAppModal();
@@ -2021,13 +2024,13 @@ $msg = $_GET['msg'] ?? '';
                 const offerBtn = document.createElement('a');
                 offerBtn.href = 'admission_offer.php?id=' + app.id;
                 offerBtn.target = '_blank';
-                offerBtn.className = 'px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5';
+                offerBtn.className = 'w-full sm:w-auto px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 text-center';
                 offerBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download Offer Letter';
                 actionsDiv.appendChild(offerBtn);
 
                 const reportBtn = document.createElement('a');
                 reportBtn.href = 'mark_reported.php?id=' + app.id;
-                reportBtn.className = 'px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5';
+                reportBtn.className = 'w-full sm:w-auto px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 text-center';
                 reportBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Mark Reported & Enrolled';
                 reportBtn.onclick = function(e) {
                     if (!confirm('Confirm that student ' + fullName + ' has physically reported and enrolled at school? This will archive their admission.')) {
@@ -2040,7 +2043,7 @@ $msg = $_GET['msg'] ?? '';
                 if (isAuto && app.auto_admit_review_status !== 'reviewed') {
                     const reviewBtn = document.createElement('a');
                     reviewBtn.href = 'review_auto_admit.php?id=' + app.id;
-                    reviewBtn.className = 'px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 whitespace-nowrap';
+                    reviewBtn.className = 'w-full sm:w-auto px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 whitespace-nowrap text-center';
                     reviewBtn.innerHTML = '<i class="fa-solid fa-check-to-slot"></i> Mark Reviewed';
                     reviewBtn.onclick = function(e) {
                         if (!confirm('Confirm that you have reviewed the auto-admitted documents and credentials for ' + fullName + '?')) {
