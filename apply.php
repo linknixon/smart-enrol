@@ -469,6 +469,54 @@ html, body {
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                         <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nationality <span class="text-rose-500 font-bold">*</span></label>
+                            <select name="nationality" id="nationalitySelect" onchange="toggleNationalityOther(this.value)" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition bg-white font-medium text-slate-800">
+                                <option value="Ugandan" selected>Ugandan</option>
+                                <option value="Kenyan">Kenyan</option>
+                                <option value="Tanzanian">Tanzanian</option>
+                                <option value="Rwandan">Rwandan</option>
+                                <option value="South Sudanese">South Sudanese</option>
+                                <option value="Burundian">Burundian</option>
+                                <option value="Congolese (DRC)">Congolese (DRC)</option>
+                                <option value="Other">Other Nationality</option>
+                            </select>
+                            <input type="text" name="nationality_other" id="nationalityOther" placeholder="Specify nationality..." class="hidden mt-2 w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Place of Residence <span class="text-rose-500 font-bold">*</span></label>
+                            <input type="text" name="residence" id="residenceInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Kisoro Town, Nyarubuye, Kabale, Kampala">
+                            <p class="text-[10px] text-slate-400 mt-1">Town, city, or physical home area where the student resides.</p>
+                        </div>
+                    </div>
+
+                    <!-- Special Health Problem / Medical Needs -->
+                    <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                                    <i class="fa-solid fa-notes-medical text-rose-600"></i> Do you have any special health problem? <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Indicate if student requires medical attention, chronic care, or has allergies.</p>
+                            </div>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-brand-700 transition">
+                                    <input type="radio" name="health_problem" value="No" checked onchange="toggleHealthDetails(false)" class="text-brand-700 focus:ring-brand-700">
+                                    <span>No (None)</span>
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-rose-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-rose-600 transition">
+                                    <input type="radio" name="health_problem" value="Yes" onchange="toggleHealthDetails(true)" class="text-rose-600 focus:ring-rose-500">
+                                    <span>Yes, Specify</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="healthDetailsBox" class="hidden pt-2 border-t border-slate-200">
+                            <label class="block text-[11px] font-bold text-rose-800 uppercase mb-1">Specify Health Problem / Medical Condition & Care Instructions:</label>
+                            <textarea name="health_details" id="healthDetailsInput" rows="2" class="w-full px-3 py-2 border border-rose-300 rounded-xl text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-rose-600 transition" placeholder="e.g. Asthma (uses inhaler), Allergies to nuts/penicillin, Sickle Cell trait, Requires specialized diet..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Class of Entry <span class="text-rose-500 font-bold">*</span></label>
                             <select name="class_of_entry" id="classOfEntry" required class="w-full px-3.5 py-2.5 border-2 border-brand-700/60 rounded-xl text-sm font-bold text-brand-900 bg-brand-50/30 focus:outline-none focus:border-brand-700 transition">
                                 <option value="S1" <?= $preSelectedClass === 'S1' ? 'selected' : '' ?>>Senior One (S1) - O-Level Entry (PLE)</option>
@@ -1209,28 +1257,143 @@ html, body {
                         <span class="text-xs font-semibold text-slate-400">Final Step</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parent / Guardian Full Name <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="text" name="parent_name" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. RWAMBO JOHN">
+                    <input type="hidden" name="caregiver_type" id="caregiverTypeInput" value="parents">
+                    <input type="hidden" name="parent_name" id="parentNameConsolidated" value="">
+                    <input type="hidden" name="parent_phone" id="parentPhoneConsolidated" value="">
+
+                    <!-- Strategic Caregiver Type Switcher -->
+                    <div class="space-y-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                                    <i class="fa-solid fa-hands-holding-child text-brand-700"></i> Primary Family / Caregiver Category <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <p class="text-[11px] text-slate-500">Choose whether applicant details are submitted by parents or by a legal guardian / sponsor.</p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telephone Contact (Uganda Format) <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="tel" inputmode="tel" name="parent_phone" id="parentPhone" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. 0772123456 or +256772123456">
-                            <p class="text-[10px] text-slate-400 mt-1">Active phone number for SMS and WhatsApp communications.</p>
+                        <div class="bg-slate-100 p-1 rounded-2xl flex gap-1 max-w-md border border-slate-200">
+                            <button type="button" id="btnCaregiverParents" onclick="selectCaregiverType('parents')" class="flex-1 py-2 px-3 rounded-xl text-xs font-black transition shadow-xs bg-white text-brand-900 border border-slate-200 flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-people-roof text-brand-700"></i> Parents (Father & Mother)
+                            </button>
+                            <button type="button" id="btnCaregiverGuardian" onclick="selectCaregiverType('guardian')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-hands-holding-child text-gold-600"></i> Guardian / Sponsor Only
+                            </button>
                         </div>
                     </div>
 
+                    <!-- SECTION A: PARENTS PARTICULARS (Father & Mother) -->
+                    <div id="caregiverParentsSection" class="space-y-3.5">
+                        <div class="p-3 bg-brand-50/50 rounded-xl border border-brand-200/60 text-[11px] text-brand-950 flex items-start gap-2">
+                            <i class="fa-solid fa-circle-info text-brand-700 mt-0.5 shrink-0"></i>
+                            <span>Provide particulars for both parents, or either Father or Mother (at least one valid telephone contact is required). Single parents can fill either contact freely.</span>
+                        </div>
+
+                        <!-- Father Particulars -->
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                            <span class="block text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-tie text-brand-700"></i> Father's Particulars
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Father's Full Name</label>
+                                    <input type="text" name="father_name" id="fatherName" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. RWAMBO JOHN">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Father's Telephone Contact</label>
+                                    <input type="tel" inputmode="tel" name="father_phone" id="fatherPhone" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. 0772123456 or +256772123456">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mother Particulars -->
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                            <span class="block text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                                <i class="fa-solid fa-person-dress text-brand-700"></i> Mother's Particulars
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Mother's Full Name</label>
+                                    <input type="text" name="mother_name" id="motherName" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. MUKARWIMO ALICE">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Mother's Telephone Contact</label>
+                                    <input type="tel" inputmode="tel" name="mother_phone" id="motherPhone" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. 0782654321 or +256782654321">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optional Guardian / Sponsor Expansion if Different from Parent -->
+                        <div class="p-3.5 bg-white rounded-xl border border-dashed border-slate-300">
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                                <input type="checkbox" id="hasSponsorCheck" onchange="toggleSponsorBox(this.checked)" class="rounded text-brand-700 focus:ring-brand-700 w-4 h-4">
+                                <span>Fees are paid by a Guardian / Sponsor (different from Father & Mother)</span>
+                            </label>
+                            <div id="sponsorFieldsBox" class="hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="sm:col-span-1">
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Guardian / Sponsor's Name</label>
+                                        <input type="text" name="guardian_name_opt" id="guardianNameOpt" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:outline-none focus:border-brand-700" placeholder="e.g. JOHN BOSCO / COMPASSION">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Guardian / Sponsor's Contact</label>
+                                        <input type="tel" inputmode="tel" name="guardian_phone_opt" id="guardianPhoneOpt" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:outline-none focus:border-brand-700" placeholder="e.g. 0701234567">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Relationship</label>
+                                        <input type="text" name="guardian_relation_opt" id="guardianRelationOpt" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:outline-none focus:border-brand-700" placeholder="e.g. Uncle / Sponsor NGO">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION B: GUARDIAN / SPONSOR ONLY (For orphans or students with guardian) -->
+                    <div id="caregiverGuardianSection" class="hidden space-y-3.5">
+                        <div class="p-3 bg-gold-50/70 rounded-xl border border-gold-200 text-[11px] text-slate-800 flex items-start gap-2">
+                            <i class="fa-solid fa-hands-holding-child text-gold-700 mt-0.5 shrink-0 text-sm"></i>
+                            <span>This section is designated for applicants who do not have parents present or are under the care of a legal guardian, relative, or educational sponsor.</span>
+                        </div>
+
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                            <span class="block text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-shield text-brand-700"></i> Guardian / Sponsor Particulars
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="sm:col-span-1">
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Guardian / Sponsor's Full Name <span class="text-rose-500 font-bold">*</span></label>
+                                    <input type="text" name="guardian_name_main" id="guardianNameMain" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. RWABUTOGO EMILY">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Relationship to Student <span class="text-rose-500 font-bold">*</span></label>
+                                    <select name="guardian_relation_main" id="guardianRelationMain" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-brand-700">
+                                        <option value="Uncle / Aunt">Uncle / Aunt</option>
+                                        <option value="Grandparent">Grandparent</option>
+                                        <option value="Elder Brother / Sister">Elder Brother / Sister</option>
+                                        <option value="Legal Guardian">Legal Guardian</option>
+                                        <option value="Sponsor / NGO">Educational Sponsor / NGO</option>
+                                        <option value="Foster Parent">Foster Parent</option>
+                                        <option value="Other">Other Caregiver</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Guardian / Sponsor's Contact <span class="text-rose-500 font-bold">*</span></label>
+                                    <input type="tel" inputmode="tel" name="guardian_phone_main" id="guardianPhoneMain" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. 0772123456 or +256772123456">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email & National ID NIN Section (Universal) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parent NIRA NIN (National ID) <?= ($show_parent_id_upload === '1') ? '<span class="text-rose-500 font-bold">*</span>' : '<span class="text-slate-400 font-normal">(Optional)</span>' ?></label>
-                            <input type="text" inputmode="text" name="parent_nin" id="parentNin" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" <?= ($show_parent_id_upload === '1') ? 'required' : '' ?> class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium uppercase text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. CM89012345ABCD">
-                            <p class="text-[10px] text-slate-400 mt-1">14-character Ugandan National Identification Number.</p>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Guardian's / Parent's E-mail <span class="text-rose-500 font-bold">*</span></label>
+                            <input type="email" inputmode="email" name="parent_email" id="parentEmail" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. parent@example.com">
+                            <p class="text-[10px] text-slate-400 mt-1">Official provisional admission letter and application receipt will be sent here.</p>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parent / Guardian Email <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="email" inputmode="email" name="parent_email" id="parentEmail" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. parent@example.com">
-                            <p class="text-[10px] text-slate-400 mt-1">An automated confirmation letter will be emailed here.</p>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parent / Guardian National ID NIN <?= ($show_parent_id_upload === '1') ? '<span class="text-rose-500 font-bold">*</span>' : '<span class="text-slate-400 font-normal">(Optional)</span>' ?></label>
+                            <input type="text" inputmode="text" name="parent_nin" id="parentNin" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" <?= ($show_parent_id_upload === '1') ? 'required' : '' ?> class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans font-medium uppercase text-slate-800 focus:outline-none focus:border-brand-700 transition" placeholder="e.g. CM89012345ABCD">
+                            <p class="text-[10px] text-slate-400 mt-1">14-character Ugandan National Identification Number.</p>
                         </div>
                     </div>
 
@@ -1755,6 +1918,34 @@ html, body {
                 return false;
             }
 
+            const natSelect = document.getElementById('nationalitySelect');
+            if (!natSelect || !natSelect.value) {
+                showFieldWarning(natSelect, "Please select the candidate's Nationality.");
+                return false;
+            }
+            if (natSelect.value === 'Other') {
+                const natOther = document.getElementById('nationalityOther');
+                if (!natOther || !natOther.value.trim()) {
+                    showFieldWarning(natOther, "Please specify the candidate's Nationality.");
+                    return false;
+                }
+            }
+
+            const residenceInp = document.getElementById('residenceInput');
+            if (!residenceInp || !residenceInp.value.trim()) {
+                showFieldWarning(residenceInp, "You have not entered the Place of Residence / Home area.");
+                return false;
+            }
+
+            const healthProb = document.querySelector("input[name='health_problem']:checked");
+            if (healthProb && healthProb.value === 'Yes') {
+                const healthDet = document.getElementById('healthDetailsInput');
+                if (!healthDet || !healthDet.value.trim()) {
+                    showFieldWarning(healthDet, "Please specify the special health problem / medical condition, or select 'No (None)'.");
+                    return false;
+                }
+            }
+
             const showPassportPhoto = <?= json_encode($show_passport_photo_upload === '1') ?>;
             if (showPassportPhoto) {
                 const passInp = document.getElementById('passportFile');
@@ -1975,14 +2166,77 @@ html, body {
 
         // STEP 3 VALIDATIONS: Parent / Guardian & Submit
         if (step === 3) {
-            const pName = document.querySelector("input[name='parent_name']");
-            if (!pName || pName.value.trim().length < 2) {
-                showFieldWarning(pName, "You have not entered the Parent / Guardian Full Name.");
+            const caregiverTypeInp = document.getElementById('caregiverTypeInput');
+            const caregiverType = caregiverTypeInp ? caregiverTypeInp.value : 'parents';
+            const phoneRegex = /^(?:\+256|256|0)[37][0-9]{8}$/;
+
+            if (caregiverType === 'guardian') {
+                const gName = document.getElementById('guardianNameMain');
+                if (!gName || gName.value.trim().length < 2) {
+                    showFieldWarning(gName, "Please enter the Guardian / Sponsor's Full Name.");
+                    return false;
+                }
+                const gPhone = document.getElementById('guardianPhoneMain');
+                if (!gPhone || !phoneRegex.test(gPhone.value.trim())) {
+                    showFieldWarning(gPhone, "Please enter a valid Guardian / Sponsor Telephone Contact (e.g. 0772123456 or +256772123456).");
+                    return false;
+                }
+                const gRel = (document.getElementById('guardianRelationMain') || {}).value || 'Guardian';
+                document.getElementById('parentNameConsolidated').value = gName.value.trim() + ' (' + gRel + ')';
+                document.getElementById('parentPhoneConsolidated').value = gPhone.value.trim();
+            } else {
+                // Parents mode
+                const fName = (document.getElementById('fatherName') || {}).value ? document.getElementById('fatherName').value.trim() : '';
+                const fPhone = (document.getElementById('fatherPhone') || {}).value ? document.getElementById('fatherPhone').value.trim() : '';
+                const mName = (document.getElementById('motherName') || {}).value ? document.getElementById('motherName').value.trim() : '';
+                const mPhone = (document.getElementById('motherPhone') || {}).value ? document.getElementById('motherPhone').value.trim() : '';
+                const gNameOpt = (document.getElementById('guardianNameOpt') || {}).value ? document.getElementById('guardianNameOpt').value.trim() : '';
+                const gPhoneOpt = (document.getElementById('guardianPhoneOpt') || {}).value ? document.getElementById('guardianPhoneOpt').value.trim() : '';
+
+                if (!fName && !mName && !gNameOpt) {
+                    showFieldWarning(document.getElementById('fatherName'), "Please enter at least Father's Name, Mother's Name, or Guardian's Name.");
+                    return false;
+                }
+
+                if (!fPhone && !mPhone && !gPhoneOpt) {
+                    showFieldWarning(document.getElementById('fatherPhone'), "Please provide at least one active telephone contact (Father's, Mother's, or Sponsor's contact).");
+                    return false;
+                }
+
+                if (fPhone && !phoneRegex.test(fPhone)) {
+                    showFieldWarning(document.getElementById('fatherPhone'), "Father's telephone contact is invalid. Use standard format e.g. 0772123456 or +256772123456.");
+                    return false;
+                }
+                if (mPhone && !phoneRegex.test(mPhone)) {
+                    showFieldWarning(document.getElementById('motherPhone'), "Mother's telephone contact is invalid. Use standard format e.g. 0782654321 or +256782654321.");
+                    return false;
+                }
+                if (gPhoneOpt && !phoneRegex.test(gPhoneOpt)) {
+                    showFieldWarning(document.getElementById('guardianPhoneOpt'), "Guardian's telephone contact is invalid. Use standard format e.g. 0701123456 or +256701123456.");
+                    return false;
+                }
+
+                const names = [];
+                if (fName) names.push("Father: " + fName);
+                if (mName) names.push("Mother: " + mName);
+                if (gNameOpt) names.push("Guardian: " + gNameOpt);
+                document.getElementById('parentNameConsolidated').value = names.join(' | ');
+                document.getElementById('parentPhoneConsolidated').value = fPhone || mPhone || gPhoneOpt;
+            }
+
+            const pEmail = document.getElementById('parentEmail');
+            if (!pEmail || !pEmail.value.trim()) {
+                showFieldWarning(pEmail, "You have not entered the Guardian / Parent Email Address.");
+                return false;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(pEmail.value.trim())) {
+                showFieldWarning(pEmail, "Please enter a valid Guardian / Parent Email Address.");
                 return false;
             }
 
             const showParentId = <?= json_encode($show_parent_id_upload === '1') ?>;
-            const pNin = document.querySelector("input[name='parent_nin']");
+            const pNin = document.getElementById('parentNin');
             if (pNin) {
                 pNin.value = pNin.value.trim().toUpperCase();
                 if (showParentId || pNin.value.length > 0) {
@@ -1991,24 +2245,6 @@ html, body {
                         showFieldWarning(pNin, "Please enter a valid Ugandan 14-character NIN starting with CM, CF, RM, or RF (e.g. CM89012345ABCD).");
                         return false;
                     }
-                }
-            }
-
-            const pPhone = document.querySelector("input[name='parent_phone']");
-            if (pPhone) {
-                const phoneRegex = /^(?:\+256|256|0)[37][0-9]{8}$/;
-                if (!phoneRegex.test(pPhone.value.trim())) {
-                    showFieldWarning(pPhone, "Please enter a valid Uganda telephone number (e.g. 0772123456 or +256772123456).");
-                    return false;
-                }
-            }
-
-            const pEmail = document.querySelector("input[name='parent_email']");
-            if (pEmail) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(pEmail.value.trim())) {
-                    showFieldWarning(pEmail, "Please enter a valid Parent / Guardian Email Address.");
-                    return false;
                 }
             }
 
@@ -2076,6 +2312,74 @@ html, body {
             if (btn) {
                 btn.classList.remove('bg-slate-700', 'hover:bg-slate-800', 'ring-slate-300');
                 btn.classList.add('fees-attention-pulse', 'bg-red-600', 'hover:bg-red-700', 'ring-red-400/60');
+            }
+        }
+    }
+
+    function toggleNationalityOther(val) {
+        const otherInp = document.getElementById('nationalityOther');
+        if (otherInp) {
+            if (val === 'Other') {
+                otherInp.classList.remove('hidden');
+                otherInp.focus();
+            } else {
+                otherInp.classList.add('hidden');
+                otherInp.value = '';
+            }
+        }
+    }
+
+    function toggleHealthDetails(show) {
+        const box = document.getElementById('healthDetailsBox');
+        const input = document.getElementById('healthDetailsInput');
+        if (box) {
+            if (show) {
+                box.classList.remove('hidden');
+                if (input) input.focus();
+            } else {
+                box.classList.add('hidden');
+                if (input) input.value = '';
+            }
+        }
+    }
+
+    function selectCaregiverType(type) {
+        const input = document.getElementById('caregiverTypeInput');
+        const parentsSec = document.getElementById('caregiverParentsSection');
+        const guardianSec = document.getElementById('caregiverGuardianSection');
+        const btnParents = document.getElementById('btnCaregiverParents');
+        const btnGuardian = document.getElementById('btnCaregiverGuardian');
+
+        if (input) input.value = type;
+
+        if (type === 'guardian') {
+            if (parentsSec) parentsSec.classList.add('hidden');
+            if (guardianSec) guardianSec.classList.remove('hidden');
+            if (btnParents) {
+                btnParents.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+            }
+            if (btnGuardian) {
+                btnGuardian.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-black transition shadow-xs bg-white text-gold-900 border border-slate-200 flex items-center justify-center gap-1.5';
+            }
+        } else {
+            if (guardianSec) guardianSec.classList.add('hidden');
+            if (parentsSec) parentsSec.classList.remove('hidden');
+            if (btnParents) {
+                btnParents.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-black transition shadow-xs bg-white text-brand-900 border border-slate-200 flex items-center justify-center gap-1.5';
+            }
+            if (btnGuardian) {
+                btnGuardian.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+            }
+        }
+    }
+
+    function toggleSponsorBox(show) {
+        const box = document.getElementById('sponsorFieldsBox');
+        if (box) {
+            if (show) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
             }
         }
     }

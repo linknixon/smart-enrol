@@ -408,6 +408,49 @@ if ($dupNameCheck->fetchColumn() > 0) {
     die("Duplicate Application Detected: An application for candidate '" . htmlspecialchars($studentName) . "' with date of birth " . htmlspecialchars($dob) . " has already been registered in the system.");
 }
 
+// Student Nationality, Residence, and Health Information
+$nationality    = trim($_POST['nationality'] ?? 'Ugandan');
+if ($nationality === 'Other' && !empty($_POST['nationality_other'])) {
+    $nationality = trim($_POST['nationality_other']);
+}
+$residence      = trim($_POST['residence'] ?? '');
+$health_problem = trim($_POST['health_problem'] ?? 'No');
+$health_details = ($health_problem === 'Yes') ? trim($_POST['health_details'] ?? '') : '';
+
+// Strategic Caregiver Details (Parents vs Guardian/Sponsor)
+$caregiver_type = trim($_POST['caregiver_type'] ?? 'parents');
+$father_name    = trim($_POST['father_name'] ?? '');
+$father_phone   = trim($_POST['father_phone'] ?? '');
+$mother_name    = trim($_POST['mother_name'] ?? '');
+$mother_phone   = trim($_POST['mother_phone'] ?? '');
+
+if ($caregiver_type === 'guardian') {
+    $guardian_name     = trim($_POST['guardian_name_main'] ?? ($_POST['guardian_name'] ?? ''));
+    $guardian_phone    = trim($_POST['guardian_phone_main'] ?? ($_POST['guardian_phone'] ?? ''));
+    $guardian_relation = trim($_POST['guardian_relation_main'] ?? ($_POST['guardian_relation'] ?? ''));
+} else {
+    $guardian_name     = trim($_POST['guardian_name_opt'] ?? ($_POST['guardian_name'] ?? ''));
+    $guardian_phone    = trim($_POST['guardian_phone_opt'] ?? ($_POST['guardian_phone'] ?? ''));
+    $guardian_relation = trim($_POST['guardian_relation_opt'] ?? ($_POST['guardian_relation'] ?? ''));
+}
+
+// Compute backward-compatible parent_name and parent_phone
+if ($caregiver_type === 'guardian' && !empty($guardian_name)) {
+    $parent_name  = $guardian_name . (!empty($guardian_relation) ? " ({$guardian_relation})" : " (Guardian)");
+    $parent_phone = !empty($guardian_phone) ? $guardian_phone : (!empty($father_phone) ? $father_phone : $mother_phone);
+} else {
+    $names = [];
+    if (!empty($father_name)) $names[] = "Father: " . $father_name;
+    if (!empty($mother_name)) $names[] = "Mother: " . $mother_name;
+    if (empty($names) && !empty($guardian_name)) $names[] = "Guardian: " . $guardian_name;
+    if (empty($names) && !empty($_POST['parent_name'])) $names[] = trim($_POST['parent_name']);
+    $parent_name  = !empty($names) ? implode(' | ', $names) : 'Parent / Guardian';
+    $parent_phone = !empty($father_phone) ? $father_phone : (!empty($mother_phone) ? $mother_phone : (!empty($guardian_phone) ? $guardian_phone : trim($_POST['parent_phone'] ?? '')));
+}
+if (empty($parent_phone) && !empty($_POST['parent_phone'])) {
+    $parent_phone = trim($_POST['parent_phone']);
+}
+
 // Residential Address Fields
 $parent_village   = trim($_POST['parent_village'] ?? '');
 $parent_parish    = trim($_POST['parent_parish'] ?? '');
@@ -421,14 +464,25 @@ if (empty($parent_address)) {
 // Insert Application Record
 $stmt = $pdo->prepare("
 INSERT INTO applications (
-    surname, firstname, othernames, sex, dob, age, religion, class_of_entry, academic_year, lin, passport_photo,
-    former_school, index_number, english, mathematics, sst, science,
+    surname, firstname, othernames, sex, dob, age, religion, class_of_entry, academic_year, lin,
+    nationality, residence, health_problem, health_details,
+    caregiver_type, father_name, father_phone, mother_name, mother_phone,
+    guardian_name, guardian_phone, guardian_relation,
+    passport_photo, former_school, index_number, english, mathematics, sst, science,
     aggregates, division, combination, transfer_reason, result_slip,
     parent_name, parent_nin, parent_phone, parent_address, parent_email,
     parent_village, parent_parish, parent_subcounty, parent_district, parent_id_file,
     uce_project_work, uce_subjects_json, s6_former_school, s6_report_file
 ) VALUES (
-    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+    ?,?,?,?,?,?,?,?,?,?,
+    ?,?,?,?,
+    ?,?,?,?,?,
+    ?,?,?,
+    ?,?,?,?,?,?,?,
+    ?,?,?,?,?,
+    ?,?,?,?,?,
+    ?,?,?,?,?,
+    ?,?,?,?
 )
 ");
 
@@ -443,6 +497,18 @@ $stmt->execute([
     $class,
     $academic_year,
     $lin,
+    $nationality,
+    $residence,
+    $health_problem,
+    $health_details,
+    $caregiver_type,
+    $father_name,
+    $father_phone,
+    $mother_name,
+    $mother_phone,
+    $guardian_name,
+    $guardian_phone,
+    $guardian_relation,
     $passport,
     $formerSchool,
     $indexNumber,
@@ -455,7 +521,7 @@ $stmt->execute([
     $combination,
     $transferReason,
     $resultSlip,
-    $_POST['parent_name'],
+    $parent_name,
     $parent_nin,
     $parent_phone,
     $parent_address,

@@ -1371,6 +1371,18 @@ $msg = $_GET['msg'] ?? '';
                             <span class="block text-[10px] uppercase font-bold text-slate-400">Religious Affiliation</span>
                             <span id="modalReligion" class="font-bold text-slate-800 text-xs"></span>
                         </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Nationality</span>
+                            <span id="modalNationality" class="font-bold text-slate-800 text-xs"></span>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 sm:col-span-2">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Place of Residence</span>
+                            <span id="modalResidence" class="font-bold text-slate-800 text-xs"></span>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 sm:col-span-2 lg:col-span-3">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Health / Medical Condition</span>
+                            <div id="modalHealthStatus" class="mt-0.5"></div>
+                        </div>
                         <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 sm:col-span-2 lg:col-span-3">
                             <span class="block text-[10px] uppercase font-bold text-slate-400">Learner Identification Number (LIN)</span>
                             <span id="modalLin" class="font-mono font-black text-brand-700 text-xs"></span>
@@ -1395,18 +1407,26 @@ $msg = $_GET['msg'] ?? '';
                     <h4 class="font-bold text-slate-800 uppercase text-xs tracking-wider flex items-center gap-1.5">
                         <i class="fa-solid fa-users text-brand-700"></i> Parent / Guardian Information
                     </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                         <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
-                            <span class="block text-[10px] uppercase font-bold text-slate-400">Full Name</span>
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Father's Details</span>
+                            <div id="modalFatherDetails" class="text-xs text-slate-800 mt-0.5"></div>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Mother's Details</span>
+                            <div id="modalMotherDetails" class="text-xs text-slate-800 mt-0.5"></div>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Guardian / Sponsor</span>
+                            <div id="modalGuardianDetails" class="text-xs text-slate-800 mt-0.5"></div>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Primary Contact Name</span>
                             <span id="modalParentName" class="font-bold text-slate-800 text-xs"></span>
                         </div>
                         <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
-                            <span class="block text-[10px] uppercase font-bold text-slate-400">Relationship</span>
-                            <span id="modalParentRelationship" class="font-bold text-slate-800 text-xs"></span>
-                        </div>
-                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
-                            <span class="block text-[10px] uppercase font-bold text-slate-400">Telephone Number</span>
-                            <span id="modalParentPhone" class="font-bold text-slate-800 text-xs"></span>
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Primary Phone</span>
+                            <span id="modalParentPhone" class="font-bold text-slate-800 text-xs font-mono"></span>
                         </div>
                         <div class="p-2.5 bg-white rounded-lg border border-slate-200/80">
                             <span class="block text-[10px] uppercase font-bold text-slate-400">Email Address</span>
@@ -1416,7 +1436,7 @@ $msg = $_GET['msg'] ?? '';
                             <span class="block text-[10px] uppercase font-bold text-slate-400">National ID (NIN)</span>
                             <span id="modalParentNin" class="font-mono font-bold text-slate-800 text-xs"></span>
                         </div>
-                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 sm:col-span-2 lg:col-span-3">
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 sm:col-span-2">
                             <span class="block text-[10px] uppercase font-bold text-slate-400">Parent National ID Attachment</span>
                             <div id="modalParentIdFile" class="mt-1"></div>
                         </div>
@@ -1737,7 +1757,19 @@ $msg = $_GET['msg'] ?? '';
         }
         document.getElementById('modalDobAge').textContent = ageText;
         document.getElementById('modalReligion').textContent = app.religion || 'Not Specified';
+        document.getElementById('modalNationality').textContent = app.nationality || 'Ugandan';
+        document.getElementById('modalResidence').textContent = app.residence || 'Not Specified';
         document.getElementById('modalLin').textContent = app.lin ? app.lin : 'Not Provided (Learner Identification Number Pending)';
+
+        // Health Status
+        const healthDiv = document.getElementById('modalHealthStatus');
+        if (healthDiv) {
+            if (app.health_problem === 'Yes') {
+                healthDiv.innerHTML = '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 text-rose-800 font-bold text-xs border border-rose-300"><i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Special Health Condition: ' + htmlEscape(app.health_details || 'Special care required') + '</span>';
+            } else {
+                healthDiv.innerHTML = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-xs"><i class="fa-solid fa-circle-check text-emerald-600"></i> No special health problem declared</span>';
+            }
+        }
 
         // Address
         const village = app.parent_village || app.village || 'N/A';
@@ -1750,7 +1782,42 @@ $msg = $_GET['msg'] ?? '';
         document.getElementById('modalDistrict').textContent = district;
         document.getElementById('modalConsolidatedAddress').textContent = app.parent_address || app.address || [village, parish, subcounty, district].filter(v => v !== 'N/A').join(', ') || 'N/A';
 
-        // Parent
+        // Parents & Caregiver Particulars
+        const fatherDiv = document.getElementById('modalFatherDetails');
+        if (fatherDiv) {
+            const fName = app.father_name || '';
+            const fPhone = app.father_phone || '';
+            if (fName || fPhone) {
+                fatherDiv.innerHTML = '<strong>' + htmlEscape(fName || 'Father') + '</strong>' + (fPhone ? '<br><a href="tel:' + htmlEscape(fPhone) + '" class="text-brand-700 font-mono font-bold hover:underline"><i class="fa-solid fa-phone text-[9px] mr-1"></i>' + htmlEscape(fPhone) + '</a>' : '');
+            } else {
+                fatherDiv.innerHTML = '<span class="text-slate-400 italic">Not specified</span>';
+            }
+        }
+
+        const motherDiv = document.getElementById('modalMotherDetails');
+        if (motherDiv) {
+            const mName = app.mother_name || '';
+            const mPhone = app.mother_phone || '';
+            if (mName || mPhone) {
+                motherDiv.innerHTML = '<strong>' + htmlEscape(mName || 'Mother') + '</strong>' + (mPhone ? '<br><a href="tel:' + htmlEscape(mPhone) + '" class="text-brand-700 font-mono font-bold hover:underline"><i class="fa-solid fa-phone text-[9px] mr-1"></i>' + htmlEscape(mPhone) + '</a>' : '');
+            } else {
+                motherDiv.innerHTML = '<span class="text-slate-400 italic">Not specified</span>';
+            }
+        }
+
+        const guardianDiv = document.getElementById('modalGuardianDetails');
+        if (guardianDiv) {
+            const gName = app.guardian_name || '';
+            const gPhone = app.guardian_phone || '';
+            const gRel = app.guardian_relation ? ' (' + app.guardian_relation + ')' : '';
+            if (gName || gPhone) {
+                guardianDiv.innerHTML = '<strong>' + htmlEscape(gName + gRel) + '</strong>' + (gPhone ? '<br><a href="tel:' + htmlEscape(gPhone) + '" class="text-gold-700 font-mono font-bold hover:underline"><i class="fa-solid fa-phone text-[9px] mr-1"></i>' + htmlEscape(gPhone) + '</a>' : '');
+            } else {
+                guardianDiv.innerHTML = '<span class="text-slate-400 italic">None (Parents Only)</span>';
+            }
+        }
+
+        // Primary Consolidated Contact
         document.getElementById('modalParentName').textContent = app.parent_name || 'N/A';
         document.getElementById('modalParentRelationship').textContent = app.parent_relationship || 'Parent / Guardian';
         document.getElementById('modalParentPhone').textContent = app.parent_phone || 'N/A';

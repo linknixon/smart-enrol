@@ -326,7 +326,7 @@ $detailsHtml = '<div style="font-family: \'trebuchetms\', \'Trebuchet MS\', Aria
                     '<td width="45%" style="border-bottom: 1px solid #cbd5e1; background-color: #f8fafc;"><strong>Student / App ID:</strong> <span style="font-weight: bold; font-family: courier, monospace; color: #0c4a24;">' . $student_number . '</span></td>' .
                 '</tr>' .
                 '<tr>' .
-                    '<td width="55%" style="border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;"><strong>Sex:</strong> ' . ucfirst($student['sex']) . ' &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Class:</strong> ' . $classNameLong . '</td>' .
+                    '<td width="55%" style="border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;"><strong>Sex:</strong> ' . ucfirst($student['sex']) . ' &nbsp;|&nbsp; <strong>Nationality:</strong> ' . htmlspecialchars($student['nationality'] ?? 'Ugandan') . ' &nbsp;|&nbsp; <strong>Class:</strong> ' . $classNameLong . '</td>' .
                     '<td width="45%" style="border-bottom: 1px solid #cbd5e1;">' . $academicIndexTag . '</td>' .
                 '</tr>' .
                 '<tr>' .
