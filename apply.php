@@ -415,15 +415,15 @@ html, body {
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Surname <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="text" name="surname" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. MUGISHA">
+                            <input type="text" name="surname" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Surname / Family Name">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">First Name <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="text" name="firstname" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. BRUCE">
+                            <input type="text" name="firstname" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="First Name / Given Name">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Other Names (Optional)</label>
-                            <input type="text" name="othernames" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. KWIZERA">
+                            <input type="text" name="othernames" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Other Names (Optional)">
                         </div>
                     </div>
 
@@ -484,7 +484,7 @@ html, body {
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Place of Residence <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="text" name="residence" id="residenceInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Kisoro Town, Nyarubuye, Kabale, Kampala">
+                            <input type="text" name="residence" id="residenceInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Town, City, or Residential Area">
                             <p class="text-[10px] text-slate-400 mt-1">Town, city, or physical home area where the student resides.</p>
                         </div>
                     </div>
@@ -582,7 +582,7 @@ html, body {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Former Primary School <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="former_school_s1" id="formerSchoolS1" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Mutolere Primary School">
+                                <input type="text" name="former_school_s1" id="formerSchoolS1" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Former Primary School Name">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">UNEB PLE Index Number <span class="text-rose-500 font-bold">*</span></label>
@@ -847,12 +847,12 @@ html, body {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Former O-Level Secondary School <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="former_school_s5" id="formerSchoolS5" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. St. Paul's SS">
+                                <input type="text" name="former_school_s5" id="formerSchoolS5" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Former Secondary School Name">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">UNEB UCE Index Number <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="index_number_s5" id="indexNumberS5" pattern="^U[0-9]{4}/[0-9]{3,4}$" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-700 transition uppercase" placeholder="e.g. U0452/009">
-                                <p class="text-[10px] text-slate-400 mt-1">Official format: Center Number / Candidate Number (e.g. U0452/009)</p>
+                                <input type="text" name="index_number_s5" id="indexNumberS5" pattern="^U[0-9]{4}/[0-9]{3,4}$" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-700 transition uppercase" placeholder="e.g. U0000/001">
+                                <p class="text-[10px] text-slate-400 mt-1">Official format: Center Number / Candidate Number (e.g. U0000/001)</p>
                             </div>
                         </div>
 
@@ -1136,7 +1136,7 @@ html, body {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Former Senior Five (S5) School <span class="text-rose-500 font-bold">*</span></label>
-                                    <input type="text" name="s6_former_school" id="s6FormerSchool" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. Previous A-Level High School">
+                                    <input type="text" name="s6_former_school" id="s6FormerSchool" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition bg-white" placeholder="Former A-Level School Name">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">S5 Principal Passes Achieved <span class="text-rose-500 font-bold">*</span></label>
@@ -1193,7 +1193,7 @@ html, body {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Former School Name <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="former_school_transfer" id="formerSchoolTransfer" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Previous Secondary School">
+                                <input type="text" name="former_school_transfer" id="formerSchoolTransfer" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Former School Name">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Last Class Attended <span class="text-rose-500 font-bold">*</span></label>
@@ -1296,7 +1296,7 @@ html, body {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Father's Full Name</label>
-                                    <input type="text" name="father_name" id="fatherName" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. RWAMBO JOHN">
+                                    <input type="text" name="father_name" id="fatherName" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="Father's Full Name">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Father's Telephone Contact</label>
@@ -1313,7 +1313,7 @@ html, body {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Mother's Full Name</label>
-                                    <input type="text" name="mother_name" id="motherName" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. MUKARWIMO ALICE">
+                                    <input type="text" name="mother_name" id="motherName" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="Mother's Full Name">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Mother's Telephone Contact</label>
@@ -1332,7 +1332,7 @@ html, body {
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div class="sm:col-span-1">
                                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">Guardian / Sponsor's Name</label>
-                                        <input type="text" name="guardian_name_opt" id="guardianNameOpt" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:outline-none focus:border-brand-700" placeholder="e.g. JOHN BOSCO / COMPASSION">
+                                        <input type="text" name="guardian_name_opt" id="guardianNameOpt" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:outline-none focus:border-brand-700" placeholder="Guardian Name or Sponsor Organization">
                                     </div>
                                     <div>
                                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">Guardian / Sponsor's Contact</label>
@@ -1361,7 +1361,7 @@ html, body {
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div class="sm:col-span-1">
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Guardian / Sponsor's Full Name <span class="text-rose-500 font-bold">*</span></label>
-                                    <input type="text" name="guardian_name_main" id="guardianNameMain" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="e.g. RWABUTOGO EMILY">
+                                    <input type="text" name="guardian_name_main" id="guardianNameMain" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-sans focus:outline-none focus:border-brand-700 transition bg-white" placeholder="Guardian / Sponsor's Full Name">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Relationship to Student <span class="text-rose-500 font-bold">*</span></label>
@@ -1405,21 +1405,21 @@ html, body {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">Village / Cell / LC1 <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="parent_village" id="parentVillage" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Nyarubuye Cell">
+                                <input type="text" name="parent_village" id="parentVillage" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Village / Cell / Zone">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parish / Ward <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="parent_parish" id="parentParish" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Gisozi Parish">
+                                <input type="text" name="parent_parish" id="parentParish" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Parish / Ward">
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">Sub-county / Town Council / Division <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="parent_subcounty" id="parentSubcounty" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Nyarusiza Sub-county">
+                                <input type="text" name="parent_subcounty" id="parentSubcounty" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="Sub-county / Division / Town Council">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">District <span class="text-rose-500 font-bold">*</span></label>
-                                <input type="text" name="parent_district" id="parentDistrict" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="e.g. Kisoro District">
+                                <input type="text" name="parent_district" id="parentDistrict" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 transition" placeholder="District / City of Origin">
                             </div>
                         </div>
                         <input type="hidden" name="parent_address" id="parentAddress">

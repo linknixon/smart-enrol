@@ -155,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         type="text" 
                         name="identifier" 
                         class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-700/10 font-medium transition" 
-                        placeholder="e.g. admin or staff@mutolere.sc.ug" 
+                        placeholder="Enter username or staff email" 
                         required
                         autofocus
                     >

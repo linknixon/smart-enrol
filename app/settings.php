@@ -660,7 +660,7 @@ if (empty($current_slider_images)) {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Main School Website (URL)</label>
-                                <input type="text" name="school_website" value="<?= htmlspecialchars($school_website) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. www.sesemegirls.sc.ug">
+                                <input type="text" name="school_website" value="<?= htmlspecialchars($school_website) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. www.school.sc.ug">
                                 <p class="text-[11px] text-slate-400 mt-1">Appears on navigation menus and offer letters with direct link.</p>
                             </div>
                             <div>
@@ -1181,7 +1181,7 @@ if (empty($current_slider_images)) {
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Notification Recipient Emails (Comma-separated) *</label>
-                                <textarea name="application_notification_emails" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. admissions@sesemegirls.sc.ug, headteacher@sesemegirls.sc.ug, registrar@sesemegirls.sc.ug"><?= htmlspecialchars($application_notification_emails) ?></textarea>
+                                <textarea name="application_notification_emails" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. admissions@school.sc.ug, headteacher@school.sc.ug, registrar@school.sc.ug"><?= htmlspecialchars($application_notification_emails) ?></textarea>
                                 <span class="text-[11px] text-slate-500 mt-1 block">Enter one or multiple email addresses separated by commas. Every email listed here will instantly receive full student summary alerts for incoming applications.</span>
                             </div>
                         </div>
@@ -1223,7 +1223,7 @@ if (empty($current_slider_images)) {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">SMTP Username / Email *</label>
-                                <input type="text" id="smtpUserInput" name="smtp_username" value="<?= htmlspecialchars($smtp_username) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. admissions@sesemegirls.sc.ug">
+                                <input type="text" id="smtpUserInput" name="smtp_username" value="<?= htmlspecialchars($smtp_username) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. admissions@school.sc.ug">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">SMTP Password *</label>
@@ -1238,7 +1238,7 @@ if (empty($current_slider_images)) {
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">From Sender Display Name</label>
-                                <input type="text" id="smtpFromNameInput" name="smtp_from_name" value="<?= htmlspecialchars($smtp_from_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. Seseme Girls SS Admissions">
+                                <input type="text" id="smtpFromNameInput" name="smtp_from_name" value="<?= htmlspecialchars($smtp_from_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. School Admissions Office">
                             </div>
                         </div>
 
@@ -1277,7 +1277,7 @@ if (empty($current_slider_images)) {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Head Teacher Official Name *</label>
-                                <input type="text" name="head_teacher_name" value="<?= htmlspecialchars($head_teacher_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. MRS. PEACE RUZAZA">
+                                <input type="text" name="head_teacher_name" value="<?= htmlspecialchars($head_teacher_name) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-brand-700" placeholder="e.g. Head Teacher Official Name">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Signatory Title</label>

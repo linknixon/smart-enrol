@@ -537,11 +537,11 @@ $isFormExpanded = ($editUser !== null || !empty($error));
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">First Name *</label>
-                                    <input type="text" name="firstname" value="<?= $editUser ? htmlspecialchars($editUser['firstname']) : '' ?>" placeholder="e.g. Ronald" class="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-brand-700 transition" required>
+                                    <input type="text" name="firstname" value="<?= $editUser ? htmlspecialchars($editUser['firstname']) : '' ?>" placeholder="First Name" class="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-brand-700 transition" required>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Last Name / Surname *</label>
-                                    <input type="text" name="lastname" value="<?= $editUser ? htmlspecialchars($editUser['lastname']) : '' ?>" placeholder="e.g. Kasaija" class="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-brand-700 transition" required>
+                                    <input type="text" name="lastname" value="<?= $editUser ? htmlspecialchars($editUser['lastname']) : '' ?>" placeholder="Last Name / Surname" class="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-brand-700 transition" required>
                                 </div>
                             </div>
 
@@ -555,7 +555,7 @@ $isFormExpanded = ($editUser !== null || !empty($error));
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Username *</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 font-mono text-xs">@</span>
-                                    <input type="text" name="username" placeholder="rkasaija" class="w-full pl-8 pr-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:bg-white focus:border-brand-700 transition" required>
+                                    <input type="text" name="username" placeholder="username" class="w-full pl-8 pr-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:bg-white focus:border-brand-700 transition" required>
                                 </div>
                                 <p class="text-[11px] text-slate-400 mt-1">Unique login username. Letters, digits, and underscores only.</p>
                             </div>
