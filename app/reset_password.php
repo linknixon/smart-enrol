@@ -82,45 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user && !$isExpired) {
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <?= renderThemeConfig($pdo) ?>
-<style>
-.bg-slideshow-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 0;
-    overflow: hidden;
-    background-color: #0f172a;
-}
-.bg-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 1.5s ease-in-out;
-}
-.bg-slide.active {
-    opacity: 0.35;
-}
-</style>
-</head>
-<body class="font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 relative bg-slate-900">
+<body class="font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 bg-slate-900">
 
-<!-- Dynamic Background Slideshow -->
-<div class="bg-slideshow-container">
-    <div class="bg-slide active" style="background-image: url('../images/campus.png');"></div>
-    <div class="bg-slide" style="background-image: url('../images/students.png');"></div>
-    <div class="bg-slide" style="background-image: url('../images/lab.png');"></div>
-</div>
-
-<div class="relative z-10 w-full max-w-md my-8">
-    <div class="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
+<div class="w-full max-w-md my-8">
+    <div class="bg-white border border-slate-200/80 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
         
         <!-- Header & Logo -->
         <div class="text-center">
@@ -248,16 +213,6 @@ function togglePassVisibility(id, btn) {
     }
 }
 
-// Background Slideshow
-let activeSlideIndex = 0;
-const slides = document.querySelectorAll('.bg-slide');
-setInterval(() => {
-    if (slides.length > 0) {
-        slides[activeSlideIndex].classList.remove('active');
-        activeSlideIndex = (activeSlideIndex + 1) % slides.length;
-        slides[activeSlideIndex].classList.add('active');
-    }
-}, 5000);
 </script>
 
 </body>
