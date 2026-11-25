@@ -355,53 +355,9 @@ $conditionsList .
 $pdf->writeHTML($letterHtml, true, false, true, false, '');
 
 /* ================= SIGNATURE & QR VERIFICATION ================= */
-$sigY = $pdf->GetY() + 1;
+$sigY = $pdf->GetY() + 2.5;
 
-$sigHtml = '
-<div style="font-family: \'trebuchetms\', sans-serif; color: #000000;">
-<table cellpadding="0" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt;">
-    <tr>
-        <td width="48%" align="left" style="vertical-align: top; padding-top: 1px;">
-            <table cellpadding="0" cellspacing="0" style="border: none;">
-                <tr>
-                    <td width="20mm" style="vertical-align: middle;">
-                        <!-- QR code space: 16mm x 16mm -->
-                    </td>
-                    <td width="66mm" style="vertical-align: middle; font-size: 6.8pt; color: #000000; line-height: 1.3;">
-                        <strong>Official Document Verification</strong><br>
-                        Admissions Registry Office<br>
-                        Scan QR code to verify validity on the school admissions portal.
-                    </td>
-                </tr>
-            </table>
-        </td>
-        <td width="52%" align="center" style="vertical-align: top; text-align: center;">
-            <div style="font-size: 7.4pt; margin-bottom: 2px;">Yours faithfully,</div>';
-
-if ($hasSignature) {
-    $sigHtml .= '
-            <div style="margin: 1px 0 2px 0;">
-                <img src="' . htmlspecialchars($signaturePath) . '" height="36" />
-            </div>';
-} else {
-    $sigHtml .= '
-            <div style="height: 6px; border-bottom: 1px solid #000000; width: 90px; margin: 4px auto 3px auto;"></div>';
-}
-
-$sigHtml .= '
-            <div style="font-weight: bold; font-size: 8pt; line-height: 1.2;">' . htmlspecialchars(strtoupper($head_teacher_name)) . '</div>
-            <div style="font-size: 7.2pt;">' . htmlspecialchars($head_teacher_title) . '</div>
-            <div style="font-size: 6.8pt;">' . htmlspecialchars($school_short_name) . '</div>
-        </td>
-    </tr>
-</table>
-</div>
-';
-
-$pdf->SetXY(15, $sigY);
-$pdf->writeHTML($sigHtml, true, false, true, false, '');
-
-/* ================= 2D QR CODE VERIFICATION (MONOCHROME) ================= */
+// 1. 2D QR Code Verification (Monochrome)
 $qrStyle = [
     'border' => 0,
     'vpadding' => 0,
@@ -409,8 +365,49 @@ $qrStyle = [
     'fgcolor' => [0, 0, 0],
     'bgcolor' => false
 ];
-$qrLink = getBaseUrl($pdo) . ($isAdmitted ? ('/app/admission_list.php?class=' . urlencode($class)) : ('/track.php?identifier=' . urlencode($student['index_number'] ?: $student['parent_phone'])));
-$pdf->write2DBarcode($qrLink, 'QRCODE,H', 16, $sigY + 1.5, 16, 16, $qrStyle, 'N');
+$qrLink = getBaseUrl($pdo) . '/app/admission_offer.php?id=' . (int)$student['id'];
+$pdf->write2DBarcode($qrLink, 'QRCODE,H', 15, $sigY + 0.5, 18, 18, $qrStyle, 'N');
+
+// 2. Official Document Verification Text (Neatly aligned beside QR code)
+$pdf->SetXY(35.5, $sigY + 2);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('trebuchetms', 'B', 7.5);
+$pdf->Cell(62, 4, 'Official Document Verification', 0, 1, 'L');
+
+$pdf->SetX(35.5);
+$pdf->SetFont('trebuchetms', '', 7);
+$pdf->Cell(62, 3.8, 'Admissions Registry Office', 0, 1, 'L');
+
+$pdf->SetX(35.5);
+$pdf->SetFont('trebuchetms', '', 6.5);
+$pdf->MultiCell(62, 3.2, "Scan QR code to verify validity on the school admissions\nportal.", 0, 'L');
+
+// 3. Head Teacher Signature Block
+$pdf->SetXY(110, $sigY);
+$pdf->SetFont('trebuchetms', '', 7.5);
+$pdf->Cell(85, 4, 'Yours faithfully,', 0, 1, 'C');
+
+if ($hasSignature) {
+    try {
+        $pdf->Image($signaturePath, 137.5, $sigY + 4, 30, 11, '', '', '', false, 300, '', false, false, 0, 'CM');
+    } catch (Exception $e) {
+        $pdf->Line(130, $sigY + 14, 170, $sigY + 14, ['width' => 0.3, 'color' => [0, 0, 0]]);
+    }
+} else {
+    $pdf->Line(130, $sigY + 14, 170, $sigY + 14, ['width' => 0.3, 'color' => [0, 0, 0]]);
+}
+
+$pdf->SetXY(110, $sigY + 15.5);
+$pdf->SetFont('trebuchetms', 'B', 8);
+$pdf->Cell(85, 4, strtoupper($head_teacher_name), 0, 1, 'C');
+
+$pdf->SetXY(110, $sigY + 19.5);
+$pdf->SetFont('trebuchetms', '', 7.2);
+$pdf->Cell(85, 3.5, $head_teacher_title, 0, 1, 'C');
+
+$pdf->SetXY(110, $sigY + 23);
+$pdf->SetFont('trebuchetms', '', 6.8);
+$pdf->Cell(85, 3.5, $school_short_name, 0, 1, 'C');
 
 /* ================= FOOTER DISCLAIMER ================= */
 $pdf->SetXY(15, 280);
