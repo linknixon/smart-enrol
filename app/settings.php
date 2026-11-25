@@ -403,6 +403,9 @@ if (empty($current_slider_images)) {
             <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-chart-line text-lg"></i> Dashboard
             </a>
+            <a href="applications.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-id-card-clip text-lg text-gold-500"></i> Applications
+            </a>
             <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-graduation-cap text-lg"></i> Admitted Register
             </a>
@@ -448,6 +451,9 @@ if (empty($current_slider_images)) {
         <nav class="flex-1 px-4 py-6 space-y-1.5">
             <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-chart-line text-lg"></i> Dashboard
+            </a>
+            <a href="applications.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-id-card-clip text-lg text-gold-500"></i> Applications
             </a>
             <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <i class="fa-solid fa-graduation-cap text-lg"></i> Admitted Register

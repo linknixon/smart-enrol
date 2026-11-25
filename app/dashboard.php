@@ -387,6 +387,9 @@ $msg = $_GET['msg'] ?? '';
             <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold bg-brand-700 text-white transition duration-150">
                 <i class="fa-solid fa-chart-line text-lg"></i> Dashboard (S1-S6)
             </a>
+            <a href="applications.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+                <i class="fa-solid fa-id-card-clip text-lg text-gold-500"></i> Applications
+            </a>
             <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
                 <i class="fa-solid fa-graduation-cap text-lg"></i> Admitted Register
             </a>
@@ -439,6 +442,9 @@ $msg = $_GET['msg'] ?? '';
         <nav class="flex-1 px-4 py-6 space-y-1.5">
             <a href="dashboard.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold bg-brand-700 text-white transition duration-150">
                 <i class="fa-solid fa-chart-line text-lg"></i> Dashboard (S1-S6)
+            </a>
+            <a href="applications.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
+                <i class="fa-solid fa-id-card-clip text-lg text-gold-500"></i> Applications
             </a>
             <a href="admission_list.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition duration-150">
                 <i class="fa-solid fa-graduation-cap text-lg"></i> Admitted Register
@@ -532,57 +538,477 @@ $msg = $_GET['msg'] ?? '';
             <?php endif; ?>
 
             <!-- Metrics Cards Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
                 <!-- Total -->
-                <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <span class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
-                        <span class="block text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $totalApps ?></span>
+                        <span class="block text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $totalApps ?></span>
                     </div>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-base shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-sm sm:text-base shrink-0">
                         <i class="fa-solid fa-folder-open"></i>
                     </div>
                 </div>
                 <!-- Pending -->
-                <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <span class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Pending</span>
-                        <span class="block text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $pendingCount ?></span>
+                        <span class="block text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $pendingCount ?></span>
                     </div>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-base shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm sm:text-base shrink-0">
                         <i class="fa-solid fa-hourglass-half"></i>
                     </div>
                 </div>
                 <!-- Admitted -->
-                <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <span class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Admitted</span>
-                        <span class="block text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $admittedCount ?></span>
+                        <span class="block text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $admittedCount ?></span>
                     </div>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-base shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm sm:text-base shrink-0">
                         <i class="fa-solid fa-circle-check"></i>
                     </div>
                 </div>
                 <!-- Reported (Enrolled & Archived) -->
-                <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
-                        <span class="block text-[10px] sm:text-xs font-bold text-purple-700 uppercase tracking-wider">Enrolled (Reported)</span>
-                        <span class="block text-xl sm:text-2xl font-extrabold text-purple-900 mt-0.5"><?= $reportedCount ?></span>
+                        <span class="block text-[10px] sm:text-xs font-bold text-purple-700 uppercase tracking-wider">Enrolled</span>
+                        <span class="block text-lg sm:text-2xl font-extrabold text-purple-900 mt-0.5"><?= $reportedCount ?></span>
                     </div>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-base shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-sm sm:text-base shrink-0">
                         <i class="fa-solid fa-user-check"></i>
                     </div>
                 </div>
                 <!-- Rejected -->
-                <div class="col-span-2 sm:col-span-1 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="col-span-2 sm:col-span-1 bg-white p-2.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <span class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Rejected</span>
-                        <span class="block text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $rejectedCount ?></span>
+                        <span class="block text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5"><?= $rejectedCount ?></span>
                     </div>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-base shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm sm:text-base shrink-0">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </div>
                 </div>
+            </div>
+
+            <!-- Candidate Registry (Filters & Applicants) -->
+            <form id="dashboardFilterForm" method="GET" class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Filter by Entry Class</label>
+                    <select name="class" onchange="this.form.submit()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-700 bg-white">
+                        <option value="ALL" <?= $classFilter === 'ALL' ? 'selected' : '' ?>>All Classes (S1-S6)</option>
+                        <option value="S1" <?= $classFilter === 'S1' ? 'selected' : '' ?>>Senior One (S1)</option>
+                        <option value="S2" <?= $classFilter === 'S2' ? 'selected' : '' ?>>Senior Two (S2)</option>
+                        <option value="S3" <?= $classFilter === 'S3' ? 'selected' : '' ?>>Senior Three (S3)</option>
+                        <option value="S4" <?= $classFilter === 'S4' ? 'selected' : '' ?>>Senior Four (S4)</option>
+                        <option value="S5" <?= $classFilter === 'S5' ? 'selected' : '' ?>>Senior Five (S5)</option>
+                        <option value="S6" <?= $classFilter === 'S6' ? 'selected' : '' ?>>Senior Six (S6)</option>
+                        <option value="OTHER" <?= $classFilter === 'OTHER' ? 'selected' : '' ?>>Other / Transfers (S2, S3, S4, S6)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                    <select name="status" onchange="this.form.submit()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-700 bg-white">
+                        <option value="ALL" <?= $statusFilter === 'ALL' ? 'selected' : '' ?>>All Statuses</option>
+                        <option value="pending" <?= $statusFilter === 'pending' ? 'selected' : '' ?>>Pending Review</option>
+                        <option value="admitted" <?= $statusFilter === 'admitted' ? 'selected' : '' ?>>Admitted</option>
+                        <option value="reported" <?= $statusFilter === 'reported' ? 'selected' : '' ?>>Reported & Enrolled (Archived)</option>
+                        <option value="rejected" <?= $statusFilter === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Academic Year</label>
+                    <select name="academic_year" onchange="this.form.submit()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-700 bg-white">
+                        <option value="all" <?= $yearFilter === 'all' ? 'selected' : '' ?>>All Academic Years</option>
+                        <?php foreach ($availableYears as $ay): ?>
+                            <option value="<?= htmlspecialchars($ay) ?>" <?= $yearFilter === $ay ? 'selected' : '' ?>><?= htmlspecialchars($ay) ?> Academic Year</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="flex gap-2">
+                    <div class="flex-1 relative">
+                        <input type="text" name="search" id="dashboardSearchInput" value="<?= htmlspecialchars($search) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:border-brand-700" placeholder="Auto-search candidate...">
+                    </div>
+                    <button type="submit" class="px-3.5 py-2 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition" title="Search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <a href="dashboard.php" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition flex items-center" title="Reset Filters">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </form>
+
+            <!-- Candidate Registry Card -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="px-4 sm:px-6 py-3.5 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Candidate Registry</h3>
+                            <span class="text-xs font-bold text-slate-800 bg-white border border-slate-300 px-2 py-0.5 rounded-full shadow-2xs">Filtered Total: <?= $filteredCount ?></span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Showing <?= count($applications) ?> applicants on this page · 20 per page</p>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 self-start sm:self-auto">
+                        <!-- View Switcher -->
+                        <div class="inline-flex items-center p-0.5 bg-slate-200/80 rounded-lg text-xs font-bold">
+                            <button type="button" onclick="setCandidateRegistryView('cards')" id="regViewCardsBtn" class="px-2.5 py-1 rounded-md transition flex items-center gap-1.5 bg-white text-brand-800 shadow-2xs">
+                                <i class="fa-solid fa-id-card"></i> <span>Cards</span>
+                            </button>
+                            <button type="button" onclick="setCandidateRegistryView('table')" id="regViewTableBtn" class="px-2.5 py-1 rounded-md transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                                <i class="fa-solid fa-table-list"></i> <span>Table</span>
+                            </button>
+                        </div>
+
+                        <a href="applications.php" class="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-700 hover:bg-brand-800 text-white rounded-lg text-xs font-bold transition shadow-sm whitespace-nowrap">
+                            <span>Open Applications</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <?php
+                $applicationsById = [];
+                foreach ($applications as $a) {
+                    $applicationsById[$a['id']] = $a;
+                }
+                ?>
+
+                <!-- VIEW 1: Mobile-Optimized Candidate Cards View -->
+                <div id="candidateCardsContainer" class="p-3 sm:p-4 space-y-3">
+                    <?php if (count($applications) === 0): ?>
+                        <div class="p-8 text-center text-slate-400 font-semibold bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                            <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300"></i>
+                            No application entries found.
+                        </div>
+                    <?php endif; ?>
+
+                    <?php foreach ($applications as $app): 
+                        $status = strtolower($app['application_status'] ?? 'pending');
+                        $fullName = trim($app['firstname'].' '.$app['surname'].' '.($app['othernames'] ?? ''));
+                        $primaryParent = !empty($app['father_name']) ? $app['father_name'] : (!empty($app['mother_name']) ? $app['mother_name'] : ($app['guardian_name'] ?? ($app['parent_name'] ?? '—')));
+                        $primaryPhone = !empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_contact'] ?? ($app['parent_phone'] ?? '')));
+                        
+                        $statusBadgeClass = 'bg-amber-100 text-amber-800 border border-amber-200';
+                        $statusLabel = 'Pending Review';
+                        if ($status === 'admitted') {
+                            $statusBadgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                            $statusLabel = 'Admitted';
+                        } elseif ($status === 'reported') {
+                            $statusBadgeClass = 'bg-purple-100 text-purple-800 border border-purple-200';
+                            $statusLabel = 'Enrolled';
+                        } elseif ($status === 'rejected') {
+                            $statusBadgeClass = 'bg-rose-100 text-rose-800 border border-rose-200';
+                            $statusLabel = 'Rejected';
+                        }
+
+                        $academicSnippet = '—';
+                        if ($app['class_of_entry'] === 'S1') {
+                            $academicSnippet = ($app['ple_division'] ? 'Div '.$app['ple_division'] : '').($app['ple_aggregates'] ? ' ('.$app['ple_aggregates'].' Aggs)' : '');
+                        } elseif (in_array($app['class_of_entry'], ['S5', 'S6'])) {
+                            if (!empty($app['uce_result_level'])) {
+                                $academicSnippet = htmlspecialchars($app['uce_result_level']).(!empty($app['nlsc_competency_score']) ? ' · '.$app['nlsc_competency_score'].' pts' : '');
+                            } else {
+                                $academicSnippet = $app['uce_division'] ? 'UCE Div '.$app['uce_division'] : 'A-Level';
+                            }
+                        } else {
+                            $academicSnippet = 'Transfer: '.htmlspecialchars($app['class_of_entry']);
+                        }
+                    ?>
+                    <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-brand-300 transition space-y-3">
+                        <div class="flex items-start justify-between gap-2.5">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center shrink-0">
+                                    <?php if(!empty($app['photo_url']) && !str_starts_with($app['photo_url'], 'data:image/svg')): ?>
+                                        <img src="<?= htmlspecialchars($app['photo_url']) ?>" alt="Photo" class="w-full h-full object-cover">
+                                    <?php else: ?>
+                                        <span class="font-bold text-xs text-slate-400"><?= strtoupper(substr($app['firstname'] ?? 'S', 0, 1) . substr($app['surname'] ?? '', 0, 1)) ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="font-bold text-slate-900 text-xs sm:text-sm hover:text-brand-700 text-left truncate leading-tight">
+                                            <?= htmlspecialchars($fullName) ?>
+                                        </button>
+                                        <span class="px-1.5 py-0.2 rounded text-[10px] font-black bg-brand-50 text-brand-700 border border-brand-200 whitespace-nowrap">
+                                            <?= htmlspecialchars($app['class_of_entry']) ?><?= !empty($app['combination']) ? ' · '.htmlspecialchars($app['combination']) : '' ?>
+                                        </span>
+                                    </div>
+                                    <span class="text-[10.5px] text-slate-400 font-mono block">ID: #<?= str_pad((string)$app['id'], 5, '0', STR_PAD_LEFT) ?> · <?= date('d M Y', strtotime($app['created_at'])) ?></span>
+                                </div>
+                            </div>
+                            <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider <?= $statusBadgeClass ?>">
+                                <?= $statusLabel ?>
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                            <div>
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Results / Standing</span>
+                                <span class="font-semibold text-slate-800 text-[11px]"><?= $academicSnippet ?></span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Gender & Religion</span>
+                                <span class="font-semibold text-slate-800 text-[11px]"><?= htmlspecialchars($app['sex'] ?? $app['gender'] ?? '—') ?> · <?= htmlspecialchars($app['religion'] ?? '—') ?></span>
+                            </div>
+                            <div class="truncate">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Former School</span>
+                                <span class="font-semibold text-slate-800 text-[11px] truncate block" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>"><?= htmlspecialchars($app['former_school'] ?? '—') ?></span>
+                            </div>
+                            <div class="truncate">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Parent / Caregiver</span>
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <span class="font-semibold text-slate-800 text-[11px] truncate"><?= htmlspecialchars($primaryParent) ?></span>
+                                    <?php if(!empty($primaryPhone)): ?>
+                                        <a href="tel:<?= htmlspecialchars($primaryPhone) ?>" class="text-brand-700 hover:text-brand-900 shrink-0 font-bold" title="Call parent">
+                                            <i class="fa-solid fa-phone text-[10px]"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 flex-wrap">
+                            <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                                <i class="fa-solid fa-id-card-clip text-brand-700"></i> View Dossier
+                            </button>
+
+                            <div class="flex items-center gap-1.5 ms-auto flex-wrap">
+                                <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
+                                    <?php if($status === 'pending'): ?>
+                                        <?php if(hasPermission($pdo, $currentRole, 'can_admit_students')): ?>
+                                            <?php if(in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
+                                                <button type="button" onclick="openAdmitS5Modal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition shadow-2xs">
+                                                    <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit & Comb
+                                                </button>
+                                            <?php else: ?>
+                                                <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes($fullName)) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>?')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition shadow-2xs">
+                                                    <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+
+                                        <?php if(hasPermission($pdo, $currentRole, 'can_reject_students')): ?>
+                                            <button type="button" onclick="openRejectModal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['parent_email'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-md transition shadow-2xs">
+                                                <i class="fa-solid fa-xmark mr-1 text-[9px]"></i> Reject
+                                            </button>
+                                        <?php endif; ?>
+                                    <?php elseif($status === 'admitted'): ?>
+                                        <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-md transition shadow-2xs">
+                                            <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
+                                        </a>
+                                        <a href="mark_reported.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm that <?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?> has reported and enrolled at school?')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-purple-700 hover:bg-purple-800 rounded-md transition shadow-2xs">
+                                            <i class="fa-solid fa-user-check mr-1 text-[8.5px]"></i> Reported
+                                        </a>
+                                        <?php if(hasPermission($pdo, $currentRole, 'can_manage_settings') || $_SESSION['admin_role'] === 'super_admin'): ?>
+                                            <a href="reverse.php?id=<?= $app['id'] ?>" class="inline-flex items-center px-1.5 py-1 text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition shadow-2xs">
+                                                Reverse
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php elseif($status === 'reported'): ?>
+                                        <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition shadow-2xs">
+                                            <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- VIEW 2: Desktop 11-Column Table View -->
+                <div id="candidateTableContainer" class="hidden overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                    <div class="flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium md:hidden">
+                        <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all columns
+                    </div>
+                    <table class="w-full text-left border-collapse text-xs table-auto min-w-[760px]">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                                <th class="p-3 w-12 text-center">Photo</th>
+                                <th class="p-3">Applicant Name</th>
+                                <th class="p-3 text-center">Class</th>
+                                <th class="p-3 text-center">UNEB / NLSC Results</th>
+                                <th class="p-3 text-center">Gender / Religion</th>
+                                <th class="p-3">Former School</th>
+                                <th class="p-3">Caregiver Details</th>
+                                <th class="p-3 text-center">Applied On</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-center w-36">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            <?php foreach ($applications as $app): 
+                                $status = strtolower($app['application_status'] ?? 'pending');
+                                $fullName = trim($app['firstname'].' '.$app['surname'].' '.($app['othernames'] ?? ''));
+                                $primaryParent = !empty($app['father_name']) ? $app['father_name'] : (!empty($app['mother_name']) ? $app['mother_name'] : ($app['guardian_name'] ?? ($app['parent_name'] ?? '—')));
+                                $primaryPhone = !empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_contact'] ?? ($app['parent_phone'] ?? '')));
+                            ?>
+                            <tr class="hover:bg-slate-50/80 transition duration-150">
+                                <td class="p-2.5 text-center">
+                                    <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-slate-100 mx-auto flex items-center justify-center">
+                                        <?php if(!empty($app['photo_url']) && !str_starts_with($app['photo_url'], 'data:image/svg')): ?>
+                                            <img src="<?= htmlspecialchars($app['photo_url']) ?>" alt="Photo" class="w-full h-full object-cover">
+                                        <?php else: ?>
+                                            <span class="font-bold text-[10px] text-slate-400"><?= strtoupper(substr($app['firstname'] ?? 'S', 0, 1) . substr($app['surname'] ?? '', 0, 1)) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td class="p-3 font-semibold text-slate-800">
+                                    <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="hover:text-brand-700 text-left">
+                                        <?= htmlspecialchars($fullName) ?>
+                                    </button>
+                                    <span class="block text-[10px] text-slate-400 font-mono">ID: #<?= str_pad((string)$app['id'], 5, '0', STR_PAD_LEFT) ?></span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="px-2 py-0.5 rounded font-black text-xs bg-brand-50 text-brand-700 border border-brand-200">
+                                        <?= htmlspecialchars($app['class_of_entry']) ?>
+                                    </span>
+                                    <?php if(!empty($app['combination'])): ?>
+                                        <span class="block text-[10px] text-slate-500 font-bold mt-0.5"><?= htmlspecialchars($app['combination']) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="p-3 text-center text-xs">
+                                    <?php if ($app['class_of_entry'] === 'S1'): ?>
+                                        <span class="font-bold text-slate-700"><?= $app['ple_division'] ? 'Div '.$app['ple_division'] : '—' ?></span>
+                                        <span class="text-[10px] text-slate-400 block"><?= $app['ple_aggregates'] ? $app['ple_aggregates'].' Aggs' : '' ?></span>
+                                    <?php elseif (in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
+                                        <?php if(!empty($app['uce_result_level'])): ?>
+                                            <span class="font-bold text-brand-700"><?= htmlspecialchars($app['uce_result_level']) ?></span>
+                                            <span class="text-[10px] text-slate-400 block font-mono"><?= $app['nlsc_competency_score'] ?? '' ?> pts</span>
+                                        <?php else: ?>
+                                            <span class="font-bold text-slate-700"><?= $app['uce_division'] ? 'Div '.$app['uce_division'] : '—' ?></span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-slate-400 text-xs">Transfer</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="p-3 text-center text-xs text-slate-600">
+                                    <span><?= htmlspecialchars($app['sex'] ?? $app['gender'] ?? '—') ?></span>
+                                    <span class="text-[10px] text-slate-400 block"><?= htmlspecialchars($app['religion'] ?? '—') ?></span>
+                                </td>
+                                <td class="p-3 text-xs text-slate-600 max-w-[150px] truncate" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>">
+                                    <?= htmlspecialchars($app['former_school'] ?? '—') ?>
+                                </td>
+                                <td class="p-3 text-xs">
+                                    <span class="font-semibold text-slate-800 block truncate max-w-[140px]"><?= htmlspecialchars($primaryParent) ?></span>
+                                    <?php if(!empty($primaryPhone)): ?>
+                                        <a href="tel:<?= htmlspecialchars($primaryPhone) ?>" class="text-[10.5px] text-brand-700 hover:underline font-mono">
+                                            <?= htmlspecialchars($primaryPhone) ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="p-3 text-center text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                                    <?= date('d M Y', strtotime($app['created_at'])) ?>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <?php
+                                    $sClass = 'bg-amber-100 text-amber-800';
+                                    $sText = 'Pending';
+                                    if ($status === 'admitted') { $sClass = 'bg-emerald-100 text-emerald-800'; $sText = 'Admitted'; }
+                                    elseif ($status === 'reported') { $sClass = 'bg-purple-100 text-purple-800'; $sText = 'Enrolled'; }
+                                    elseif ($status === 'rejected') { $sClass = 'bg-rose-100 text-rose-800'; $sText = 'Rejected'; }
+                                    ?>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase <?= $sClass ?>">
+                                        <?= $sText ?>
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition duration-150" title="View Candidate Dossier">
+                                            <i class="fa-solid fa-eye mr-1 text-[9px]"></i> View
+                                        </button>
+                                        <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
+                                            <?php if($status === 'pending'): ?>
+                                                <?php if(hasPermission($pdo, $currentRole, 'can_admit_students')): ?>
+                                                    <?php if(in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
+                                                        <button type="button" onclick="openAdmitS5Modal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit & Assign Combination">
+                                                            <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes($fullName)) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>?')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit Candidate">
+                                                            <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
+                                                        </a>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+                                                <?php if(hasPermission($pdo, $currentRole, 'can_reject_students')): ?>
+                                                    <button type="button" onclick="openRejectModal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['parent_email'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="Reject Candidate">
+                                                        <i class="fa-solid fa-xmark mr-1 text-[9px]"></i> Reject
+                                                    </button>
+                                                <?php endif; ?>
+                                            <?php elseif($status === 'admitted'): ?>
+                                                <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-md transition duration-150 shadow-2xs" title="Print Official Admission Offer">
+                                                    <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
+                                                </a>
+                                                <a href="mark_reported.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm that <?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?> has reported and enrolled at school?')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-purple-700 hover:bg-purple-800 rounded-md transition duration-150 shadow-2xs" title="Mark as Reported & Enrolled">
+                                                    <i class="fa-solid fa-user-check mr-1 text-[8.5px]"></i> Reported
+                                                </a>
+                                                <?php if(hasPermission($pdo, $currentRole, 'can_manage_settings') || $_SESSION['admin_role'] === 'super_admin'): ?>
+                                                    <a href="reverse.php?id=<?= $app['id'] ?>" class="inline-flex items-center justify-center px-1.5 py-1 h-6 text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition duration-150 shadow-2xs" title="Reverse Status">
+                                                        Reverse
+                                                    </a>
+                                                <?php endif; ?>
+                                            <?php elseif($status === 'reported'): ?>
+                                                <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition duration-150 shadow-2xs" title="View Official Admission Offer">
+                                                    <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+
+                            <?php if (count($applications) === 0): ?>
+                            <tr>
+                                <td colspan="10" class="px-6 py-12 text-center text-slate-400 font-semibold">
+                                    <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300"></i>
+                                    No application entries found.
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 20 Rows Per Page Pagination -->
+                <?php if ($totalPages > 1): ?>
+                <div class="px-4 sm:px-6 py-3.5 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                    <span class="text-xs text-slate-500">
+                        Showing <span class="font-bold text-slate-700"><?= min($offset + 1, $filteredCount) ?></span> to <span class="font-bold text-slate-700"><?= min($offset + $perPage, $filteredCount) ?></span> of <span class="font-bold text-slate-700"><?= $filteredCount ?></span> applications (20 per page)
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <?php 
+                        $queryBase = 'dashboard.php?class=' . urlencode($classFilter) . '&status=' . urlencode($statusFilter) . '&academic_year=' . urlencode($yearFilter) . '&search=' . urlencode($search);
+                        ?>
+                        <?php if ($page > 1): ?>
+                            <a href="<?= $queryBase ?>&page=<?= $page - 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-2xs">
+                                <i class="fa-solid fa-chevron-left me-1"></i> Prev
+                            </a>
+                        <?php else: ?>
+                            <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-400 cursor-not-allowed">
+                                <i class="fa-solid fa-chevron-left me-1"></i> Prev
+                            </span>
+                        <?php endif; ?>
+
+                        <span class="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg shadow-2xs">
+                            Page <?= $page ?> of <?= $totalPages ?>
+                        </span>
+
+                        <?php if ($page < $totalPages): ?>
+                            <a href="<?= $queryBase ?>&page=<?= $page + 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-2xs">
+                                Next <i class="fa-solid fa-chevron-right ms-1"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-400 cursor-not-allowed">
+                                Next <i class="fa-solid fa-chevron-right ms-1"></i>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Interactive Analytics & Multi-Year Trends Switcher -->
@@ -630,8 +1056,8 @@ $msg = $_GET['msg'] ?? '';
                             <p class="text-[11px] text-slate-400 mt-0.5">Holistic demographic overview, intake distribution, and performance merit.</p>
                         </div>
                     </div>
-                    <!-- KPI Counter Chips -->
-                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <!-- KPI Counter Chips in Responsive 2x2 Grid on Mobile -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs w-full lg:w-auto">
                         <div class="px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 flex items-center gap-1.5 shadow-2xs">
                             <span class="text-slate-400 text-[11px]">Total Applied:</span>
                             <span id="catTotalApps" class="font-black text-amber-300 font-mono">0</span>
@@ -782,358 +1208,6 @@ $msg = $_GET['msg'] ?? '';
                 <div class="pt-3 h-44 relative">
                     <canvas id="academicPerformanceChart"></canvas>
                 </div>
-            </div>
-
-            <!-- Filters Area -->
-            <form id="dashboardFilterForm" method="GET" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Filter by Entry Class</label>
-                    <select name="class" onchange="this.form.submit()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-700 bg-white">
-                        <option value="ALL" <?= $classFilter === 'ALL' ? 'selected' : '' ?>>All Classes (S1-S6)</option>
-                        <option value="S1" <?= $classFilter === 'S1' ? 'selected' : '' ?>>Senior One (S1)</option>
-                        <option value="S2" <?= $classFilter === 'S2' ? 'selected' : '' ?>>Senior Two (S2)</option>
-                        <option value="S3" <?= $classFilter === 'S3' ? 'selected' : '' ?>>Senior Three (S3)</option>
-                        <option value="S4" <?= $classFilter === 'S4' ? 'selected' : '' ?>>Senior Four (S4)</option>
-                        <option value="S5" <?= $classFilter === 'S5' ? 'selected' : '' ?>>Senior Five (S5)</option>
-                        <option value="S6" <?= $classFilter === 'S6' ? 'selected' : '' ?>>Senior Six (S6)</option>
-                        <option value="OTHER" <?= $classFilter === 'OTHER' ? 'selected' : '' ?>>Other / Transfers (S2, S3, S4, S6)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Status</label>
-                    <select name="status" onchange="this.form.submit()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-700 bg-white">
-                        <option value="ALL" <?= $statusFilter === 'ALL' ? 'selected' : '' ?>>All Statuses</option>
-                        <option value="pending" <?= $statusFilter === 'pending' ? 'selected' : '' ?>>Pending Review</option>
-                        <option value="admitted" <?= $statusFilter === 'admitted' ? 'selected' : '' ?>>Admitted</option>
-                        <option value="reported" <?= $statusFilter === 'reported' ? 'selected' : '' ?>>Reported & Enrolled (Archived)</option>
-                        <option value="rejected" <?= $statusFilter === 'rejected' ? 'selected' : '' ?>>Rejected</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Academic Year</label>
-                    <select name="academic_year" onchange="this.form.submit()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-700 bg-white">
-                        <option value="all" <?= $yearFilter === 'all' ? 'selected' : '' ?>>All Academic Years</option>
-                        <?php foreach ($availableYears as $ay): ?>
-                            <option value="<?= htmlspecialchars($ay) ?>" <?= $yearFilter === $ay ? 'selected' : '' ?>><?= htmlspecialchars($ay) ?> Academic Year</option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="flex gap-2">
-                    <div class="flex-1 relative">
-                        <input type="text" name="search" id="dashboardSearchInput" value="<?= htmlspecialchars($search) ?>" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:border-brand-700" placeholder="Auto-search...">
-                    </div>
-                    <button type="submit" class="px-3.5 py-2 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                    <a href="dashboard.php" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition flex items-center">
-                        <i class="fa-solid fa-rotate-left"></i>
-                    </a>
-                </div>
-            </form>
-
-            <!-- Table Card -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Candidate Registry</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Showing 20 applicants per page</p>
-                    </div>
-                    <span class="text-xs font-bold text-slate-800 bg-slate-100 border border-slate-300 px-2.5 py-1 rounded">Filtered Total: <?= $filteredCount ?></span>
-                </div>
-
-                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium">
-                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all columns
-                </div>
-                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
-                    <?php
-                    $applicationsById = [];
-                    foreach ($applications as $a) {
-                        $applicationsById[$a['id']] = $a;
-                    }
-                    ?>
-                    <table class="w-full text-left border-collapse text-xs table-auto min-w-[760px]">
-                        <thead>
-                            <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                                <th class="px-2 py-2 text-center w-8">#</th>
-                                <th class="px-1.5 py-2 text-center w-10">Photo</th>
-                                <th class="px-2 py-2">Student Full Name</th>
-                                <th class="px-1.5 py-2 text-center w-12">Class</th>
-                                <th class="px-2 py-2 text-center">Index / ID</th>
-                                <th class="px-1.5 py-2 text-center w-14 whitespace-nowrap">Aggs</th>
-                                <th class="px-2 py-2">Academic details</th>
-                                <th class="px-2 py-2">Parent / Contact</th>
-                                <th class="px-1.5 py-2 text-center w-16">Record</th>
-                                <th class="px-1.5 py-2 text-center w-20">Status</th>
-                                <th class="px-2 py-2 text-center whitespace-nowrap">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <?php foreach ($applications as $app): 
-                                $status = strtolower($app['application_status'] ?? 'pending');
-                            ?>
-                            <tr class="hover:bg-slate-50 transition duration-150">
-                                <td class="px-2 py-2 text-center font-bold text-slate-400 font-mono"><?= $app['id'] ?></td>
-                                <td class="px-1.5 py-2 text-center">
-                                    <?php 
-                                    $photoUrl = getStudentPhotoUrl($app['passport_photo'] ?? '', '../');
-                                    if(!empty($photoUrl)): 
-                                    ?>
-                                        <a href="download_photo.php?id=<?= $app['id'] ?>" title="Download Student Photo" class="inline-block relative group">
-                                            <img src="<?= htmlspecialchars($photoUrl) ?>" class="w-8 h-8 object-cover rounded-full border border-slate-200 mx-auto shadow-sm group-hover:ring-2 group-hover:ring-slate-400 transition" alt="Student Photo">
-                                            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-slate-800 text-white text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-solid fa-arrow-down"></i></span>
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm mx-auto"><i class="fa-solid fa-user-ninja"></i></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="px-2 py-2">
-                                    <span class="block font-bold text-slate-800 leading-tight"><?= htmlspecialchars($app['firstname'].' '.$app['surname'].' '.$app['othernames']) ?></span>
-                                    <span class="block text-[10px] text-slate-500 uppercase mt-0.5"><?= htmlspecialchars($app['sex'].' · Age: '.$app['age']) ?></span>
-                                </td>
-                                <td class="px-1.5 py-2 text-center font-bold text-slate-800"><?= htmlspecialchars($app['class_of_entry']) ?></td>
-                                <td class="px-2 py-2 text-center">
-                                    <?php if(!empty($app['index_number'])): ?>
-                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-slate-700 hover:text-slate-900 font-mono text-[11px] transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['index_number'])) ?>', this)" title="Click to copy Index No">
-                                            <span><?= htmlspecialchars($app['index_number']) ?></span>
-                                            <i class="fa-regular fa-copy text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="text-slate-400 font-mono text-[11px]">N/A</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="px-1.5 py-2 text-center font-bold text-slate-800 whitespace-nowrap">
-                                    <?php if(!empty($app['division'])): ?>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300 block"><?= htmlspecialchars($app['division']) ?></span>
-                                        <span class="block text-[9px] text-slate-500 font-mono mt-0.5">Agg: <?= htmlspecialchars($app['aggregates'] ?? 'N/A') ?></span>
-                                    <?php else: ?>
-                                        <span class="block font-black text-slate-800 text-xs"><?= htmlspecialchars($app['aggregates'] ?? 'N/A') ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="px-2 py-2 max-w-[200px]">
-                                    <span class="block text-xs font-bold text-slate-800 truncate" title="<?= htmlspecialchars($app['former_school']) ?>"><?= htmlspecialchars($app['former_school']) ?></span>
-                                    <?php if($app['class_of_entry'] === 'S1'): ?>
-                                        <span class="block text-[10px] text-slate-500 mt-0.5">Primary Leaving Examination (PLE)</span>
-                                    <?php elseif($app['class_of_entry'] === 'S5' || $app['class_of_entry'] === 'S6'): ?>
-                                        <span class="block text-[10.5px] text-slate-900 font-bold mt-0.5">
-                                            <i class="fa-solid fa-graduation-cap text-slate-600"></i> <?= htmlspecialchars($app['combination']) ?>
-                                        </span>
-                                        <?php if(!empty($app['uce_project_work'])): ?>
-                                            <span class="inline-flex items-center gap-1 text-[10px] text-slate-600 font-semibold mt-0.5 whitespace-nowrap">
-                                                <span class="px-1.5 py-0.2 rounded bg-slate-100 font-mono font-bold text-slate-800 border border-slate-200">Project: <?= htmlspecialchars($app['uce_project_work']) ?></span>
-                                                <?= ($app['class_of_entry'] === 'S6') ? '<span class="text-slate-800 font-bold">(S6 Transfer)</span>' : '' ?>
-                                            </span>
-                                        <?php endif; ?>
-                                        <?php if(!empty($app['s6_former_school'])): ?>
-                                            <span class="block text-[9.5px] text-slate-500 truncate max-w-xs" title="Former S5: <?= htmlspecialchars($app['s6_former_school']) ?>">S5: <?= htmlspecialchars($app['s6_former_school']) ?></span>
-                                        <?php endif; ?>
-                                        <?php if(!empty($app['uce_subjects_json'])): ?>
-                                            <button type="button" 
-                                                    onclick='openNlscModal(<?= json_encode([
-                                                        "name" => trim($app['firstname']." ".$app['surname']." ".($app['othernames'] ?? "")),
-                                                        "class" => $app['class_of_entry'],
-                                                        "index" => $app['index_number'] ?? "N/A",
-                                                        "former_school" => $app['former_school'] ?? "N/A",
-                                                        "combination" => $app['combination'] ?? "N/A",
-                                                        "division" => $app['division'] ?? "N/A",
-                                                        "project_work" => $app['uce_project_work'] ?? "N/A",
-                                                        "result_slip" => $app['result_slip'] ?? "",
-                                                        "s6_former_school" => $app['s6_former_school'] ?? "",
-                                                        "s6_report_file" => $app['s6_report_file'] ?? "",
-                                                        "nlsc" => json_decode($app['uce_subjects_json'], true)
-                                                    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)' 
-                                                    class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 text-[9.5px] font-bold border border-slate-300 transition cursor-pointer whitespace-nowrap">
-                                                <i class="fa-solid fa-table-list"></i> View NLSC Grades
-                                            </button>
-                                        <?php endif; ?>
-                                    <?php else: ?>
-                                        <span class="block text-[10px] text-slate-800 font-bold mt-0.5">Last Class: <?= htmlspecialchars($app['division']) ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="px-2 py-2 max-w-[200px]">
-                                    <span class="block text-xs font-bold text-slate-800 leading-tight"><?= htmlspecialchars($app['parent_name']) ?></span>
-                                    <?php if(!empty($app['parent_phone'])): ?>
-                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-[11px] text-slate-600 hover:text-slate-900 mt-0.5 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_phone'])) ?>', this)" title="Click to copy Phone">
-                                            <i class="fa-solid fa-phone text-[9px] text-slate-400"></i>
-                                            <span><?= htmlspecialchars($app['parent_phone']) ?></span>
-                                            <i class="fa-regular fa-copy text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if(!empty($app['parent_email'])): ?>
-                                        <span class="flex items-center gap-1 group cursor-pointer text-[11px] text-slate-600 hover:text-slate-900 mt-0.5 truncate max-w-[190px] transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_email'])) ?>', this)" title="Click to copy Email: <?= htmlspecialchars($app['parent_email']) ?>">
-                                            <i class="fa-solid fa-envelope text-[9px] text-slate-400 shrink-0"></i>
-                                            <span class="truncate"><?= htmlspecialchars($app['parent_email']) ?></span>
-                                            <i class="fa-regular fa-copy text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"></i>
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if(!empty($app['parent_nin'])): ?>
-                                        <span class="inline-flex items-center gap-1 group cursor-pointer text-[9.5px] font-mono text-slate-500 hover:text-slate-900 mt-0.5 transition" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($app['parent_nin'])) ?>', this)" title="Click to copy NIN">
-                                            <span>NIN: <?= htmlspecialchars($app['parent_nin']) ?></span>
-                                            <i class="fa-regular fa-copy text-[8px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if(!empty($app['parent_id_file'])): ?>
-                                        <a href="../<?= htmlspecialchars(ltrim($app['parent_id_file'], './')) ?>" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-700 hover:text-slate-900 mt-0.5">
-                                             <i class="fa-solid fa-id-card"></i> View ID
-                                        </a>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="px-1.5 py-2 text-center">
-                                    <div class="flex flex-col items-center gap-1">
-                                        <?php if(!empty($app['result_slip']) && file_exists('../' . $app['result_slip'])): ?>
-                                            <a href="../<?= $app['result_slip'] ?>" target="_blank" class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded text-[10.5px] font-bold transition duration-150">
-                                                <i class="fa-solid fa-file-pdf"></i> <?= ($app['class_of_entry'] === 'S1') ? 'PLE Slip' : 'UCE Slip' ?>
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-xs text-slate-400 font-bold">N/A</span>
-                                        <?php endif; ?>
-
-                                        <?php if(!empty($app['s6_report_file']) && file_exists('../' . $app['s6_report_file'])): ?>
-                                            <a href="../<?= $app['s6_report_file'] ?>" target="_blank" class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded text-[10px] font-bold transition duration-150 border border-emerald-200">
-                                                <i class="fa-solid fa-file-lines"></i> S5 Report
-                                            </a>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td class="px-1.5 py-2 text-center">
-                                    <?php 
-                                    $isAuto = (!empty($app['is_auto_admitted']) && $app['is_auto_admitted'] == 1) || (stripos($app['admitted_by'] ?? '', 'AI') !== false) || (stripos($app['admitted_by'] ?? '', 'Auto') !== false);
-                                    $reviewSt = $app['auto_admit_review_status'] ?? ($isAuto ? 'needs_review' : null);
-                                    ?>
-                                    <?php if($status=='reported'): ?>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-50 text-purple-800 border border-purple-200"><i class="fa-solid fa-user-check mr-1 text-[8.5px]"></i> Reported</span>
-                                    <?php elseif($status=='admitted'): ?>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">Admitted</span>
-                                        <?php if($isAuto && $reviewSt === 'needs_review'): ?>
-                                            <a href="review_auto_admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm review of system auto-admitted application for <?= htmlspecialchars(addslashes($app['firstname'].' '.$app['surname'])) ?>?')" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 text-[8.5px] font-black uppercase tracking-wider mt-0.5 hover:bg-amber-100 transition shadow-2xs block whitespace-nowrap" title="System Auto-Admitted: Click to mark as Reviewed">
-                                                <i class="fa-solid fa-robot text-amber-600"></i> Needs Review
-                                            </a>
-                                        <?php elseif($isAuto && $reviewSt === 'reviewed'): ?>
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200 text-[8.5px] font-bold mt-0.5 block whitespace-nowrap" title="Auto-admit reviewed by <?= htmlspecialchars($app['reviewed_by'] ?? 'Admin') ?>">
-                                                <i class="fa-solid fa-check-double text-sky-600"></i> Reviewed
-                                            </span>
-                                        <?php endif; ?>
-                                    <?php elseif($status=='rejected'): ?>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200" title="<?= htmlspecialchars($app['rejection_reason'] ?? 'Rejected') ?>">Rejected</span>
-                                        <?php if(!empty($app['rejection_reason'])): ?>
-                                            <span class="block text-[9px] text-rose-600 font-medium italic mt-0.5 max-w-[110px] mx-auto truncate" title="<?= htmlspecialchars($app['rejection_reason']) ?>">
-                                                <?= htmlspecialchars($app['rejection_reason']) ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    <?php else: ?>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Pending</span>
-                                        <?php if(($app['auto_admit_review_status'] ?? '') === 'manual_verification_required'): ?>
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-300 text-[8.5px] font-black uppercase tracking-wider mt-0.5 block whitespace-nowrap" title="Academic document held: Manual verification required by admissions committee">
-                                                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Manual Verif.
-                                            </span>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="px-2 py-2 text-center whitespace-nowrap">
-                                    <div class="inline-flex items-center justify-center gap-1.5 flex-nowrap whitespace-nowrap">
-                                        <button type="button" 
-                                                onclick="openAppModalById(<?= $app['id'] ?>)" 
-                                                class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="View Complete Application Details">
-                                            <i class="fa-solid fa-eye text-slate-500 mr-1 text-[9px]"></i> Details
-                                        </button>
-
-                                        <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
-                                            <?php if($status=='pending'): ?>
-                                                <?php if(hasPermission($pdo, $currentRole, 'can_admit_students')): ?>
-                                                    <?php if(in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
-                                                        <button type="button" 
-                                                                onclick="openAdmitS5Modal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes(trim($app['firstname'].' '.$app['surname'])), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>')" 
-                                                                class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="Admit & Assign Combination">
-                                                            <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes(trim($app['firstname'].' '.$app['surname']))) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>?')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit Candidate">
-                                                            <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
-                                                        </a>
-                                                    <?php endif; ?>
-                                                <?php endif; ?>
-                                                <?php if(hasPermission($pdo, $currentRole, 'can_reject_students')): ?>
-                                                    <button type="button" 
-                                                            onclick="openRejectModal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes(trim($app['firstname'].' '.$app['surname'])), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['parent_email'] ?? ''), ENT_QUOTES) ?>')" 
-                                                            class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="Reject Candidate">
-                                                        <i class="fa-solid fa-xmark mr-1 text-[9px]"></i> Reject
-                                                    </button>
-                                                <?php endif; ?>
-                                            <?php elseif($status=='admitted'): ?>
-                                                <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-md transition duration-150 shadow-2xs" title="Print Official Admission Offer">
-                                                    <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
-                                                </a>
-                                                <a href="mark_reported.php?id=<?= $app['id'] ?>" 
-                                                   onclick="return confirm('Confirm that <?= htmlspecialchars(addslashes(trim($app['firstname'].' '.$app['surname'])), ENT_QUOTES) ?> has physically reported and enrolled at school? This will archive their admission.')" 
-                                                   class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-purple-700 hover:bg-purple-800 rounded-md transition duration-150 shadow-2xs" title="Mark as Reported & Enrolled">
-                                                    <i class="fa-solid fa-user-check mr-1 text-[8.5px]"></i> Reported
-                                                </a>
-                                                <?php if(hasPermission($pdo, $currentRole, 'can_manage_settings') || $_SESSION['admin_role'] === 'super_admin'): ?>
-                                                    <a href="reverse.php?id=<?= $app['id'] ?>" class="inline-flex items-center justify-center px-1.5 py-1 h-6 text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition duration-150 shadow-2xs" title="Reverse Status">
-                                                        Reverse
-                                                    </a>
-                                                <?php endif; ?>
-                                            <?php elseif($status=='reported'): ?>
-                                                <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition duration-150 shadow-2xs" title="View Official Admission Offer">
-                                                    <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
-                                                </a>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-
-                            <?php if (count($applications) === 0): ?>
-                            <tr>
-                                <td colspan="11" class="px-6 py-12 text-center text-slate-400 font-semibold">
-                                    <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300"></i>
-                                    No application entries found.
-                                </td>
-                            </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 20 Rows Per Page Pagination -->
-                <?php if ($totalPages > 1): ?>
-                <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                    <span class="text-xs text-slate-500">
-                        Showing <span class="font-bold text-slate-700"><?= min($offset + 1, $filteredCount) ?></span> to <span class="font-bold text-slate-700"><?= min($offset + $perPage, $filteredCount) ?></span> of <span class="font-bold text-slate-700"><?= $filteredCount ?></span> applications (20 per page)
-                    </span>
-                    <div class="flex items-center gap-1.5">
-                        <?php 
-                        $queryBase = 'dashboard.php?class=' . urlencode($classFilter) . '&search=' . urlencode($search);
-                        ?>
-                        <?php if ($page > 1): ?>
-                            <a href="<?= $queryBase ?>&page=<?= $page - 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
-                                <i class="fa-solid fa-chevron-left me-1"></i> Prev
-                            </a>
-                        <?php else: ?>
-                            <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-400 cursor-not-allowed">
-                                <i class="fa-solid fa-chevron-left me-1"></i> Prev
-                            </span>
-                        <?php endif; ?>
-
-                        <span class="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg">
-                            Page <?= $page ?> of <?= $totalPages ?>
-                        </span>
-
-                        <?php if ($page < $totalPages): ?>
-                            <a href="<?= $queryBase ?>&page=<?= $page + 1 ?>" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
-                                Next <i class="fa-solid fa-chevron-right ms-1"></i>
-                            </a>
-                        <?php else: ?>
-                            <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-400 cursor-not-allowed">
-                                Next <i class="fa-solid fa-chevron-right ms-1"></i>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
             </div>
 
         </div>
@@ -1613,6 +1687,51 @@ $msg = $_GET['msg'] ?? '';
     </button>
 
     <script>
+    // View Switcher (Cards vs Table)
+    function setCandidateRegistryView(mode) {
+        const cardsEl = document.getElementById('candidateCardsContainer');
+        const tableEl = document.getElementById('candidateTableContainer');
+        const cardsBtn = document.getElementById('regViewCardsBtn');
+        const tableBtn = document.getElementById('regViewTableBtn');
+        if (!cardsEl || !tableEl) return;
+        if (mode === 'cards') {
+            cardsEl.classList.remove('hidden');
+            tableEl.classList.add('hidden');
+            if (cardsBtn) {
+                cardsBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 bg-white text-brand-800 shadow-2xs';
+            }
+            if (tableBtn) {
+                tableBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+            }
+            try { localStorage.setItem('candidate_reg_view', 'cards'); } catch(e){}
+        } else {
+            cardsEl.classList.add('hidden');
+            tableEl.classList.remove('hidden');
+            if (cardsBtn) {
+                cardsBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+            }
+            if (tableBtn) {
+                tableBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 bg-white text-brand-800 shadow-2xs';
+            }
+            try { localStorage.setItem('candidate_reg_view', 'table'); } catch(e){}
+        }
+    }
+
+    // Initialize View Mode on Load
+    document.addEventListener('DOMContentLoaded', function() {
+        let savedView = null;
+        try { savedView = localStorage.getItem('candidate_reg_view'); } catch(e){}
+        if (savedView) {
+            setCandidateRegistryView(savedView);
+        } else {
+            if (window.innerWidth < 768) {
+                setCandidateRegistryView('cards');
+            } else {
+                setCandidateRegistryView('table');
+            }
+        }
+    });
+
     const canAdmitStudents = <?= hasPermission($pdo, $currentRole, 'can_admit_students') ? 'true' : 'false' ?>;
     const canRejectStudents = <?= hasPermission($pdo, $currentRole, 'can_reject_students') ? 'true' : 'false' ?>;
     const canManageSettings = <?= (hasPermission($pdo, $currentRole, 'can_manage_settings') || ($_SESSION['admin_role'] ?? '') === 'super_admin') ? 'true' : 'false' ?>;
