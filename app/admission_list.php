@@ -176,19 +176,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-.hidden, [hidden] { display: none !important; }
-img { max-width: 100%; height: auto; }
-.logo-img { width: 40px !important; height: 40px !important; object-fit: contain; }
-.print-banner { display: none !important; }
-@media print {
-    .print-banner { display: block !important; }
-}
-</style>
 <?= renderThemeConfig($pdo) ?>
-<!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
 <style>
 @media print {
     .no-print {

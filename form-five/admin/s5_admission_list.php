@@ -64,13 +64,10 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Senior Five Admitted Register - <?= htmlspecialchars($school_short_name) ?></title>
-<!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
-<!-- Font Awesome & Google Fonts -->
+<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <?= renderThemeConfig($pdo) ?>
 <style>
 @media print {

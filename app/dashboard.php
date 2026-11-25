@@ -284,16 +284,9 @@ $msg = $_GET['msg'] ?? '';
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-.hidden, [hidden] { display: none !important; }
-img { max-width: 100%; height: auto; }
-.logo-img { width: 40px !important; height: 40px !important; object-fit: contain; }
-</style>
 <?= renderThemeConfig($pdo) ?>
-<!-- Tailwind CDN & Chart.js -->
-<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js" data-cfasync="false"></script>
+<!-- Local Chart.js -->
+<script src="js/chart.min.js" data-cfasync="false"></script>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 

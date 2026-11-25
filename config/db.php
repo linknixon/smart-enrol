@@ -940,39 +940,33 @@ if (!function_exists('renderThemeConfig')) {
     function renderThemeConfig($pdo = null) {
         $primary = htmlspecialchars(getPrimaryColor($pdo));
         $accent  = htmlspecialchars(getAccentColor($pdo));
-        return "
-        <script data-cfasync=\"false\">
-        tailwind = window.tailwind || {};
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            500: '{$primary}',
-                            600: '{$primary}',
-                            700: '{$primary}',
-                            800: '{$primary}',
-                            900: '#031b0b',
-                        },
-                        gold: {
-                            400: '{$accent}',
-                            500: '{$accent}',
-                            600: '{$accent}',
-                            700: '{$accent}',
-                        }
-                    }
-                }
+
+        // Dynamically compute relative prefix to web root based on the active executing script
+        $baseDir = realpath(__DIR__ . '/..');
+        $scriptDir = isset($_SERVER['SCRIPT_FILENAME']) ? dirname($_SERVER['SCRIPT_FILENAME']) : getcwd();
+        $relPrefix = '';
+        if ($scriptDir && $baseDir && strpos($scriptDir, $baseDir) === 0) {
+            $sub = trim(substr($scriptDir, strlen($baseDir)), "/\\");
+            if ($sub !== '') {
+                $parts = explode(DIRECTORY_SEPARATOR, $sub);
+                $relPrefix = str_repeat('../', count($parts));
             }
-        };
-        </script>
-        <style>
-        /* Immediate FOUC prevention & logo stabilization before external CDN loads */
+        }
+        $tailwindLocal = $relPrefix . 'js/tailwind.js';
+        $faLocal       = $relPrefix . 'css/fontawesome/css/all.min.css';
+
+        return "
+        <!-- Immediate Anti-FOUC (Flash of Unstyled Content Prevention) -->
+        <style id=\"anti-fouc-style\">
+        html:not(.tailwind-ready) body {
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        html.tailwind-ready body {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transition: opacity 0.12s ease-in;
+        }
         .hidden, [hidden] { display: none !important; }
         img { max-width: 100%; height: auto; }
         .logo-img, img[alt='Logo'], img[alt='School Logo'] {
@@ -1079,6 +1073,68 @@ if (!function_exists('renderThemeConfig')) {
             transform: scale(1.1);
         }
         </style>
+
+        <!-- Local Font Awesome 6 -->
+        <link rel=\"stylesheet\" href=\"{$faLocal}\">
+
+        <!-- Tailwind Configuration & Local Engine -->
+        <script data-cfasync=\"false\">
+        tailwind = window.tailwind || {};
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Outfit', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '{$primary}',
+                            600: '{$primary}',
+                            700: '{$primary}',
+                            800: '{$primary}',
+                            900: '#031b0b',
+                        },
+                        gold: {
+                            400: '{$accent}',
+                            500: '{$accent}',
+                            600: '{$accent}',
+                            700: '{$accent}',
+                        }
+                    }
+                }
+            }
+        };
+        </script>
+        <script src=\"{$tailwindLocal}\" data-cfasync=\"false\"></script>
+        <script data-cfasync=\"false\">
+        if (typeof tailwind === 'undefined') {
+            document.write('<script src=\"https://cdn.tailwindcss.com\" data-cfasync=\"false\"><\/script>');
+        }
+        (function() {
+            function unhide() {
+                if (!document.documentElement.classList.contains('tailwind-ready')) {
+                    document.documentElement.classList.add('tailwind-ready');
+                }
+            }
+            if (typeof tailwind !== 'undefined') {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        setTimeout(unhide, 15);
+                    });
+                } else {
+                    unhide();
+                }
+            } else {
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(unhide, 30);
+                });
+            }
+            setTimeout(unhide, 250);
+        })();
+        </script>
         ";
     }
 }

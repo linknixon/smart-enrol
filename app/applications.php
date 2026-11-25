@@ -165,16 +165,11 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .hidden, [hidden] { display: none !important; }
-        img { max-width: 100%; height: auto; }
-        .logo-img { width: 40px !important; height: 40px !important; object-fit: contain; }
         body { font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif; }
         .shadow-2xs { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
     </style>
     <?= renderThemeConfig($pdo) ?>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-700 antialiased flex min-h-screen">
 
