@@ -173,14 +173,22 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admitted Register | <?= htmlspecialchars($school_short_name) ?></title>
 <link rel="icon" type="image/png" href="<?= !empty($logo_source) ? htmlspecialchars($logo_source) : '../images/default_logo.png' ?>">
-<!-- Tailwind CDN -->
-<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
-<!-- Font Awesome & Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+.hidden, [hidden] { display: none !important; }
+img { max-width: 100%; height: auto; }
+.logo-img { width: 40px !important; height: 40px !important; object-fit: contain; }
+.print-banner { display: none !important; }
+@media print {
+    .print-banner { display: block !important; }
+}
+</style>
 <?= renderThemeConfig($pdo) ?>
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com" data-cfasync="false"></script>
 <style>
 @media print {
     .no-print {
@@ -217,7 +225,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     <aside id="mobileSidebar" class="fixed top-0 bottom-0 left-0 w-72 text-white flex flex-col z-50 transform -translate-x-full transition-transform duration-200 ease-in-out md:hidden shadow-2xl no-print" style="background-color: <?= htmlspecialchars($primary_color) ?>;">
         <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <img src="<?= $logo_source ?>" alt="Logo" class="w-9 h-9 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+                <img src="<?= $logo_source ?>" alt="Logo" width="36" height="36" style="width: 36px; height: 36px; object-fit: contain;" class="w-9 h-9 bg-white rounded-full p-1 border-2 border-gold-500 object-contain logo-img">
                 <div class="min-w-0">
                     <span class="block text-xs font-bold text-white tracking-tight uppercase truncate"><?= htmlspecialchars($school_short_name ?: $school_name) ?></span>
                     <span class="block text-[9px] font-semibold text-gold-400 uppercase tracking-widest">Consolidated Portal</span>
@@ -271,7 +279,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     <!-- Desktop Sidebar (Hidden on print) -->
     <aside class="hidden md:flex w-64 text-white flex-col shrink-0 min-h-screen no-print" style="background-color: <?= htmlspecialchars($primary_color) ?>;">
         <div class="px-6 py-5 border-b border-white/10 flex items-center gap-3">
-            <img src="<?= $logo_source ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+            <img src="<?= $logo_source ?>" alt="Logo" width="40" height="40" style="width: 40px; height: 40px; object-fit: contain;" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain logo-img">
             <div class="min-w-0">
                 <span class="block text-sm font-bold text-white tracking-tight leading-tight uppercase truncate" title="<?= htmlspecialchars($school_name) ?>"><?= htmlspecialchars($school_short_name ?: substr($school_name, 0, 16)) ?></span>
                 <span class="block text-xs font-semibold text-gold-400 uppercase tracking-widest text-[9px]">Consolidated Portal</span>
@@ -337,7 +345,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 <a href="../index.php" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1.5 transition">
                     <i class="fa-solid fa-arrow-left"></i> Main Portal
                 </a>
-                <img src="<?= $logo_source ?>" alt="Logo" class="w-8 h-8 object-contain">
+                <img src="<?= $logo_source ?>" alt="Logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain;" class="w-8 h-8 object-contain logo-img">
                 <?php endif; ?>
                 <h1 class="text-base sm:text-xl font-bold text-slate-800 tracking-tight">Admitted Student Registers</h1>
             </div>
@@ -382,9 +390,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         <div class="flex-1 px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-5 print-container">
 
             <!-- Print Banner Header -->
-            <div class="hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6">
+            <div class="print-banner hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6" style="display: none;">
                 <div class="flex justify-center items-center gap-4">
-                    <img src="<?= $logo_source ?>" alt="Logo" class="w-16 h-16 object-contain">
+                    <img src="<?= $logo_source ?>" alt="Logo" width="64" height="64" style="width: 64px; height: 64px; object-fit: contain;" class="w-16 h-16 object-contain">
                     <div class="text-left">
                         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight"><?= strtoupper($school_name) ?></h1>
                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest"><?= htmlspecialchars($school_address) ?> | Tel: <?= htmlspecialchars($school_phone) ?></p>
@@ -465,82 +473,8 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                     <span class="text-xs font-bold text-white bg-white/20 border border-white/30 px-3 py-1 rounded-xl">Total Admitted: <?= $totalAdmitted ?></span>
                 </div>
 
-                <!-- Responsive Mobile Card View (<640px) -->
-                <div class="block sm:hidden divide-y divide-slate-200 bg-slate-50/70 p-3 space-y-3 no-print">
-                    <?php 
-                    $idxM = 1;
-                    foreach ($students as $s): 
-                        $serialNo = $offset + $idxM;
-                        $sClass = $s['class_of_entry'];
-                        $admNum = getAdmissionNumber($s);
-                        $fullName = trim($s['surname'].' '.$s['firstname'].' '.($s['othernames'] ?? ''));
-                        $acad = ($sClass === 'S1') ? ('PLE Div ' . ($s['division'] ?? 'N/A')) : (($sClass === 'S5' || $sClass === 'S6') ? (($s['combination'] ?? 'N/A') . ' (' . ($s['division'] ?? '') . ')') : ('Div ' . ($s['division'] ?? 'N/A')));
-                        $isAutoAdm = (!empty($s['is_auto_admitted']) && $s['is_auto_admitted'] == 1) || (stripos($s['admitted_by'] ?? '', 'AI') !== false) || (stripos($s['admitted_by'] ?? '', 'Auto') !== false);
-                    ?>
-                    <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-2xs space-y-2.5">
-                        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-mono font-bold text-[11px] flex items-center justify-center">#<?= $serialNo ?></span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-brand-50 text-brand-900 border border-brand-200"><?= htmlspecialchars($sClass) ?></span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold capitalize bg-slate-100 text-slate-700"><?= htmlspecialchars($s['sex']) ?></span>
-                            </div>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                                <i class="fa-solid fa-circle-check text-[9px] text-emerald-600"></i> Admitted
-                            </span>
-                        </div>
-
-                        <div>
-                            <div class="text-sm font-bold text-slate-900 leading-snug break-words">
-                                <?= htmlspecialchars($fullName) ?>
-                            </div>
-                            <?php if ($isAutoAdm && ($s['auto_admit_review_status'] ?? 'needs_review') === 'needs_review'): ?>
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 text-[9px] font-bold mt-1">
-                                    <i class="fa-solid fa-robot text-amber-600"></i> Auto-Admitted (Needs Review)
-                                </span>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
-                            <div>
-                                <span class="block text-[9.5px] uppercase font-bold text-slate-400">Admission No</span>
-                                <span class="font-mono font-bold text-brand-900 text-[11px] inline-flex items-center gap-1 cursor-pointer" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($admNum)) ?>', this)" title="Tap to copy">
-                                    <span><?= htmlspecialchars($admNum) ?></span>
-                                    <i class="fa-regular fa-copy text-[9px] text-slate-400"></i>
-                                </span>
-                            </div>
-                            <div>
-                                <span class="block text-[9.5px] uppercase font-bold text-slate-400">Index Number</span>
-                                <span class="font-mono font-bold text-slate-700 text-[11px] inline-flex items-center gap-1 cursor-pointer" onclick="copyToClipboard('<?= htmlspecialchars(addslashes($s['index_number'] ?? '')) ?>', this)" title="Tap to copy">
-                                    <span><?= htmlspecialchars($s['index_number'] ?? 'N/A') ?></span>
-                                    <i class="fa-regular fa-copy text-[9px] text-slate-400"></i>
-                                </span>
-                            </div>
-                            <div class="col-span-2 pt-1 border-t border-slate-200/60">
-                                <span class="block text-[9.5px] uppercase font-bold text-slate-400">Academic Merit</span>
-                                <span class="font-bold text-slate-800 text-xs"><?= htmlspecialchars($acad) ?></span>
-                            </div>
-                        </div>
-
-                        <div class="pt-1 flex items-center justify-end">
-                            <a href="admission_offer.php?id=<?= $s['id'] ?>" target="_blank" class="w-full text-center px-3 py-2 rounded-xl text-xs font-bold bg-brand-700 hover:bg-brand-800 text-white transition flex items-center justify-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> View / Download Offer Letter
-                            </a>
-                        </div>
-                    </div>
-                    <?php 
-                    $idxM++;
-                    endforeach; 
-                    ?>
-                    <?php if (count($students) === 0): ?>
-                    <div class="p-8 text-center text-slate-400 font-semibold bg-white rounded-xl">
-                        <i class="fa-solid fa-folder-open text-2xl block mb-2 text-slate-300"></i>
-                        No admitted students registered matching the selected criteria.
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Desktop / Tablet Table View (>=640px and print) -->
-                <div class="hidden sm:block overflow-x-auto print:block" style="-webkit-overflow-scrolling: touch;">
+                <!-- Admitted Register Table View (Single Unified View) -->
+                <div class="overflow-x-auto print:block w-full" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full text-left border-collapse text-xs table-auto min-w-[700px]" id="admissionTable">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px] print:bg-white print:border-b-2 print:border-black">

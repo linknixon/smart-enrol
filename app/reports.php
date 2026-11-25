@@ -363,9 +363,9 @@ $count = count($applications);
         <div class="flex-1 px-4 sm:px-6 py-6 space-y-6 print-container min-w-0">
 
             <!-- Official Report Header (Only on print) -->
-            <div class="hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6">
+            <div class="print-banner hidden print:block text-center border-b-4 border-slate-800 pb-4 mb-6" style="display: none;">
                 <div class="flex justify-center items-center gap-4">
-                    <img src="<?= $logo_source ?>" alt="Logo" class="w-16 h-16 object-contain">
+                    <img src="<?= $logo_source ?>" alt="Logo" width="64" height="64" style="width: 64px; height: 64px; object-fit: contain;" class="w-16 h-16 object-contain">
                     <div class="text-left">
                         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight"><?= strtoupper($school_name) ?></h1>
                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest"><?= htmlspecialchars($school_address) ?> | Tel: <?= htmlspecialchars($school_phone) ?></p>

@@ -972,6 +972,24 @@ if (!function_exists('renderThemeConfig')) {
         };
         </script>
         <style>
+        /* Immediate FOUC prevention & logo stabilization before external CDN loads */
+        .hidden, [hidden] { display: none !important; }
+        img { max-width: 100%; height: auto; }
+        .logo-img, img[alt='Logo'], img[alt='School Logo'] {
+            width: 40px !important;
+            height: 40px !important;
+            max-width: 40px !important;
+            max-height: 40px !important;
+            object-fit: contain !important;
+        }
+        .print-banner {
+            display: none !important;
+        }
+        @media print {
+            .print-banner {
+                display: block !important;
+            }
+        }
         :root {
             --primary-color: {$primary};
             --primary-light: {$primary};

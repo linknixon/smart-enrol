@@ -162,16 +162,19 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Applications Registry · <?= htmlspecialchars($school_short_name) ?></title>
     <link rel="icon" type="image/png" href="<?= !empty($logo_source) ? htmlspecialchars($logo_source) : '../images/default_logo.png' ?>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <?= renderThemeConfig($pdo) ?>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        .hidden, [hidden] { display: none !important; }
+        img { max-width: 100%; height: auto; }
+        .logo-img { width: 40px !important; height: 40px !important; object-fit: contain; }
         body { font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif; }
         .shadow-2xs { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
     </style>
+    <?= renderThemeConfig($pdo) ?>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-700 antialiased flex min-h-screen">
 
@@ -180,7 +183,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     <aside id="mobileSidebar" class="fixed top-0 bottom-0 left-0 w-72 text-white flex flex-col z-50 transform -translate-x-full transition-transform duration-200 ease-in-out md:hidden shadow-2xl" style="background-color: <?= htmlspecialchars($primary_color) ?>;">
         <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <img src="<?= $logo_source ?>" alt="Logo" class="w-9 h-9 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+                <img src="<?= $logo_source ?>" alt="Logo" width="36" height="36" style="width: 36px; height: 36px; object-fit: contain;" class="w-9 h-9 bg-white rounded-full p-1 border-2 border-gold-500 object-contain logo-img">
                 <div class="min-w-0">
                     <span class="block text-xs font-bold text-white tracking-tight uppercase truncate"><?= htmlspecialchars($school_short_name) ?></span>
                     <span class="block text-[9px] font-semibold text-gold-400 uppercase tracking-widest">Consolidated Portal</span>
@@ -237,7 +240,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     <!-- Desktop Sidebar -->
     <aside class="hidden md:flex w-64 text-white flex-col shrink-0 min-h-screen" style="background-color: <?= htmlspecialchars($primary_color) ?>;">
         <div class="px-6 py-5 border-b border-white/10 flex items-center gap-3">
-            <img src="<?= $logo_source ?>" alt="Logo" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain">
+            <img src="<?= $logo_source ?>" alt="Logo" width="40" height="40" style="width: 40px; height: 40px; object-fit: contain;" class="w-10 h-10 bg-white rounded-full p-1 border-2 border-gold-500 object-contain logo-img">
             <div>
                 <span class="block text-sm font-bold text-white tracking-tight leading-tight uppercase"><?= htmlspecialchars($school_short_name) ?></span>
                 <span class="block text-xs font-semibold text-gold-400 uppercase tracking-widest text-[9px]">Consolidated Portal</span>
@@ -466,171 +469,14 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                     </div>
 
                     <div class="flex items-center gap-2.5 self-start sm:self-auto">
-                        <!-- View Switcher -->
-                        <div class="inline-flex items-center p-0.5 bg-slate-200/80 rounded-lg text-xs font-bold">
-                            <button type="button" onclick="setCandidateRegistryView('cards')" id="regViewCardsBtn" class="px-2.5 py-1 rounded-md transition flex items-center gap-1.5 bg-white text-brand-800 shadow-2xs">
-                                <i class="fa-solid fa-id-card"></i> <span>Cards</span>
-                            </button>
-                            <button type="button" onclick="setCandidateRegistryView('table')" id="regViewTableBtn" class="px-2.5 py-1 rounded-md transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-                                <i class="fa-solid fa-table-list"></i> <span>Table</span>
-                            </button>
-                        </div>
-
                         <a href="reports.php" class="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition shadow-2xs">
                             <i class="fa-solid fa-file-invoice text-gold-500"></i> <span class="hidden xs:inline">Custom Reports</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- VIEW 1: Mobile-Optimized Candidate Cards View -->
-                <div id="candidateCardsContainer" class="p-3 sm:p-4 space-y-3">
-                    <?php if (count($applications) === 0): ?>
-                        <div class="p-10 text-center text-slate-400 font-semibold bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                            <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300"></i>
-                            No application entries found matching current filter criteria.
-                        </div>
-                    <?php endif; ?>
-
-                    <?php foreach ($applications as $app): 
-                        $status = strtolower($app['application_status'] ?? 'pending');
-                        $fullName = trim($app['firstname'].' '.$app['surname'].' '.($app['othernames'] ?? ''));
-                        $primaryParent = !empty($app['father_name']) ? $app['father_name'] : (!empty($app['mother_name']) ? $app['mother_name'] : ($app['guardian_name'] ?? ($app['parent_name'] ?? '—')));
-                        $primaryPhone = !empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_contact'] ?? ($app['parent_phone'] ?? '')));
-                        
-                        $statusBadgeClass = 'bg-amber-100 text-amber-800 border border-amber-200';
-                        $statusLabel = 'Pending Review';
-                        if ($status === 'admitted') {
-                            $statusBadgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-                            $statusLabel = 'Admitted';
-                        } elseif ($status === 'reported') {
-                            $statusBadgeClass = 'bg-purple-100 text-purple-800 border border-purple-200';
-                            $statusLabel = 'Enrolled';
-                        } elseif ($status === 'rejected') {
-                            $statusBadgeClass = 'bg-rose-100 text-rose-800 border border-rose-200';
-                            $statusLabel = 'Rejected';
-                        }
-
-                        // Academic Result display snippet
-                        $academicSnippet = '—';
-                        if ($app['class_of_entry'] === 'S1') {
-                            $academicSnippet = ($app['ple_division'] ? 'Div '.$app['ple_division'] : '').($app['ple_aggregates'] ? ' ('.$app['ple_aggregates'].' Aggs)' : '');
-                        } elseif (in_array($app['class_of_entry'], ['S5', 'S6'])) {
-                            if (!empty($app['uce_result_level'])) {
-                                $academicSnippet = htmlspecialchars($app['uce_result_level']).(!empty($app['nlsc_competency_score']) ? ' · '.$app['nlsc_competency_score'].' pts' : '');
-                            } else {
-                                $academicSnippet = $app['uce_division'] ? 'UCE Div '.$app['uce_division'] : 'A-Level Applicant';
-                            }
-                        } else {
-                            $academicSnippet = 'Transfer: '.htmlspecialchars($app['class_of_entry']);
-                        }
-                    ?>
-                    <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-brand-300 transition space-y-3">
-                        <!-- Top Info: Avatar, Name, Class Badge, Status -->
-                        <div class="flex items-start justify-between gap-2.5">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center shrink-0">
-                                    <?php if(!empty($app['photo_url']) && !str_starts_with($app['photo_url'], 'data:image/svg')): ?>
-                                        <img src="<?= htmlspecialchars($app['photo_url']) ?>" alt="Photo" class="w-full h-full object-cover">
-                                    <?php else: ?>
-                                        <span class="font-bold text-xs text-slate-400"><?= strtoupper(substr($app['firstname'] ?? 'S', 0, 1) . substr($app['surname'] ?? '', 0, 1)) ?></span>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-1.5 flex-wrap">
-                                        <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="font-bold text-slate-900 text-xs sm:text-sm hover:text-brand-700 text-left truncate leading-tight">
-                                            <?= htmlspecialchars($fullName) ?>
-                                        </button>
-                                        <span class="px-1.5 py-0.2 rounded text-[10px] font-black bg-brand-50 text-brand-700 border border-brand-200 whitespace-nowrap">
-                                            <?= htmlspecialchars($app['class_of_entry']) ?><?= !empty($app['combination']) ? ' · '.htmlspecialchars($app['combination']) : '' ?>
-                                        </span>
-                                    </div>
-                                    <span class="text-[10.5px] text-slate-400 font-mono block">ID: #<?= str_pad((string)$app['id'], 5, '0', STR_PAD_LEFT) ?> · <?= date('d M Y', strtotime($app['created_at'])) ?></span>
-                                </div>
-                            </div>
-                            <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider <?= $statusBadgeClass ?>">
-                                <?= $statusLabel ?>
-                            </span>
-                        </div>
-
-                        <!-- 2x2 Key Info Grid -->
-                        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                            <div>
-                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Results / Standing</span>
-                                <span class="font-semibold text-slate-800 text-[11px]"><?= $academicSnippet ?></span>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Gender & Religion</span>
-                                <span class="font-semibold text-slate-800 text-[11px]"><?= htmlspecialchars($app['sex'] ?? $app['gender'] ?? '—') ?> · <?= htmlspecialchars($app['religion'] ?? '—') ?></span>
-                            </div>
-                            <div class="truncate">
-                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Former School</span>
-                                <span class="font-semibold text-slate-800 text-[11px] truncate block" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>"><?= htmlspecialchars($app['former_school'] ?? '—') ?></span>
-                            </div>
-                            <div class="truncate">
-                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Parent / Caregiver</span>
-                                <div class="flex items-center gap-1.5 truncate">
-                                    <span class="font-semibold text-slate-800 text-[11px] truncate"><?= htmlspecialchars($primaryParent) ?></span>
-                                    <?php if(!empty($primaryPhone)): ?>
-                                        <a href="tel:<?= htmlspecialchars($primaryPhone) ?>" class="text-brand-700 hover:text-brand-900 shrink-0 font-bold" title="Call parent">
-                                            <i class="fa-solid fa-phone text-[10px]"></i>
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons Bar -->
-                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 flex-wrap">
-                            <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                                <i class="fa-solid fa-id-card-clip text-brand-700"></i> View Dossier
-                            </button>
-
-                            <div class="flex items-center gap-1.5 ms-auto flex-wrap">
-                                <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
-                                    <?php if($status === 'pending'): ?>
-                                        <?php if(hasPermission($pdo, $currentRole, 'can_admit_students')): ?>
-                                            <?php if(in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
-                                                <button type="button" onclick="openAdmitS5Modal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition shadow-2xs">
-                                                    <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit & Comb
-                                                </button>
-                                            <?php else: ?>
-                                                <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes($fullName)) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>?')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition shadow-2xs">
-                                                    <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
-                                                </a>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-
-                                        <?php if(hasPermission($pdo, $currentRole, 'can_reject_students')): ?>
-                                            <button type="button" onclick="openRejectModal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['parent_email'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-md transition shadow-2xs">
-                                                <i class="fa-solid fa-xmark mr-1 text-[9px]"></i> Reject
-                                            </button>
-                                        <?php endif; ?>
-                                    <?php elseif($status === 'admitted'): ?>
-                                        <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-md transition shadow-2xs">
-                                            <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
-                                        </a>
-                                        <a href="mark_reported.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm that <?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?> has reported and enrolled at school?')" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-white bg-purple-700 hover:bg-purple-800 rounded-md transition shadow-2xs">
-                                            <i class="fa-solid fa-user-check mr-1 text-[8.5px]"></i> Reported
-                                        </a>
-                                        <?php if(hasPermission($pdo, $currentRole, 'can_manage_settings') || $_SESSION['admin_role'] === 'super_admin'): ?>
-                                            <a href="reverse.php?id=<?= $app['id'] ?>" class="inline-flex items-center px-1.5 py-1 text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition shadow-2xs">
-                                                Reverse
-                                            </a>
-                                        <?php endif; ?>
-                                    <?php elseif($status === 'reported'): ?>
-                                        <a href="admission_offer.php?id=<?= $app['id'] ?>" target="_blank" class="inline-flex items-center px-2 py-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition shadow-2xs">
-                                            <i class="fa-solid fa-file-pdf mr-1 text-[9px]"></i> Offer
-                                        </a>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <!-- VIEW 2: Desktop 11-Column Table View -->
-                <div id="candidateTableContainer" class="hidden overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                <!-- Candidate Registry Table View (Single Unified View) -->
+                <div id="candidateTableContainer" class="overflow-x-auto w-full" style="-webkit-overflow-scrolling: touch;">
                     <div class="flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium md:hidden">
                         <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all columns
                     </div>
@@ -998,23 +844,24 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 
     <!-- View Complete Application Details Modal -->
     <div id="fullApplicationModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 relative">
             <!-- Modal Header -->
-            <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 text-white flex items-center justify-between shrink-0">
+            <div class="px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 text-white flex items-center justify-between shrink-0 relative pr-14">
                 <div class="flex items-center gap-3">
-                    <span class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg border border-white/20 text-gold-400">
+                    <span class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg border border-white/20 text-gold-400 shrink-0">
                         <i class="fa-solid fa-id-card-clip"></i>
                     </span>
                     <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <h3 id="modalStudentName" class="text-base font-extrabold uppercase tracking-tight text-white">Application Details</h3>
                             <span id="modalStatusBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase"></span>
                         </div>
                         <p class="text-xs text-brand-200 font-medium">Cohort Intake <span id="modalAcademicYear" class="font-bold text-white"></span> · Application ID: <span id="modalAppId" class="font-mono text-gold-400"></span></p>
                     </div>
                 </div>
-                <button type="button" onclick="closeFullAppModal()" class="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer">
-                    <i class="fa-solid fa-xmark text-xl"></i>
+                <!-- Close Button in Top Right Corner as an X -->
+                <button type="button" onclick="closeFullAppModal()" class="absolute top-3 right-3 sm:top-3.5 sm:right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer border border-white/20 shadow-sm" title="Close Window (X)">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
@@ -1442,48 +1289,23 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         }
     }
 
-    // View Switcher (Cards vs Table)
-    function setCandidateRegistryView(mode) {
-        const cardsEl = document.getElementById('candidateCardsContainer');
-        const tableEl = document.getElementById('candidateTableContainer');
-        const cardsBtn = document.getElementById('regViewCardsBtn');
-        const tableBtn = document.getElementById('regViewTableBtn');
-        if (!cardsEl || !tableEl) return;
-        if (mode === 'cards') {
-            cardsEl.classList.remove('hidden');
-            tableEl.classList.add('hidden');
-            if (cardsBtn) {
-                cardsBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 bg-white text-brand-800 shadow-2xs';
-            }
-            if (tableBtn) {
-                tableBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
-            }
-            try { localStorage.setItem('candidate_reg_view', 'cards'); } catch(e){}
-        } else {
-            cardsEl.classList.add('hidden');
-            tableEl.classList.remove('hidden');
-            if (cardsBtn) {
-                cardsBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
-            }
-            if (tableBtn) {
-                tableBtn.className = 'px-2.5 py-1 rounded-md transition flex items-center gap-1.5 bg-white text-brand-800 shadow-2xs';
-            }
-            try { localStorage.setItem('candidate_reg_view', 'table'); } catch(e){}
+    // Close modal on Escape key or backdrop click
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeFullAppModal();
+            closeRejectModal();
+            closeAdmitS5Modal();
+            closeNlscModal();
+            closeChangeCombModal();
         }
-    }
+    });
 
-    // Initialize View Mode on Load
     document.addEventListener('DOMContentLoaded', function() {
-        let savedView = null;
-        try { savedView = localStorage.getItem('candidate_reg_view'); } catch(e){}
-        if (savedView) {
-            setCandidateRegistryView(savedView);
-        } else {
-            if (window.innerWidth < 768) {
-                setCandidateRegistryView('cards');
-            } else {
-                setCandidateRegistryView('table');
-            }
+        const fullModal = document.getElementById('fullApplicationModal');
+        if (fullModal) {
+            fullModal.addEventListener('click', function(e) {
+                if (e.target === this) closeFullAppModal();
+            });
         }
     });
 
