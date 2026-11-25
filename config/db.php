@@ -984,13 +984,14 @@ if (!function_exists('renderThemeConfig')) {
                 display: block !important;
             }
         }
+        /* Theme Color Classes (Static CSS Fallback & Immediate Paint) */
         :root {
             --primary-color: {$primary};
             --primary-light: {$primary};
-            --primary-dark: {$primary};
+            --primary-dark: #062f14;
             --gold-color: {$accent};
-            --gold-light: {$accent};
-            --gold-dark: {$accent};
+            --gold-light: #d4af37;
+            --gold-dark: #8a661c;
         }
         .btn-brand {
             background-color: var(--primary-color) !important;
@@ -1006,24 +1007,86 @@ if (!function_exists('renderThemeConfig')) {
         .btn-gold:hover {
             opacity: 0.92;
         }
-        .text-brand {
-            color: var(--primary-color) !important;
-        }
-        .text-gold {
-            color: var(--gold-color) !important;
-        }
-        .border-brand {
-            border-color: var(--primary-color) !important;
-        }
-        .border-gold {
-            border-color: var(--gold-color) !important;
-        }
-        .bg-brand {
-            background-color: var(--primary-color) !important;
-        }
-        .bg-gold {
-            background-color: var(--gold-color) !important;
-        }
+        .text-brand { color: var(--primary-color) !important; }
+        .text-gold  { color: var(--gold-color) !important; }
+        .border-brand { border-color: var(--primary-color) !important; }
+        .border-gold  { border-color: var(--gold-color) !important; }
+        .bg-brand   { background-color: var(--primary-color) !important; }
+        .bg-gold    { background-color: var(--gold-color) !important; }
+
+        /* Full Brand Palette Utilities */
+        .text-brand-50  { color: #f0fdf4 !important; }
+        .text-brand-100 { color: #dcfce7 !important; }
+        .text-brand-200 { color: #bbf7d0 !important; }
+        .text-brand-300 { color: #86efac !important; }
+        .text-brand-400 { color: #4ade80 !important; }
+        .text-brand-500, .text-brand-600, .text-brand-700 { color: var(--primary-color) !important; }
+        .text-brand-800 { color: #062f14 !important; }
+        .text-brand-900 { color: #031b0b !important; }
+        .text-brand-950 { color: #021207 !important; }
+
+        .bg-brand-50  { background-color: #f0fdf4 !important; }
+        .bg-brand-100 { background-color: #dcfce7 !important; }
+        .bg-brand-200 { background-color: #bbf7d0 !important; }
+        .bg-brand-300 { background-color: #86efac !important; }
+        .bg-brand-400 { background-color: #4ade80 !important; }
+        .bg-brand-500, .bg-brand-600, .bg-brand-700 { background-color: var(--primary-color) !important; }
+        .bg-brand-800 { background-color: #062f14 !important; }
+        .bg-brand-900 { background-color: #031b0b !important; }
+        .bg-brand-950 { background-color: #021207 !important; }
+
+        .border-brand-100 { border-color: #dcfce7 !important; }
+        .border-brand-200 { border-color: #bbf7d0 !important; }
+        .border-brand-500, .border-brand-600, .border-brand-700 { border-color: var(--primary-color) !important; }
+        .border-brand-800 { border-color: #062f14 !important; }
+
+        /* Full Gold Palette Utilities */
+        .text-gold-50  { color: #fbf8ee !important; }
+        .text-gold-100 { color: #f5edd3 !important; }
+        .text-gold-200 { color: #ebd9a5 !important; }
+        .text-gold-300 { color: #dfc272 !important; }
+        .text-gold-400 { color: #c89f3c !important; }
+        .text-gold-500, .text-gold-600 { color: var(--gold-color) !important; }
+        .text-gold-700 { color: #8a661c !important; }
+        .text-gold-800 { color: #6f5214 !important; }
+
+        .bg-gold-50  { background-color: #fbf8ee !important; }
+        .bg-gold-100 { background-color: #f5edd3 !important; }
+        .bg-gold-200 { background-color: #ebd9a5 !important; }
+        .bg-gold-300 { background-color: #dfc272 !important; }
+        .bg-gold-400 { background-color: #c89f3c !important; }
+        .bg-gold-500, .bg-gold-600 { background-color: var(--gold-color) !important; }
+        .bg-gold-700 { background-color: #8a661c !important; }
+        .bg-gold-800 { background-color: #6f5214 !important; }
+
+        .border-gold-100 { border-color: #f5edd3 !important; }
+        .border-gold-200 { border-color: #ebd9a5 !important; }
+        .border-gold-300 { border-color: #dfc272 !important; }
+        .border-gold-400 { border-color: #c89f3c !important; }
+        .border-gold-500, .border-gold-600 { border-color: var(--gold-color) !important; }
+        .border-gold-700 { border-color: #8a661c !important; }
+
+        /* Opacity & Alpha Modifiers */
+        .bg-gold-500\/20 { background-color: rgba(181, 141, 47, 0.2) !important; }
+        .border-gold-500\/30 { border-color: rgba(181, 141, 47, 0.3) !important; }
+        .shadow-brand-700\/20 { box-shadow: 0 4px 12px rgba(12, 74, 36, 0.2) !important; }
+        .shadow-brand-950\/40 { box-shadow: 0 6px 18px rgba(2, 18, 7, 0.4) !important; }
+        .border-brand-700\/40 { border-color: rgba(12, 74, 36, 0.4) !important; }
+
+        /* Brand Gradients */
+        .from-brand-900 { --tw-gradient-from: #031b0b var(--tw-gradient-from-position); --tw-gradient-to: rgb(3 27 11 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+        .via-brand-800 { --tw-gradient-to: rgb(6 47 20 / 0)  var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), #062f14 var(--tw-gradient-via-position), var(--tw-gradient-to); }
+        .to-brand-950 { --tw-gradient-to: #021207 var(--tw-gradient-to-position); }
+
+        /* Hover States */
+        .hover\:bg-brand-800:hover { background-color: #062f14 !important; }
+        .hover\:bg-gold-600:hover { background-color: #8a661c !important; }
+        .hover\:text-brand-700:hover { color: var(--primary-color) !important; }
+        .hover\:text-brand-800:hover { color: #062f14 !important; }
+        .hover\:text-brand-900:hover { color: #031b0b !important; }
+        .group:hover .group-hover\:text-brand-700 { color: var(--primary-color) !important; }
+        .group:hover .group-hover\:border-brand-700\/40 { border-color: rgba(12, 74, 36, 0.4) !important; }
+
         /* Uniform, modern select dropdown styling with SVG arrow */
         select, .form-select-custom {
             appearance: none !important;
@@ -1077,7 +1140,7 @@ if (!function_exists('renderThemeConfig')) {
         <!-- Local Font Awesome 6 -->
         <link rel=\"stylesheet\" href=\"{$faLocal}\">
 
-        <!-- Tailwind Configuration & Local Engine -->
+        <!-- Tailwind Configuration & Official JIT Compiler Engine -->
         <script data-cfasync=\"false\">
         tailwind = window.tailwind || {};
         tailwind.config = {
@@ -1091,28 +1154,35 @@ if (!function_exists('renderThemeConfig')) {
                             50: '#f0fdf4',
                             100: '#dcfce7',
                             200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
                             500: '{$primary}',
                             600: '{$primary}',
                             700: '{$primary}',
-                            800: '{$primary}',
+                            800: '#062f14',
                             900: '#031b0b',
+                            950: '#021207',
                         },
                         gold: {
-                            400: '{$accent}',
+                            50: '#fbf8ee',
+                            100: '#f5edd3',
+                            200: '#ebd9a5',
+                            300: '#dfc272',
+                            400: '#c89f3c',
                             500: '{$accent}',
                             600: '{$accent}',
-                            700: '{$accent}',
+                            700: '#8a661c',
+                            800: '#6f5214',
+                            900: '#42310a',
+                            950: '#281d05',
                         }
                     }
                 }
             }
         };
         </script>
-        <script src=\"{$tailwindLocal}\" data-cfasync=\"false\"></script>
+        <script src=\"https://cdn.tailwindcss.com\" data-cfasync=\"false\"></script>
         <script data-cfasync=\"false\">
-        if (typeof tailwind === 'undefined') {
-            document.write('<script src=\"https://cdn.tailwindcss.com\" data-cfasync=\"false\"><\/script>');
-        }
         (function() {
             function unhide() {
                 if (!document.documentElement.classList.contains('tailwind-ready')) {
