@@ -182,19 +182,19 @@ $headerY = $hasLogo ? (8 + $logoH + 1.5) : 10;
 
 $pdf->SetXY(15, $headerY);
 $pdf->SetTextColor(0, 0, 0); // Strictly black
-$pdf->SetFont('times', 'B', 13);
+$pdf->SetFont('trebuchetms', 'B', 12.5);
 $pdf->Cell(180, 5, strtoupper($school_name), 0, 1, 'C');
 
 if (!empty($school_motto)) {
     $pdf->SetX(15);
     $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFont('times', 'I', 8.5);
+    $pdf->SetFont('trebuchetms', 'I', 8.5);
     $pdf->Cell(180, 3.8, '"' . $school_motto . '"', 0, 1, 'C');
 }
 
 $pdf->SetX(15);
 $pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('times', '', 7.5);
+$pdf->SetFont('trebuchetms', '', 7.5);
 $pdf->Cell(180, 3.4, $school_address . '   |   Telephone: ' . $school_phone . '   |   Email: ' . $school_email, 0, 1, 'C');
 $pdf->SetX(15);
 $pdf->Cell(180, 3.2, 'Website: ' . $school_website, 0, 1, 'C');
@@ -208,7 +208,7 @@ $pdf->Line(15, $divY + 0.5, 195, $divY + 0.5, ['width' => 0.2, 'color' => [0, 0,
 $refY = $divY + 2.5;
 $pdf->SetXY(15, $refY);
 $pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('times', '', 8);
+$pdf->SetFont('trebuchetms', '', 8);
 
 $studentFullName = strtoupper(trim($student['surname'] . ' ' . $student['firstname'] . ' ' . ($student['othernames'] ?? '')));
 $currentDateFormatted = date('jS F, Y');
@@ -220,22 +220,6 @@ $pdf->Cell(85, 4, 'Date: ' . $currentDateFormatted, 0, 1, 'R');
 /* ================= ADDRESSEE & STUDENT PARTICULARS ================= */
 $contentY = $pdf->GetY() + 1.5;
 $pdf->SetXY(15, $contentY);
-
-// Build Student Photo Box (Monochrome)
-$photoCellHtml = '';
-if ($hasStudentPhoto) {
-    $photoCellHtml = '<td width="16%" align="center" style="vertical-align: middle; padding: 0px;">
-        <img src="' . htmlspecialchars($studentPhotoPath) . '" width="58" height="58" style="border: 1px solid #000000;" />
-    </td>';
-} else {
-    $photoCellHtml = '<td width="16%" align="center" style="vertical-align: middle; padding: 0px;">
-        <div style="border: 1px solid #000000; background-color: #ffffff; padding: 12px 2px; text-align: center;">
-            <span style="font-size: 5.5pt; font-family: times; color: #000000; font-weight: bold; line-height: 1.2;">STUDENT<br>PASSPORT<br>PHOTO</span>
-        </div>
-    </td>';
-}
-
-$detailsColWidth = '84%';
 
 // Academic credential label
 $academicCredential = '';
@@ -280,42 +264,41 @@ if ($isAdmitted) {
 // Conditions and instructions
 if ($isAdmitted) {
     $reportingNotice = (!empty($reportingDate) ? htmlspecialchars($reportingDate) : 'the official opening day of Term I');
-    $conditionsList = '<table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt; line-height: 1.35; margin: 0;">' .
+    $conditionsList = '<table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt; line-height: 1.35; margin: 0; font-family: \'trebuchetms\', sans-serif;">' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">1.</td><td width="97%" style="text-align: justify;"><strong>Reporting Date &amp; Forfeiture:</strong> You are expected to report to the school on <strong>' . $reportingNotice . '</strong> between 8:00 AM and 4:00 PM. Please take note that this provisional vacancy will automatically lapse and be re-allocated if you fail to report within five (5) working days from the opening date without prior written permission approved by the Head Teacher.</td></tr>' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">2.</td><td width="97%" style="text-align: justify;"><strong>Verification of Credentials:</strong> Admission is strictly provisional and conditional upon the physical presentation and verification of your original UNEB Result Slip, Primary Leaving / UCE Certificate, Birth Certificate, and two (2) recent passport-sized photographs on arrival.</td></tr>' .
-        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Payment Procedure:</strong> All school fees must be paid through the official <strong>SchoolPay</strong> platform using your Student Payment Code: <strong>' . $student_number . '</strong>. Payment may be completed via Mobile Money (dial *165# for MTN or *185# for Airtel &rarr; Pay School Fees &rarr; Enter Code: ' . $student_number . ') or deposited over the counter at any branch of Centenary Bank, Stanbic Bank, or PostBank. Cash payments are strictly not accepted on the school premises. Please present the bank deposit slip or mobile transaction confirmation to the School Bursar upon reporting.</td></tr>' .
+        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Payment of School Fees:</strong> All prescribed school dues must be cleared prior to or upon reporting. Details on how to pay will be shared.</td></tr>' .
         '</table>';
 } else {
-    $conditionsList = '<table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt; line-height: 1.35; margin: 0;">' .
+    $conditionsList = '<table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt; line-height: 1.35; margin: 0; font-family: \'trebuchetms\', sans-serif;">' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">1.</td><td width="97%" style="text-align: justify;"><strong>Evaluation Notice:</strong> Admission is competitive and subject to the availability of vacancies and verification of submitted academic results against official UNEB records.</td></tr>' .
-        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">2.</td><td width="97%" style="text-align: justify;"><strong>No Advance Payment:</strong> Please note that no fees should be paid until an official letter of offer has been issued. Your SchoolPay Payment Code will be activated once your admission is confirmed.</td></tr>' .
+        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">2.</td><td width="97%" style="text-align: justify;"><strong>Payment Notice:</strong> No payment is required until an official offer of admission has been issued. Details on how to pay will be shared upon confirmation of admission.</td></tr>' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Status Tracking:</strong> You will be notified of the committee\'s decision via SMS to your registered telephone contact (' . htmlspecialchars($student['parent_phone'] ?: 'Parent Contact') . ') and updates will be accessible on the school portal (' . htmlspecialchars($school_website) . ').</td></tr>' .
         '</table>';
 }
 
 $feeTableTitle = $isAdmitted ? 'APPROVED TERM I SCHOOL FEES SCHEDULE' : 'ESTIMATED TERM I SCHOOL FEES SCHEDULE';
 
-// Build Complete Document HTML (Strictly Monochrome)
-$letterHtml = '<div style="font-family: times; font-size: 7.5pt; color: #000000; line-height: 1.35; text-align: justify;">' .
-'<table cellpadding="2.5" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">' .
+// Build Complete Document HTML with Trebuchet MS and Clean Standard Tables
+$letterHtml = '<div style="font-family: \'trebuchetms\', sans-serif; font-size: 7.4pt; color: #000000; line-height: 1.35; text-align: justify;">' .
+
+'<table border="1" cellpadding="3" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 7.2pt; font-family: \'trebuchetms\', sans-serif; margin-bottom: 2px;">' .
     '<tr>' .
-        '<td width="' . $detailsColWidth . '" style="vertical-align: top; padding-right: 6px;">' .
-            '<table cellpadding="2.5" cellspacing="0" style="width: 100%; border: 1px solid #000000; background-color: #ffffff; font-size: 7.2pt;">' .
-                '<tr>' .
-                    '<td width="60%" style="border-right: 1px solid #000000; border-bottom: 1px solid #000000;"><strong>Student Name:</strong> ' . htmlspecialchars($studentFullName) . '</td>' .
-                    '<td width="40%" style="border-bottom: 1px solid #000000;"><strong>Student Code:</strong> ' . $student_number . '</td>' .
-                '</tr>' .
-                '<tr>' .
-                    '<td width="60%" style="border-right: 1px solid #000000; border-bottom: 1px solid #000000;"><strong>Sex:</strong> ' . ucfirst($student['sex'] ?? 'N/A') . ' &nbsp;|&nbsp; <strong>Nationality:</strong> ' . htmlspecialchars($student['nationality'] ?? 'Ugandan') . ' &nbsp;|&nbsp; <strong>Class:</strong> ' . $classNameLong . '</td>' .
-                    '<td width="40%" style="border-bottom: 1px solid #000000;">' . $academicCredential . '</td>' .
-                '</tr>' .
-                '<tr>' .
-                    '<td width="60%" style="border-right: 1px solid #000000;"><strong>Former School:</strong> ' . htmlspecialchars($student['former_school'] ?: 'N/A') . '</td>' .
-                    '<td width="40%"><strong>Status:</strong> ' . ($isAdmitted ? 'PROVISIONALLY ADMITTED' : 'APPLICATION UNDER REVIEW') . '</td>' .
-                '</tr>' .
-            '</table>' .
+        '<td width="55%"><strong>Student Name:</strong> ' . htmlspecialchars($studentFullName) . '</td>' .
+        '<td width="29%"><strong>Student Code:</strong> ' . $student_number . '</td>' .
+        '<td width="16%" rowspan="3" align="center" style="vertical-align: middle;">' .
+            ($hasStudentPhoto 
+                ? '<img src="' . htmlspecialchars($studentPhotoPath) . '" width="54" height="54" />' 
+                : '<span style="font-size: 5.5pt; font-weight: bold; line-height: 1.2;">STUDENT<br>PASSPORT<br>PHOTO</span>') .
         '</td>' .
-        $photoCellHtml .
+    '</tr>' .
+    '<tr>' .
+        '<td width="55%"><strong>Class:</strong> ' . $classNameLong . ' &nbsp;|&nbsp; <strong>Sex:</strong> ' . ucfirst($student['sex'] ?? 'N/A') . ' &nbsp;|&nbsp; <strong>Nationality:</strong> ' . htmlspecialchars($student['nationality'] ?? 'Ugandan') . '</td>' .
+        '<td width="29%">' . $academicCredential . '</td>' .
+    '</tr>' .
+    '<tr>' .
+        '<td width="55%"><strong>Former School:</strong> ' . htmlspecialchars($student['former_school'] ?: 'N/A') . '</td>' .
+        '<td width="29%"><strong>Status:</strong> ' . ($isAdmitted ? 'PROVISIONALLY ADMITTED' : 'APPLICATION UNDER REVIEW') . '</td>' .
     '</tr>' .
 '</table>' .
 
@@ -323,44 +306,49 @@ $letterHtml = '<div style="font-family: times; font-size: 7.5pt; color: #000000;
     '<strong style="font-size: 8.2pt; text-decoration: underline;">' . $subjectLine . '</strong>' .
 '</div>' .
 
-'<p style="margin: 2px 0 2px 0; padding: 0; font-size: 7.5pt;">' . $parentSalutation . '</p>' .
-'<p style="margin: 0 0 3px 0; padding: 0; font-size: 7.4pt; text-align: justify;">' . $openingPara . '</p>' .
+'<p style="margin: 2px 0 2px 0; padding: 0; font-size: 7.4pt;">' . $parentSalutation . '</p>' .
+'<p style="margin: 0 0 3px 0; padding: 0; font-size: 7.3pt; text-align: justify;">' . $openingPara . '</p>' .
 
 $conditionsList .
 
-'<div style="font-size: 7.2pt; font-weight: bold; margin: 3px 0 1px 0; text-align: left;">' . $feeTableTitle . ' (UGX)</div>' .
-'<table cellpadding="2" cellspacing="0" style="width: 100%; border: 1px solid #000000; font-size: 7pt; border-collapse: collapse; margin: 0;">' .
+'<div style="font-size: 7.2pt; font-weight: bold; margin: 3px 0 1.5px 0; text-align: left;">' . $feeTableTitle . ' (UGX)</div>' .
+'<table border="1" cellpadding="2.8" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 7pt; font-family: \'trebuchetms\', sans-serif; margin: 0;">' .
     '<thead>' .
-        '<tr style="font-weight: bold; border-bottom: 1.2px solid #000000; background-color: #ffffff;">' .
-            '<th width="72%" style="border: 1px solid #000000; text-align: left; padding: 2px 4px;">Item Description</th>' .
-            '<th width="28%" align="right" style="border: 1px solid #000000; text-align: right; padding: 2px 4px;">Amount (UGX)</th>' .
+        '<tr style="font-weight: bold; background-color: #ffffff;">' .
+            '<th width="8%" align="center" style="font-weight: bold; text-align: center;">No.</th>' .
+            '<th width="64%" align="left" style="font-weight: bold; text-align: left;">Item Description</th>' .
+            '<th width="28%" align="right" style="font-weight: bold; text-align: right;">Amount (UGX)</th>' .
         '</tr>' .
     '</thead>' .
     '<tbody>' .
         '<tr>' .
-            '<td style="border: 1px solid #000000; text-align: left; padding: 1.8px 4px;">Tuition and Boarding Fees (Termly)</td>' .
-            '<td align="right" style="border: 1px solid #000000; text-align: right; padding: 1.8px 4px;">' . number_format($tuition) . '</td>' .
+            '<td width="8%" align="center">1</td>' .
+            '<td width="64%" align="left">Tuition and Boarding Fees (Termly)</td>' .
+            '<td width="28%" align="right">' . number_format($tuition) . '</td>' .
         '</tr>' .
         '<tr>' .
-            '<td style="border: 1px solid #000000; text-align: left; padding: 1.8px 4px;">Admission &amp; Enrolment Fee (Paid Once upon Entry)</td>' .
-            '<td align="right" style="border: 1px solid #000000; text-align: right; padding: 1.8px 4px;">' . number_format($admission) . '</td>' .
+            '<td width="8%" align="center">2</td>' .
+            '<td width="64%" align="left">Admission &amp; Enrolment Fee (Paid Once upon Entry)</td>' .
+            '<td width="28%" align="right">' . number_format($admission) . '</td>' .
         '</tr>' .
         '<tr>' .
-            '<td style="border: 1px solid #000000; text-align: left; padding: 1.8px 4px;">School Uniforms Package (Paid Once upon Entry)</td>' .
-            '<td align="right" style="border: 1px solid #000000; text-align: right; padding: 1.8px 4px;">' . number_format($uniforms) . '</td>' .
+            '<td width="8%" align="center">3</td>' .
+            '<td width="64%" align="left">School Uniforms Package (Paid Once upon Entry)</td>' .
+            '<td width="28%" align="right">' . number_format($uniforms) . '</td>' .
         '</tr>' .
-        ($vocational > 0 ? ('<tr><td style="border: 1px solid #000000; text-align: left; padding: 1.8px 4px;">Vocational Skills Training (Termly)</td><td align="right" style="border: 1px solid #000000; text-align: right; padding: 1.8px 4px;">' . number_format($vocational) . '</td></tr>') : '') .
+        ($vocational > 0 ? ('<tr><td width="8%" align="center">4</td><td width="64%" align="left">Vocational Skills Training (Termly)</td><td width="28%" align="right">' . number_format($vocational) . '</td></tr>') : '') .
         '<tr>' .
-            '<td style="border: 1px solid #000000; text-align: left; padding: 1.8px 4px;">Functional Fees (ICT, Laboratory, Library &amp; Student Identity Card)</td>' .
-            '<td align="right" style="border: 1px solid #000000; text-align: right; padding: 1.8px 4px;">' . number_format($functional) . '</td>' .
+            '<td width="8%" align="center">' . ($vocational > 0 ? '5' : '4') . '</td>' .
+            '<td width="64%" align="left">Functional Fees (ICT, Laboratory, Library &amp; Student Identity Card)</td>' .
+            '<td width="28%" align="right">' . number_format($functional) . '</td>' .
         '</tr>' .
-        '<tr style="font-weight: bold; border-top: 1.2px solid #000000; border-bottom: 1.5px solid #000000;">' .
-            '<td style="border: 1px solid #000000; font-weight: bold; text-align: left; padding: 2px 4px;">Total Term I Fees Payable (Boarding)</td>' .
-            '<td align="right" style="border: 1px solid #000000; font-weight: bold; text-align: right; padding: 2px 4px;">UGX ' . number_format($totalFees) . '</td>' .
+        '<tr style="font-weight: bold;">' .
+            '<td colspan="2" align="left" style="font-weight: bold; text-align: left;"><strong>Total Term I Fees Payable (Boarding)</strong></td>' .
+            '<td width="28%" align="right" style="font-weight: bold; text-align: right;"><strong>UGX ' . number_format($totalFees) . '</strong></td>' .
         '</tr>' .
     '</tbody>' .
 '</table>' .
-'<div style="font-size: 6.4pt; margin: 1px 0 2px 0; text-align: left;">Note: Tuition for Day Scholars is UGX ' . number_format($tuition_day) . '/term. School fees once paid are non-refundable and non-transferable.</div>' .
+'<div style="font-size: 6.4pt; margin: 1.5px 0 2px 0; text-align: left;">Note: Tuition for Day Scholars is UGX ' . number_format($tuition_day) . '/term. School fees once paid are non-refundable and non-transferable.</div>' .
 '<div style="font-size: 6.8pt; margin: 0 0 2px 0;"><strong>Enclosures:</strong> (1) School Rules &amp; Regulations &nbsp;|&nbsp; (2) Boarding Requirements Checklist &nbsp;|&nbsp; (3) Medical Examination Form</div>' .
 '</div>';
 
@@ -370,7 +358,7 @@ $pdf->writeHTML($letterHtml, true, false, true, false, '');
 $sigY = $pdf->GetY() + 1;
 
 $sigHtml = '
-<div style="font-family: times; color: #000000;">
+<div style="font-family: \'trebuchetms\', sans-serif; color: #000000;">
 <table cellpadding="0" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt;">
     <tr>
         <td width="48%" align="left" style="vertical-align: top; padding-top: 1px;">
@@ -426,7 +414,7 @@ $pdf->write2DBarcode($qrLink, 'QRCODE,H', 16, $sigY + 1.5, 16, 16, $qrStyle, 'N'
 
 /* ================= FOOTER DISCLAIMER ================= */
 $pdf->SetXY(15, 280);
-$pdf->SetFont('times', 'I', 6.5);
+$pdf->SetFont('trebuchetms', 'I', 6.5);
 $pdf->SetTextColor(0, 0, 0);
 $pdf->MultiCell(180, 3, 'This is an official document of ' . $school_name . '. Any unauthorized alteration, erasure, or forgery renders this offer completely null and void.', 0, 'C', 0, 1);
 
@@ -436,7 +424,7 @@ $generatedTime = date('d-M-Y H:i:s T');
 
 $pdf->Line(15, 285, 195, 285, ['width' => 0.2, 'color' => [0, 0, 0]]);
 $pdf->SetXY(15, 286);
-$pdf->SetFont('times', '', 6.2);
+$pdf->SetFont('trebuchetms', '', 6.2);
 $pdf->SetTextColor(0, 0, 0);
 $pdf->Cell(180, 3.5, 'Official Admissions Document   |   Verification Code: ' . $student_number . '   |   Issued: ' . $generatedTime, 0, 1, 'C');
 
