@@ -144,6 +144,18 @@ try {
     $pdo->exec("SET time_zone = '+03:00'");
 } catch (Exception $e) {}
 
+// High-performance schema initialization guard: run DDL & migrations only once rather than on every HTTP request
+$isSchemaReady = false;
+try {
+    $chkInit = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'system_schema_initialized' LIMIT 1");
+    if ($chkInit && $chkInit->fetchColumn() === '2026_v2') {
+        $isSchemaReady = true;
+    }
+} catch (Exception $e) {
+    $isSchemaReady = false;
+}
+
+if (!$isSchemaReady) {
     // 1. Automatically create admin_logs table if it doesn't exist
     $pdo->exec("
     CREATE TABLE IF NOT EXISTS admin_logs (
@@ -573,6 +585,25 @@ try {
     try {
         $pdo->exec("UPDATE system_settings SET setting_value = REPLACE(REPLACE(setting_value, '–', '-'), 'â€“', '-') WHERE setting_value LIKE '%–%' OR setting_value LIKE '%â€“%'");
     } catch (Exception $e) {}
+
+    // Ensure database indexes exist on key search columns for maximum query performance
+    $indexesToEnsure = [
+        'idx_apps_acad_year'   => "CREATE INDEX idx_apps_acad_year ON applications (academic_year)",
+        'idx_apps_app_status'  => "CREATE INDEX idx_apps_app_status ON applications (application_status)",
+        'idx_apps_class_entry' => "CREATE INDEX idx_apps_class_entry ON applications (class_of_entry)",
+        'idx_apps_created_at'  => "CREATE INDEX idx_apps_created_at ON applications (created_at)"
+    ];
+    foreach ($indexesToEnsure as $idxName => $idxSql) {
+        try {
+            $pdo->exec($idxSql);
+        } catch (Exception $e) {}
+    }
+
+    // Mark schema initialization complete so this heavy DDL block is bypassed on subsequent requests
+    try {
+        $pdo->exec("INSERT INTO system_settings (setting_key, setting_value) VALUES ('system_schema_initialized', '2026_v2') ON DUPLICATE KEY UPDATE setting_value = '2026_v2'");
+    } catch (Exception $e) {}
+}
 
 } catch (Exception $e) {
     if (php_sapi_name() === 'cli' && !isset($_SERVER['HTTP_HOST'])) {
@@ -1560,9 +1591,14 @@ if (!function_exists('getAllRoles')) {
 
 if (!function_exists('getRolePermissions')) {
     function getRolePermissions($pdo, $roleKey) {
+        static $roleCache = [];
         $roleKey = strtolower(trim((string)$roleKey));
+        if (isset($roleCache[$roleKey])) {
+            return $roleCache[$roleKey];
+        }
+
         if ($roleKey === 'super_admin' || $roleKey === 'superadmin') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 1,
                 'can_manage_admission_policies' => 1,
                 'can_admit_students'            => 1,
@@ -1574,13 +1610,15 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 1,
                 'can_view_logs'                 => 1,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         try {
             $stmt = $pdo->prepare("SELECT * FROM system_roles WHERE role_key = ?");
             $stmt->execute([$roleKey]);
             $r = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($r) {
-                return [
+                $perms = [
                     'can_manage_settings'           => (int)$r['can_manage_settings'],
                     'can_manage_admission_policies' => (int)($r['can_manage_admission_policies'] ?? 0),
                     'can_admit_students'            => (int)$r['can_admit_students'],
@@ -1592,12 +1630,14 @@ if (!function_exists('getRolePermissions')) {
                     'can_take_application_actions'  => (int)($r['can_take_application_actions'] ?? 0),
                     'can_view_logs'                 => (int)$r['can_view_logs'],
                 ];
+                $roleCache[$roleKey] = $perms;
+                return $perms;
             }
         } catch (Exception $e) {}
 
         // Fallbacks for legacy/default roles (CRUDAS Matrix)
         if ($roleKey === 'admissions_manager') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 0,
                 'can_manage_admission_policies' => 1,
                 'can_admit_students'            => 1,
@@ -1609,9 +1649,11 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 1,
                 'can_view_logs'                 => 1,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         if ($roleKey === 'admin') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 0,
                 'can_manage_admission_policies' => 0,
                 'can_admit_students'            => 1,
@@ -1623,9 +1665,11 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 1,
                 'can_view_logs'                 => 1,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         if ($roleKey === 'admissions_registry' || $roleKey === 'secretary') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 0,
                 'can_manage_admission_policies' => 0,
                 'can_admit_students'            => 1,
@@ -1637,9 +1681,11 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 1,
                 'can_view_logs'                 => 0,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         if ($roleKey === 'bursar') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 0,
                 'can_manage_admission_policies' => 0,
                 'can_admit_students'            => 0,
@@ -1651,9 +1697,11 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 0,
                 'can_view_logs'                 => 0,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         if ($roleKey === 'viewer') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 0,
                 'can_manage_admission_policies' => 0,
                 'can_admit_students'            => 0,
@@ -1665,9 +1713,11 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 0,
                 'can_view_logs'                 => 0,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         if ($roleKey === 'ict_admin') {
-            return [
+            $perms = [
                 'can_manage_settings'           => 0,
                 'can_manage_admission_policies' => 0,
                 'can_admit_students'            => 0,
@@ -1679,9 +1729,11 @@ if (!function_exists('getRolePermissions')) {
                 'can_take_application_actions'  => 0,
                 'can_view_logs'                 => 0,
             ];
+            $roleCache[$roleKey] = $perms;
+            return $perms;
         }
         // Strict zero fallback for any unknown or non-configured role
-        return [
+        $perms = [
             'can_manage_settings'           => 0,
             'can_manage_admission_policies' => 0,
             'can_admit_students'            => 0,
@@ -1693,6 +1745,8 @@ if (!function_exists('getRolePermissions')) {
             'can_take_application_actions'  => 0,
             'can_view_logs'                 => 0,
         ];
+        $roleCache[$roleKey] = $perms;
+        return $perms;
     }
 }
 
