@@ -956,18 +956,32 @@ if (!function_exists('renderThemeConfig')) {
         $faLocal       = $relPrefix . 'css/fontawesome/css/all.min.css';
 
         return "
-        <!-- Immediate Anti-FOUC (Flash of Unstyled Content Prevention) -->
+        <!-- Immediate Anti-FOUC & Static Fallbacks -->
         <style id=\"anti-fouc-style\">
-        html:not(.tailwind-ready) body {
-            opacity: 0 !important;
-            visibility: hidden !important;
+        [hidden] { display: none !important; }
+        .hidden { display: none; }
+
+        /* Responsive utility guarantees to prevent FOUC and ensure menu and link visibility */
+        @media (min-width: 640px) {
+            .hidden.sm\:inline-flex, .sm\:inline-flex.hidden { display: inline-flex !important; }
+            .hidden.sm\:block, .sm\:block.hidden { display: block !important; }
+            .hidden.sm\:flex, .sm\:flex.hidden { display: flex !important; }
+            .hidden.sm\:inline, .sm\:inline.hidden { display: inline !important; }
         }
-        html.tailwind-ready body {
-            opacity: 1 !important;
-            visibility: visible !important;
-            transition: opacity 0.12s ease-in;
+        @media (min-width: 768px) {
+            .hidden.md\:flex, .md\:flex.hidden { display: flex !important; }
+            .hidden.md\:block, .md\:block.hidden { display: block !important; }
+            .hidden.md\:inline-flex, .md\:inline-flex.hidden { display: inline-flex !important; }
+            .md\:hidden { display: none !important; }
         }
-        .hidden, [hidden] { display: none !important; }
+        @media (min-width: 1024px) {
+            .hidden.lg\:flex, .lg\:flex.hidden { display: flex !important; }
+            .hidden.lg\:block, .lg\:block.hidden { display: block !important; }
+            .hidden.lg\:inline-flex, .lg\:inline-flex.hidden { display: inline-flex !important; }
+            .hidden.lg\:table-cell, .lg\:table-cell.hidden { display: table-cell !important; }
+            .lg\:hidden { display: none !important; }
+        }
+
         img { max-width: 100%; height: auto; }
         .logo-img, img[alt='Logo'], img[alt='School Logo'] {
             width: 40px !important;
@@ -1037,8 +1051,11 @@ if (!function_exists('renderThemeConfig')) {
 
         .border-brand-100 { border-color: #dcfce7 !important; }
         .border-brand-200 { border-color: #bbf7d0 !important; }
+        .border-brand-300 { border-color: #86efac !important; }
+        .border-brand-400 { border-color: #4ade80 !important; }
         .border-brand-500, .border-brand-600, .border-brand-700 { border-color: var(--primary-color) !important; }
         .border-brand-800 { border-color: #062f14 !important; }
+        .border-brand-900 { border-color: #031b0b !important; }
 
         /* Full Gold Palette Utilities */
         .text-gold-50  { color: #fbf8ee !important; }
@@ -1049,6 +1066,8 @@ if (!function_exists('renderThemeConfig')) {
         .text-gold-500, .text-gold-600 { color: var(--gold-color) !important; }
         .text-gold-700 { color: #8a661c !important; }
         .text-gold-800 { color: #6f5214 !important; }
+        .text-gold-900 { color: #42310a !important; }
+        .text-gold-950 { color: #281d05 !important; }
 
         .bg-gold-50  { background-color: #fbf8ee !important; }
         .bg-gold-100 { background-color: #f5edd3 !important; }
@@ -1058,6 +1077,8 @@ if (!function_exists('renderThemeConfig')) {
         .bg-gold-500, .bg-gold-600 { background-color: var(--gold-color) !important; }
         .bg-gold-700 { background-color: #8a661c !important; }
         .bg-gold-800 { background-color: #6f5214 !important; }
+        .bg-gold-900 { background-color: #42310a !important; }
+        .bg-gold-950 { background-color: #281d05 !important; }
 
         .border-gold-100 { border-color: #f5edd3 !important; }
         .border-gold-200 { border-color: #ebd9a5 !important; }
@@ -1065,13 +1086,22 @@ if (!function_exists('renderThemeConfig')) {
         .border-gold-400 { border-color: #c89f3c !important; }
         .border-gold-500, .border-gold-600 { border-color: var(--gold-color) !important; }
         .border-gold-700 { border-color: #8a661c !important; }
+        .border-gold-800 { border-color: #6f5214 !important; }
 
         /* Opacity & Alpha Modifiers */
+        .bg-brand-50\/20 { background-color: rgba(240, 253, 244, 0.2) !important; }
+        .bg-brand-50\/30 { background-color: rgba(240, 253, 244, 0.3) !important; }
+        .bg-brand-50\/40 { background-color: rgba(240, 253, 244, 0.4) !important; }
         .bg-gold-500\/20 { background-color: rgba(181, 141, 47, 0.2) !important; }
         .border-gold-500\/30 { border-color: rgba(181, 141, 47, 0.3) !important; }
         .shadow-brand-700\/20 { box-shadow: 0 4px 12px rgba(12, 74, 36, 0.2) !important; }
+        .shadow-brand-700\/25 { box-shadow: 0 4px 14px rgba(12, 74, 36, 0.25) !important; }
         .shadow-brand-950\/40 { box-shadow: 0 6px 18px rgba(2, 18, 7, 0.4) !important; }
         .border-brand-700\/40 { border-color: rgba(12, 74, 36, 0.4) !important; }
+        .border-brand-700\/60 { border-color: rgba(12, 74, 36, 0.6) !important; }
+        .ring-brand-700 { --tw-ring-color: var(--primary-color) !important; }
+        .ring-brand-700\/10 { --tw-ring-color: rgba(12, 74, 36, 0.1) !important; }
+        .ring-brand-700\/20 { --tw-ring-color: rgba(12, 74, 36, 0.2) !important; }
 
         /* Brand Gradients */
         .from-brand-900 { --tw-gradient-from: #031b0b var(--tw-gradient-from-position); --tw-gradient-to: rgb(3 27 11 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
@@ -1080,6 +1110,7 @@ if (!function_exists('renderThemeConfig')) {
 
         /* Hover States */
         .hover\:bg-brand-800:hover { background-color: #062f14 !important; }
+        .hover\:bg-brand-900:hover { background-color: #031b0b !important; }
         .hover\:bg-gold-600:hover { background-color: #8a661c !important; }
         .hover\:text-brand-700:hover { color: var(--primary-color) !important; }
         .hover\:text-brand-800:hover { color: #062f14 !important; }
@@ -1140,7 +1171,7 @@ if (!function_exists('renderThemeConfig')) {
         <!-- Local Font Awesome 6 -->
         <link rel=\"stylesheet\" href=\"{$faLocal}\">
 
-        <!-- Tailwind Configuration & Official JIT Compiler Engine -->
+        <!-- Tailwind Configuration & Local JIT Engine -->
         <script data-cfasync=\"false\">
         tailwind = window.tailwind || {};
         tailwind.config = {
@@ -1181,29 +1212,11 @@ if (!function_exists('renderThemeConfig')) {
             }
         };
         </script>
-        <script src=\"https://cdn.tailwindcss.com\" data-cfasync=\"false\"></script>
+        <script src=\"{$tailwindLocal}\" data-cfasync=\"false\"></script>
         <script data-cfasync=\"false\">
-        (function() {
-            function unhide() {
-                if (!document.documentElement.classList.contains('tailwind-ready')) {
-                    document.documentElement.classList.add('tailwind-ready');
-                }
-            }
-            if (typeof tailwind !== 'undefined') {
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', function() {
-                        setTimeout(unhide, 15);
-                    });
-                } else {
-                    unhide();
-                }
-            } else {
-                document.addEventListener('DOMContentLoaded', function() {
-                    setTimeout(unhide, 30);
-                });
-            }
-            setTimeout(unhide, 250);
-        })();
+        if (typeof tailwind === 'undefined') {
+            document.write('<script src=\"https://cdn.tailwindcss.com\" data-cfasync=\"false\"><\/script>');
+        }
         </script>
         ";
     }
