@@ -418,12 +418,251 @@ $pdf->MultiCell(180, 3, 'This is an official document of ' . $school_name . '. A
 /* ================= SECURITY FOOTER ================= */
 date_default_timezone_set('Africa/Kampala');
 $generatedTime = date('d-M-Y H:i:s T');
+$totalPages = ($isAdmitted || $isAdmin) ? 4 : 1;
 
 $pdf->Line(15, 285, 195, 285, ['width' => 0.2, 'color' => [0, 0, 0]]);
 $pdf->SetXY(15, 286);
 $pdf->SetFont('trebuchetms', '', 6.2);
 $pdf->SetTextColor(0, 0, 0);
-$pdf->Cell(180, 3.5, 'Official Admissions Document   |   Verification Code: ' . $student_number . '   |   Issued: ' . $generatedTime, 0, 1, 'C');
+$pdf->Cell(180, 3.5, 'Official Admissions Packet   |   Verification Code: ' . $student_number . '   |   Page 1 of ' . $totalPages . '   |   Issued: ' . $generatedTime, 0, 1, 'C');
+
+/* ================= HELPER FUNCTIONS FOR ENCLOSURE PAGES ================= */
+if (!function_exists('renderEnclosureLetterhead')) {
+    function renderEnclosureLetterhead($pdf, $school_name, $school_motto, $school_address, $school_phone, $school_email, $school_website, $hasLogo, $logo_source, $logoH, $studentFullName, $student_number, $classNameLong, $enclosureTitle, $academic_year) {
+        if ($hasLogo && !empty($logo_source) && file_exists($logo_source)) {
+            try {
+                $pdf->Image($logo_source, 88, 8, 34, $logoH, '', '', '', false, 300, '', false, false, 0, 'CM');
+            } catch (Exception $e) {}
+        }
+        
+        $headerY = $hasLogo ? (8 + $logoH + 1.5) : 10;
+        $pdf->SetXY(15, $headerY);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('trebuchetms', 'B', 12.5);
+        $pdf->Cell(180, 5, strtoupper($school_name), 0, 1, 'C');
+
+        if (!empty($school_motto)) {
+            $pdf->SetX(15);
+            $pdf->SetFont('trebuchetms', 'I', 8.5);
+            $pdf->Cell(180, 3.8, '"' . $school_motto . '"', 0, 1, 'C');
+        }
+
+        $pdf->SetX(15);
+        $pdf->SetFont('trebuchetms', '', 7.5);
+        $pdf->Cell(180, 3.4, $school_address . '   |   Telephone: ' . $school_phone . '   |   Email: ' . $school_email, 0, 1, 'C');
+        $pdf->SetX(15);
+        $pdf->Cell(180, 3.2, 'Website: ' . $school_website, 0, 1, 'C');
+
+        // Double divider line
+        $divY = $pdf->GetY() + 1.2;
+        $pdf->Line(15, $divY, 195, $divY, ['width' => 0.5, 'color' => [0, 0, 0]]);
+        $pdf->Line(15, $divY + 0.5, 195, $divY + 0.5, ['width' => 0.2, 'color' => [0, 0, 0]]);
+
+        // Enclosure Title Banner
+        $bannerY = $divY + 2.5;
+        $pdf->SetXY(15, $bannerY);
+        $pdf->SetFont('trebuchetms', 'B', 9.5);
+        $pdf->Cell(180, 4.5, $enclosureTitle . ' — ' . $academic_year, 0, 1, 'C');
+
+        // Candidate particulars strip
+        $pdf->SetX(15);
+        $pdf->SetFont('trebuchetms', '', 7.5);
+        $pdf->Cell(180, 4, 'Candidate: ' . $studentFullName . '   |   Student Code: ' . $student_number . '   |   Class: ' . $classNameLong, 0, 1, 'C');
+
+        $pdf->Line(15, $pdf->GetY() + 1, 195, $pdf->GetY() + 1, ['width' => 0.2, 'color' => [0, 0, 0]]);
+        $pdf->SetY($pdf->GetY() + 2.5);
+    }
+}
+
+if (!function_exists('renderEnclosureFooter')) {
+    function renderEnclosureFooter($pdf, $school_name, $student_number, $pageNumber, $totalPages = 4) {
+        date_default_timezone_set('Africa/Kampala');
+        $generatedTime = date('d-M-Y H:i:s T');
+        $pdf->SetXY(15, 280);
+        $pdf->SetFont('trebuchetms', 'I', 6.5);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->MultiCell(180, 3, 'This is an official document of ' . $school_name . '. Any unauthorized alteration, erasure, or forgery renders this document completely null and void.', 0, 'C', 0, 1);
+
+        $pdf->Line(15, 285, 195, 285, ['width' => 0.2, 'color' => [0, 0, 0]]);
+        $pdf->SetXY(15, 286);
+        $pdf->SetFont('trebuchetms', '', 6.2);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Cell(180, 3.5, 'Official Admissions Packet   |   Verification Code: ' . $student_number . '   |   Page ' . $pageNumber . ' of ' . $totalPages . '   |   Issued: ' . $generatedTime, 0, 1, 'C');
+    }
+}
+
+/* ================= MULTI-PAGE ENCLOSURES (PAGES 2, 3, 4) ================= */
+if ($isAdmitted || $isAdmin) {
+
+    /* ---------- PAGE 2: ENCLOSURE 1 - SCHOOL RULES & REGULATIONS ---------- */
+    $pdf->AddPage();
+    renderEnclosureLetterhead($pdf, $school_name, $school_motto, $school_address, $school_phone, $school_email, $school_website, $hasLogo, $logo_source, $logoH, $studentFullName, $student_number, $classNameLong, 'ENCLOSURE 1: GENERAL SCHOOL RULES AND REGULATIONS', $academic_year);
+
+    $customRules = trim(getSetting($pdo, 'school_rules_content', ''));
+    $rulesHtml = '<div style="font-family: \'trebuchetms\', sans-serif; font-size: 7.2pt; color: #000000; line-height: 1.35; text-align: justify;">';
+
+    if (!empty($customRules)) {
+        $rulesHtml .= nl2br(htmlspecialchars($customRules));
+    } else {
+        $rulesHtml .= '
+        <div style="font-weight: bold; margin-bottom: 2px;">PREAMBLE &amp; CODE OF DISCIPLINE:</div>
+        <p style="margin: 0 0 3px 0;">All students admitted to ' . htmlspecialchars($school_name) . ' must observe the following statutory rules with utmost discipline, diligence, and respect. Acceptance of a place in this institution signifies that both the student and parent/guardian unconditionally agree to abide by these regulations.</p>
+
+        <table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7pt; line-height: 1.32;">
+            <tr><td width="4%" style="font-weight: bold; vertical-align: top;">1.</td><td width="96%"><strong>Spiritual &amp; Moral Values:</strong> Students are required to uphold moral discipline, obedience to authority, and respect for staff and fellow students. Bullying, fighting, abusive language, theft, and insubordination attract immediate suspension.</td></tr>
+            <tr><td width="4%" style="font-weight: bold; vertical-align: top;">2.</td><td width="96%"><strong>School Uniform &amp; Grooming:</strong> The approved school uniform must be worn at all formal school gatherings, classes, and assemblies. Civilian attire is strictly prohibited on campus. Hair must be neatly kept, uncolored, and without artificial additions.</td></tr>
+            <tr><td width="4%" style="font-weight: bold; vertical-align: top;">3.</td><td width="96%"><strong>Academic Attendance &amp; Punctuality:</strong> Attendance at all lessons, laboratory practicals, prep sessions, roll calls, and official functions is mandatory. Dodging lessons or prep constitutes serious indiscipline.</td></tr>
+            <tr><td width="4%" style="font-weight: bold; vertical-align: top;">4.</td><td width="96%"><strong>School Bounds &amp; Exeat Permits:</strong> No student is permitted to leave school compound without a formal written exeat permit authorized by the Deputy Head Teacher. Escaping from school (breaking bounds) leads to automatic expulsion.</td></tr>
+            <tr><td width="4%" style="font-weight: bold; vertical-align: top;">5.</td><td width="96%"><strong>Prohibited Contraband Articles:</strong> Possession of mobile phones, smart devices, unprescribed drugs, alcohol, weapons, flammable liquids, or electric cooking coils is strictly forbidden and results in immediate expulsion.</td></tr>
+            <tr><td width="4%" style="font-weight: bold; vertical-align: top;">6.</td><td width="96%"><strong>Property Care &amp; Restitution:</strong> Willful damage to school buildings, desks, lab apparatus, or library books will be repaired or replaced at the direct expense of the offending student\'s parent or guardian.</td></tr>
+        </table>';
+    }
+
+    $rulesHtml .= '
+    <div style="border: 1px solid #000000; padding: 4px 6px; margin-top: 4px; background-color: #ffffff;">
+        <div style="font-weight: bold; font-size: 7.2pt; text-align: center; margin-bottom: 2px;">STUDENT &amp; PARENT / GUARDIAN UNDERTAKING</div>
+        <p style="font-size: 6.8pt; margin: 0 0 4px 0; text-align: justify;">We, the undersigned Student and Parent/Guardian, confirm that we have thoroughly read, understood, and solemnly pledge to abide by the rules and regulations of ' . htmlspecialchars($school_short_name) . '. We accept that any breach may result in disciplinary sanctions up to expulsion.</p>
+        <table cellpadding="2" cellspacing="0" style="width: 100%; border: none; font-size: 6.8pt;">
+            <tr>
+                <td width="50%"><strong>Student Signature:</strong> _____________________________</td>
+                <td width="50%"><strong>Date:</strong> _____________________________</td>
+            </tr>
+            <tr>
+                <td width="50%"><strong>Parent / Guardian Signature:</strong> _____________________________</td>
+                <td width="50%"><strong>Date:</strong> _____________________________</td>
+            </tr>
+        </table>
+    </div>
+    </div>';
+
+    $pdf->writeHTML($rulesHtml, true, false, true, false, '');
+    renderEnclosureFooter($pdf, $school_name, $student_number, 2, 4);
+
+    /* ---------- PAGE 3: ENCLOSURE 2 - BOARDING REQUIREMENTS CHECKLIST ---------- */
+    $pdf->AddPage();
+    renderEnclosureLetterhead($pdf, $school_name, $school_motto, $school_address, $school_phone, $school_email, $school_website, $hasLogo, $logo_source, $logoH, $studentFullName, $student_number, $classNameLong, 'ENCLOSURE 2: BOARDING & ACADEMIC REQUIREMENTS CHECKLIST', $academic_year);
+
+    $reqText = trim($schoolRequirements);
+    if (empty($reqText)) {
+        $reqText = "1. School Uniform Package (Issued at School Bursary upon fees clearance)\n2. Black formal leather shoes and three (3) pairs of plain white socks / stockings\n3. Ten (10) 4-quire counter books, Oxford mathematical set, and scientific calculator\n4. One (1) ream of photocopy paper (Rotatrim / Double A) and 1 long ruler (30cm)\n5. One (1) hoe with sturdy handle and one (1) grass slasher\n6. High-density 2.5-inch mattress (3x6 ft), two (2) pairs of bedsheets, and warm blanket\n7. Metallic trunk / suitcase with two reliable padlocks\n8. Two (2) plastic buckets, one (1) basin, personal toiletries, and mosquito net\n9. Four (4) passport-size photographs and original PLE / UCE result slips";
+    }
+
+    $lines = array_values(array_filter(array_map('trim', explode("\n", $reqText))));
+
+    $reqHtml = '<div style="font-family: \'trebuchetms\', sans-serif; font-size: 7.2pt; color: #000000; line-height: 1.35;">' .
+        '<p style="margin: 0 0 3px 0; font-size: 7.2pt; text-align: justify;">The admitted student must report with the following mandatory items on opening day. Each requirement will be verified and stamped by the Senior Housemaster / Housemistress before dormitory room allocation.</p>' .
+        '<table border="1" cellpadding="2.8" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 6.9pt; font-family: \'trebuchetms\', sans-serif;">' .
+            '<thead>' .
+                '<tr style="font-weight: bold; background-color: #ffffff;">' .
+                    '<th width="8%" align="center" style="font-weight: bold;">No.</th>' .
+                    '<th width="62%" align="left" style="font-weight: bold;">Prescribed Item &amp; Specification</th>' .
+                    '<th width="15%" align="center" style="font-weight: bold;">Inspection Check</th>' .
+                    '<th width="15%" align="center" style="font-weight: bold;">Clearance Status</th>' .
+                '</tr>' .
+            '</thead>' .
+            '<tbody>';
+
+    $i = 1;
+    foreach ($lines as $line) {
+        $cleanLine = preg_replace('/^\d+[\.\)]\s*/', '', $line);
+        if (empty($cleanLine)) continue;
+        $reqHtml .= '<tr>' .
+            '<td width="8%" align="center">' . $i . '</td>' .
+            '<td width="62%" align="left">' . htmlspecialchars($cleanLine) . '</td>' .
+            '<td width="15%" align="center">[ &nbsp;&nbsp;&nbsp;&nbsp; ] Verified</td>' .
+            '<td width="15%" align="center">Cleared</td>' .
+        '</tr>';
+        $i++;
+    }
+
+    $reqHtml .= '</tbody></table>' .
+        '<div style="border: 1px solid #000000; padding: 4px 6px; margin-top: 4px; background-color: #ffffff;">' .
+            '<div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 2px;">BOARDING MASTER / MISTRESS CLEARANCE &amp; HOUSE ALLOCATION</div>' .
+            '<table cellpadding="2" cellspacing="0" style="width: 100%; border: none; font-size: 6.8pt;">' .
+                '<tr>' .
+                    '<td width="50%"><strong>Cleared by (Senior Warden):</strong> _____________________________</td>' .
+                    '<td width="50%"><strong>Signature &amp; Date:</strong> _____________________________</td>' .
+                '</tr>' .
+                '<tr>' .
+                    '<td width="50%"><strong>Dormitory / House Allocated:</strong> _____________________________</td>' .
+                    '<td width="50%"><strong>Bed / Locker Number:</strong> _____________________________</td>' .
+                '</tr>' .
+            '</table>' .
+        '</div>' .
+    '</div>';
+
+    $pdf->writeHTML($reqHtml, true, false, true, false, '');
+    renderEnclosureFooter($pdf, $school_name, $student_number, 3, 4);
+
+    /* ---------- PAGE 4: ENCLOSURE 3 - MEDICAL EXAMINATION FORM ---------- */
+    $pdf->AddPage();
+    renderEnclosureLetterhead($pdf, $school_name, $school_motto, $school_address, $school_phone, $school_email, $school_website, $hasLogo, $logo_source, $logoH, $studentFullName, $student_number, $classNameLong, 'ENCLOSURE 3: CONFIDENTIAL STUDENT MEDICAL EXAMINATION FORM', $academic_year);
+
+    $medHtml = '<div style="font-family: \'trebuchetms\', sans-serif; font-size: 7.2pt; color: #000000; line-height: 1.35;">' .
+        '<p style="margin: 0 0 3px 0; font-size: 7.2pt; text-align: justify;"><strong>Notice to Medical Officer:</strong> This confidential medical form must be completed by a Registered Medical Doctor or Clinical Officer at an accredited health facility prior to reporting. Accurate medical declaration ensures appropriate care in the school sickbay.</p>' .
+
+        '<div style="font-weight: bold; font-size: 7.2pt; margin: 2px 0 1px 0;">SECTION A: CANDIDATE MEDICAL HISTORY (Declared by Parent/Guardian)</div>' .
+        '<table border="1" cellpadding="2.5" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 6.8pt; font-family: \'trebuchetms\', sans-serif;">' .
+            '<tr>' .
+                '<td width="50%"><strong>Asthma / Respiratory Conditions:</strong> [ &nbsp; ] Yes &nbsp; [ &nbsp; ] No</td>' .
+                '<td width="50%"><strong>Epilepsy / Convulsions:</strong> [ &nbsp; ] Yes &nbsp; [ &nbsp; ] No</td>' .
+            '</tr>' .
+            '<tr>' .
+                '<td width="50%"><strong>Sickle Cell Disease / Trait:</strong> [ &nbsp; ] Yes &nbsp; [ &nbsp; ] No</td>' .
+                '<td width="50%"><strong>Diabetes / Cardiac Condition:</strong> [ &nbsp; ] Yes &nbsp; [ &nbsp; ] No</td>' .
+            '</tr>' .
+            '<tr>' .
+                '<td colspan="2"><strong>Known Food / Medication Allergies:</strong> ____________________________________________________________________</td>' .
+            '</tr>' .
+            '<tr>' .
+                '<td colspan="2"><strong>Physical Impairments / Special Dietary Requirements:</strong> __________________________________________________</td>' .
+            '</tr>' .
+        '</table>' .
+
+        '<div style="font-weight: bold; font-size: 7.2pt; margin: 4px 0 1px 0;">SECTION B: CLINICAL EXAMINATION (Conducted by Medical Doctor)</div>' .
+        '<table border="1" cellpadding="2.5" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 6.8pt; font-family: \'trebuchetms\', sans-serif;">' .
+            '<tr>' .
+                '<td width="25%"><strong>Height:</strong> _________ cm</td>' .
+                '<td width="25%"><strong>Weight:</strong> _________ kg</td>' .
+                '<td width="25%"><strong>Blood Pressure:</strong> _________</td>' .
+                '<td width="25%"><strong>Blood Group:</strong> _________</td>' .
+            '</tr>' .
+            '<tr>' .
+                '<td width="50%"><strong>Visual Acuity:</strong> Right: _________ &nbsp; Left: _________</td>' .
+                '<td width="50%"><strong>Hearing / ENT Examination:</strong> _____________________________</td>' .
+            '</tr>' .
+            '<tr>' .
+                '<td width="50%"><strong>Cardiovascular / Chest / Lungs:</strong> _____________________</td>' .
+                '<td width="50%"><strong>Abdomen / Spleen / Hernia:</strong> _____________________________</td>' .
+            '</tr>' .
+            '<tr>' .
+                '<td colspan="2"><strong>Skin / Communicable Conditions / Urinalysis:</strong> ___________________________________________________________</td>' .
+            '</tr>' .
+        '</table>' .
+
+        '<div style="font-weight: bold; font-size: 7.2pt; margin: 4px 0 1px 0;">SECTION C: MEDICAL PRACTITIONER\'S CERTIFICATION &amp; RECOMMENDATION</div>' .
+        '<div style="border: 1px solid #000000; padding: 4px 6px; background-color: #ffffff;">' .
+            '<p style="font-size: 6.8pt; margin: 0 0 3px 0; text-align: justify;">I have clinically examined the candidate named above and hereby certify that in my medical opinion, the student is <strong>[ &nbsp; ] FIT &nbsp;&nbsp; [ &nbsp; ] UNFIT</strong> to undertake normal secondary school academic, boarding, and physical co-curricular activities.</p>' .
+            '<table cellpadding="2" cellspacing="0" style="width: 100%; border: none; font-size: 6.8pt;">' .
+                '<tr>' .
+                    '<td width="60%"><strong>Medical Doctor\'s Full Name:</strong> ___________________________________</td>' .
+                    '<td width="40%" rowspan="3" align="center" style="vertical-align: middle; border: 1px dashed #000000;">' .
+                        '<span style="font-size: 6pt; color: #000000;">OFFICIAL HOSPITAL /<br>CLINIC RUBBER STAMP</span>' .
+                    '</td>' .
+                '</tr>' .
+                '<tr>' .
+                    '<td><strong>Health Facility &amp; Tel:</strong> ___________________________________</td>' .
+                '</tr>' .
+                '<tr>' .
+                    '<td><strong>Doctor\'s Signature:</strong> ________________________ <strong>Date:</strong> ___________</td>' .
+                '</tr>' .
+            '</table>' .
+        '</div>' .
+    '</div>';
+
+    $pdf->writeHTML($medHtml, true, false, true, false, '');
+    renderEnclosureFooter($pdf, $school_name, $student_number, 4, 4);
+}
 
 /* ================= OUTPUT ================= */
 if (ob_get_length()) {
