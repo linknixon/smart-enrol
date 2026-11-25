@@ -155,10 +155,10 @@ $detailsHtml = '
 </table>
 
 <p style="margin-top: 6px; margin-bottom: 3px; font-size: 8pt; color: #0f172a;">
-    Dear Parent / Guardian of <strong>' . htmlspecialchars($student['firstname'] . ' ' . $student['surname']) . '</strong>,
+    Dear <strong>' . htmlspecialchars(ucwords(strtolower(trim($student['firstname'] . ' ' . $student['surname'] . ' ' . ($student['othernames'] ?? ''))))) . '</strong>,
 </p>
 <p style="margin-top: 0px; margin-bottom: 6px; font-size: 8pt; color: #334155; line-height: 1.35;">
-    We are pleased to inform you that your child has been <strong>successfully admitted</strong> to <strong>' . $classNameLong . '</strong> at <strong>' . htmlspecialchars($school_name) . '</strong> for the <strong>' . htmlspecialchars($academic_year) . ' Academic Year</strong>. This admission offer is awarded on the basis of excellent academic performance in the Primary Leaving Examinations.
+    We are pleased to inform you that you have been <strong>successfully admitted</strong> to <strong>' . $classNameLong . '</strong> at <strong>' . htmlspecialchars($school_name) . '</strong> for the <strong>' . htmlspecialchars($academic_year) . ' Academic Year</strong>. This admission offer is awarded on the basis of excellent academic performance in the Primary Leaving Examinations.
 </p>
 
 <div style="font-size: 8.5pt; font-weight: bold; color: ' . $primaryHex . '; margin-bottom: 3px;">

@@ -231,12 +231,28 @@ if ($class === 'S1') {
     $academicCredential = 'Former School: ' . htmlspecialchars($student['former_school'] ?: 'N/A');
 }
 
-$parentName = trim(($student['father_name'] ?? '') ?: (($student['mother_name'] ?? '') ?: ($student['guardian_name'] ?? '')));
-if (empty($parentName)) {
-    $parentSalutation = 'Dear Parent / Guardian,';
+// Applicant salutation: Dear {Firstname, Second Name} (Applicant full name instead of Parent/Guardian)
+$applicantFirstName = trim($student['firstname'] ?? '');
+$applicantSecondName = trim($student['surname'] ?? '');
+$applicantOtherNames = trim($student['othernames'] ?? '');
+
+$nameParts = [];
+if (!empty($applicantFirstName)) $nameParts[] = $applicantFirstName;
+if (!empty($applicantSecondName)) $nameParts[] = $applicantSecondName;
+if (!empty($applicantOtherNames)) $nameParts[] = $applicantOtherNames;
+
+if (!empty($nameParts)) {
+    $applicantFullNameSalutation = ucwords(strtolower(implode(' ', $nameParts)));
+} elseif (!empty(trim($student['full_name'] ?? ''))) {
+    $applicantFullNameSalutation = ucwords(strtolower(trim($student['full_name'])));
+} elseif (!empty(trim($student['name'] ?? ''))) {
+    $applicantFullNameSalutation = ucwords(strtolower(trim($student['name'])));
 } else {
-    $parentSalutation = 'Dear ' . htmlspecialchars($parentName) . ' (Parent/Guardian),';
+    $applicantFullNameSalutation = 'Candidate';
 }
+
+$applicantSalutation = 'Dear ' . htmlspecialchars($applicantFullNameSalutation) . ',';
+$parentSalutation = $applicantSalutation;
 
 // Letter Subject Line (Monochrome, formal, underlined)
 if ($isAdmitted) {
@@ -306,7 +322,7 @@ $letterHtml = '<div style="font-family: \'trebuchetms\', sans-serif; font-size: 
     '<strong style="font-size: 8.2pt; text-decoration: underline;">' . $subjectLine . '</strong>' .
 '</div>' .
 
-'<p style="margin: 2px 0 2px 0; padding: 0; font-size: 7.4pt;">' . $parentSalutation . '</p>' .
+'<p style="margin: 2px 0 2px 0; padding: 0; font-size: 7.4pt;">' . $applicantSalutation . '</p>' .
 '<p style="margin: 0 0 3px 0; padding: 0; font-size: 7.3pt; text-align: justify;">' . $openingPara . '</p>' .
 
 $conditionsList .
