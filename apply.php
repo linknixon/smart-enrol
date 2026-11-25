@@ -1509,9 +1509,9 @@ html, body {
 
     </div>
 
-    <!-- Floating Back-to-Top Button -->
-    <button id="backToTopBtn" type="button" aria-label="Back to Top"
-        class="fixed bottom-6 right-6 z-50 p-3.5 rounded-full text-white shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 focus:outline-none"
+    <!-- Floating Back-to-Top Button (Strictly Round Circle) -->
+    <button id="backToTopBtn" type="button" aria-label="Back to Top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+        class="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center aspect-square text-white shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 focus:outline-none"
         style="background-color: <?= $primary_color ?>;">
         <i class="fa-solid fa-arrow-up text-sm"></i>
     </button>

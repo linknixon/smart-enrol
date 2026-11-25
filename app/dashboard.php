@@ -1679,9 +1679,10 @@ $msg = $_GET['msg'] ?? '';
         </div>
     </div>
 
-    <!-- Floating Back to Top Button -->
+    <!-- Floating Back to Top Button (Strictly Round Circle) -->
     <button id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
-            class="fixed bottom-6 right-6 z-40 bg-brand-700 hover:bg-brand-800 text-white w-10 h-10 rounded-full shadow-lg items-center justify-center transition-all duration-300 opacity-0 pointer-events-none flex"
+            class="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center aspect-square text-white shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 focus:outline-none"
+            style="background-color: <?= htmlspecialchars($primary_color) ?>;"
             aria-label="Back to Top">
         <i class="fa-solid fa-arrow-up text-sm"></i>
     </button>

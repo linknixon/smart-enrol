@@ -403,6 +403,26 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             drop.classList.add('hidden');
         }
     });
+
+    const bttBtn = document.getElementById('backToTopBtn');
+    if (bttBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 250) {
+                bttBtn.classList.remove('opacity-0', 'pointer-events-none');
+                bttBtn.classList.add('opacity-100', 'pointer-events-auto');
+            } else {
+                bttBtn.classList.add('opacity-0', 'pointer-events-none');
+                bttBtn.classList.remove('opacity-100', 'pointer-events-auto');
+            }
+        });
+    }
     </script>
+
+    <!-- Floating Back-to-Top Button (Strictly Round Circle) -->
+    <button id="backToTopBtn" type="button" aria-label="Back to Top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+        class="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center aspect-square text-white shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 focus:outline-none"
+        style="background-color: <?= htmlspecialchars($primary_color) ?>;">
+        <i class="fa-solid fa-arrow-up text-sm"></i>
+    </button>
 </body>
 </html>
