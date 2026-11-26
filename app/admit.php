@@ -1,79 +1,126 @@
 <?php
-require 'auth.php';
-require '../config/db.php';
-require '../form-one/includes/mailer.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../config/db.php';
+
+$mailerPath = __DIR__ . '/../form-one/includes/mailer.php';
+if (file_exists($mailerPath)) {
+    require_once $mailerPath;
+}
 
 $currentRole = $_SESSION['admin_role'] ?? 'guest';
 if (!hasPermission($pdo, $currentRole, 'can_admit_students')) {
-    die("Permission denied: You do not have privilege to admit applicants.");
+    header("Location: applications.php?error=" . urlencode("Permission denied: You do not have privilege to admit applicants."));
+    exit;
 }
 
 // Fetch dynamic configurations
-$school_name    = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+$school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
 $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
-$school_website = getSetting($pdo, 'school_website', 'www.mutolere.sc.ug');
+$school_website    = getSetting($pdo, 'school_website', 'www.mutolere.sc.ug');
 
 $logo_source = getSchoolLogoSrc($pdo);
-if (strpos($logo_source, 'http') === false) {
+if (is_string($logo_source) && strpos($logo_source, 'http') === false) {
     $logo_source = getBaseUrl($pdo) . '/' . ltrim($logo_source, '/');
 }
 
 $id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : (isset($_GET['id']) && is_numeric($_GET['id']) ? (int)$_GET['id'] : 0);
 if ($id <= 0) {
-    die("Invalid request");
+    header("Location: applications.php?error=" . urlencode("Invalid candidate identification code."));
+    exit;
+}
+
+// Proactive self-healing check: guarantee critical admission columns exist in the database
+try {
+    $chkCols = $pdo->query("SHOW COLUMNS FROM applications");
+    $existingCols = $chkCols ? $chkCols->fetchAll(PDO::FETCH_COLUMN) : [];
+    if (!in_array('student_number', $existingCols)) {
+        $pdo->exec("ALTER TABLE applications ADD student_number VARCHAR(100) DEFAULT NULL");
+    }
+    if (!in_array('admitted_by', $existingCols)) {
+        $pdo->exec("ALTER TABLE applications ADD admitted_by VARCHAR(150) DEFAULT NULL");
+    }
+    if (!in_array('admitted_at', $existingCols)) {
+        $pdo->exec("ALTER TABLE applications ADD admitted_at DATETIME DEFAULT NULL");
+    }
+    if (!in_array('combination', $existingCols)) {
+        $pdo->exec("ALTER TABLE applications ADD combination VARCHAR(100) DEFAULT NULL");
+    }
+} catch (Throwable $e) {
+    error_log("Admit schema check note: " . $e->getMessage());
 }
 
 /* ================= FETCH APPLICANT ================= */
-$stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
-$stmt->execute([$id]);
-$applicant = $stmt->fetch(PDO::FETCH_ASSOC);
+$applicant = null;
+try {
+    $stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
+    $stmt->execute([$id]);
+    $applicant = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    error_log("Failed to fetch applicant: " . $e->getMessage());
+}
 
 if (!$applicant) {
-    die("Applicant not found");
+    header("Location: applications.php?error=" . urlencode("Applicant dossier was not found in the registry."));
+    exit;
 }
 
 /* ================= MANUAL A-LEVEL COMBINATION ASSIGNMENT ================= */
-$assignedCombination = trim($_POST['combination'] ?? $_GET['combination'] ?? '');
-$customComb = trim($_POST['custom_combination'] ?? $_GET['custom_combination'] ?? '');
+$assignedCombination = trim((string)($_POST['combination'] ?? $_GET['combination'] ?? ''));
+$customComb = trim((string)($_POST['custom_combination'] ?? $_GET['custom_combination'] ?? ''));
 if ($assignedCombination === 'CUSTOM' || $assignedCombination === 'OTHER' || !empty($customComb)) {
     $assignedCombination = strtoupper($customComb);
 }
 
 if (!empty($assignedCombination)) {
-    $pdo->prepare("UPDATE applications SET combination = ? WHERE id = ?")->execute([$assignedCombination, $id]);
-    $applicant['combination'] = $assignedCombination;
+    try {
+        $pdo->prepare("UPDATE applications SET combination = ? WHERE id = ?")->execute([$assignedCombination, $id]);
+        $applicant['combination'] = $assignedCombination;
+    } catch (Throwable $e) {
+        error_log("Combination update warning: " . $e->getMessage());
+    }
 }
 
 /* ================= SCHOOLPAY / STUDENT NUMBER ASSIGNMENT ================= */
 $isManual = isManualStudentNumberEnabled($pdo);
-$inputStudentNumber = trim($_POST['student_number'] ?? $_GET['student_number'] ?? '');
+$inputStudentNumber = trim((string)($_POST['student_number'] ?? $_GET['student_number'] ?? ''));
 
 if ($isManual) {
     if (empty($inputStudentNumber) && empty($applicant['student_number'])) {
-        die("Error: Manual SchoolPay Payment Code / Student Number is required before admitting candidate. Please return and enter the code.");
+        header("Location: applications.php?error=" . urlencode("Manual SchoolPay Payment Code / Student Number is required before admitting candidate. Please enter the code."));
+        exit;
     }
     if (!empty($inputStudentNumber)) {
         $cleanStudentNumber = strtoupper(preg_replace('/[^A-Za-z0-9\/\-_]/', '', $inputStudentNumber));
-        $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$cleanStudentNumber, $id]);
+        try {
+            $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$cleanStudentNumber, $id]);
+        } catch (Throwable $e) {
+            error_log("Student number update warning: " . $e->getMessage());
+        }
         $applicant['student_number'] = $cleanStudentNumber;
         $student_number = $cleanStudentNumber;
     } else {
-        $student_number = $applicant['student_number'];
+        $student_number = (string)($applicant['student_number'] ?? '');
     }
 } else {
     if (!empty($inputStudentNumber)) {
         $cleanStudentNumber = strtoupper(preg_replace('/[^A-Za-z0-9\/\-_]/', '', $inputStudentNumber));
-        $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$cleanStudentNumber, $id]);
+        try {
+            $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$cleanStudentNumber, $id]);
+        } catch (Throwable $e) {
+            error_log("Student number update warning: " . $e->getMessage());
+        }
         $applicant['student_number'] = $cleanStudentNumber;
         $student_number = $cleanStudentNumber;
     } elseif (!empty($applicant['student_number'])) {
-        $student_number = $applicant['student_number'];
+        $student_number = (string)$applicant['student_number'];
     } else {
         $student_number = getAdmissionNumber($applicant, $pdo);
         try {
             $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$student_number, $id]);
             $applicant['student_number'] = $student_number;
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {
+            error_log("Student number auto-assign warning: " . $e->getMessage());
+        }
     }
 }
 
@@ -87,38 +134,62 @@ try {
     $uStmt->execute([$adminUsername]);
     $uRow = $uStmt->fetch(PDO::FETCH_ASSOC);
     if ($uRow && (!empty($uRow['firstname']) || !empty($uRow['lastname']))) {
-        $adminFullName = trim($uRow['firstname'] . ' ' . $uRow['lastname']);
+        $adminFullName = trim((string)$uRow['firstname'] . ' ' . (string)$uRow['lastname']);
     }
-} catch (Exception $e) {}
+} catch (Throwable $e) {}
 
 /* ================= UPDATE STATUS ================= */
-$update = $pdo->prepare("
-    UPDATE applications 
-    SET application_status = 'admitted', admitted_by = ?, admitted_at = NOW() 
-    WHERE id = ?
-");
-$update->execute([$adminFullName, $id]);
+try {
+    $update = $pdo->prepare("
+        UPDATE applications 
+        SET application_status = 'admitted', admitted_by = ?, admitted_at = NOW() 
+        WHERE id = ?
+    ");
+    $update->execute([$adminFullName, $id]);
+} catch (Throwable $e) {
+    error_log("Full admission update notice: " . $e->getMessage());
+    try {
+        $pdo->prepare("UPDATE applications SET application_status = 'admitted' WHERE id = ?")->execute([$id]);
+    } catch (Throwable $e2) {
+        error_log("Fallback admission update failed: " . $e2->getMessage());
+    }
+}
+
+// Synchronize status to auxiliary legacy tables if present
+try {
+    if (!empty($applicant['index_number'])) {
+        $pdo->prepare("UPDATE s1_applications SET application_status = 'admitted', admitted_by = ?, admitted_at = NOW(), student_number = ? WHERE index_number = ?")
+            ->execute([$adminFullName, $student_number, $applicant['index_number']]);
+    }
+    $uceIdx = $applicant['index_number'] ?? ($applicant['uce_index'] ?? '');
+    if (!empty($uceIdx)) {
+        $pdo->prepare("UPDATE s5_applications SET application_status = 'admitted', admitted_by = ?, admitted_at = NOW(), student_number = ? WHERE uce_index = ?")
+            ->execute([$adminFullName, $student_number, $uceIdx]);
+    }
+} catch (Throwable $e) {}
 
 // Log activity
 $combLog = !empty($applicant['combination']) ? " - Assigned Combination: " . $applicant['combination'] : "";
 $codeLog = !empty($student_number) ? " - Student No / SchoolPay Code: " . $student_number : "";
-logActivity($pdo, $_SESSION['admin_username'], "Admit Student", "Admitted applicant: " . $applicant['firstname'] . " " . $applicant['surname'] . " (" . $applicant['class_of_entry'] . "){$combLog}{$codeLog}");
+try {
+    logActivity($pdo, $_SESSION['admin_username'] ?? 'Admin', "Admit Student", "Admitted applicant: " . ($applicant['firstname'] ?? '') . " " . ($applicant['surname'] ?? '') . " (" . ($applicant['class_of_entry'] ?? 'S1') . "){$combLog}{$codeLog}");
+} catch (Throwable $e) {}
 
 /* ================= PDF & REPORTING DETAILS ================= */
-$pdfLink = getBaseUrl($pdo) . "/app/admission_offer.php?id=" . $id;
+$pdfLink       = getBaseUrl($pdo) . "/app/admission_offer.php?id=" . $id;
 $reportingDate = getReportingDate($pdo, $applicant['class_of_entry'] ?? 'S1');
 $primary_color = getPrimaryColor($pdo);
 $accent_color  = getAccentColor($pdo);
 
-$baseUrl = getBaseUrl($pdo);
+$baseUrl     = getBaseUrl($pdo);
 $docRules    = getSetting($pdo, 'doc_school_rules', '');
 $docCircular = getSetting($pdo, 'doc_admission_circular', '');
 $docMedForm  = getSetting($pdo, 'doc_medical_form', '');
 
 /* ================= EMAIL MESSAGE ================= */
-$className = "Senior " . substr($applicant['class_of_entry'], 1);
-$parentName = htmlspecialchars($applicant['parent_name']);
-$studentName = htmlspecialchars($applicant['firstname'] . ' ' . $applicant['surname']);
+$className   = "Senior " . substr((string)($applicant['class_of_entry'] ?? 'S1'), 1);
+$parentName  = htmlspecialchars((string)($applicant['parent_name'] ?? 'Parent / Guardian'));
+$studentName = htmlspecialchars(trim((string)($applicant['firstname'] ?? '') . ' ' . (string)($applicant['surname'] ?? '')));
 
 $enclosuresHtml = '';
 $hasEnclosures = (!empty($docRules) || !empty($docCircular) || !empty($docMedForm));
@@ -154,9 +225,11 @@ if (!empty($applicant['combination']) && in_array($applicant['class_of_entry'], 
     $combinationNotice = "
     <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid {$primary_color}; padding: 12px 15px; border-radius: 6px; margin: 15px 0;'>
         <span style='font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;'>Officially Assigned A-Level Combination:</span><br>
-        <strong style='font-size: 15px; color: {$primary_color};'>" . htmlspecialchars($applicant['combination']) . "</strong>
+        <strong style='font-size: 15px; color: {$primary_color};'>" . htmlspecialchars((string)$applicant['combination']) . "</strong>
     </div>";
 }
+
+$safeStudentNumber = htmlspecialchars((string)$student_number);
 
 $message = "
 <!DOCTYPE html>
@@ -216,13 +289,13 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
                     <span style='background-color: #dcfce7; padding: 3px 8px; border-radius: 6px;'>Official School Fees Payment Reference</span>
                 </div>
                 <div style='font-size: 24px; font-weight: 900; font-family: monospace; color: #15803d; letter-spacing: 1px; margin: 8px 0 10px 0;'>
-                    {$student_number}
+                    {$safeStudentNumber}
                 </div>
                 <p style='margin: 0 0 8px 0; font-size: 13.5px; font-weight: 700; color: #0f172a;'>
                     Payment Details:
                 </p>
                 <p style='margin: 0; font-size: 13px; color: #334155; line-height: 1.6;'>
-                    Your payment details have been shared with you via email. Please reference your unique student identification code (<strong>{$student_number}</strong>) when making school fees payments as detailed in your official offer packet.
+                    Your payment details have been shared with you via email. Please reference your unique student identification code (<strong>{$safeStudentNumber}</strong>) when making school fees payments as detailed in your official offer packet.
                 </p>
             </div>
 
@@ -234,7 +307,7 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
                 <ol style='margin: 8px 0 0 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.65;'>
                     <li><strong>Download and Print:</strong> Click the button below to download and print the official Provisional Admission Offer Letter (PDF).</li>
                     <li><strong>Secure Vacancy:</strong> Complete the admission commitment fee or full term fees using the official payment instructions shared on your email.</li>
-                    <li><strong>Reporting Day:</strong> Arrive at school on <strong>" . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : "the official reporting date") . "</strong> with this printed offer letter, original UNEB result slips, bank deposit receipt, 2 physical passport-size photographs, and student requirements.</li>
+                    <li><strong>Reporting Day:</strong> Arrive at school on <strong>" . (!empty($reportingDate) ? htmlspecialchars((string)$reportingDate) : "the official reporting date") . "</strong> with this printed offer letter, original UNEB result slips, bank deposit receipt, 2 physical passport-size photographs, and student requirements.</li>
                 </ol>
             </div>
 
@@ -269,11 +342,18 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
 ";
 
 /* ================= SEND EMAIL ================= */
-sendEmail(
-    $applicant['parent_email'],
-    "$className Admission Offer - {$academic_year} - {$school_name}",
-    $message
-);
+try {
+    $parentEmail = trim((string)($applicant['parent_email'] ?? ''));
+    if (!empty($parentEmail) && filter_var($parentEmail, FILTER_VALIDATE_EMAIL) && function_exists('sendEmail')) {
+        sendEmail(
+            $parentEmail,
+            "$className Admission Offer - {$academic_year} - {$school_name}",
+            $message
+        );
+    }
+} catch (Throwable $e) {
+    error_log("Failed to dispatch admission notification email: " . $e->getMessage());
+}
 
 /* ================= REDIRECT ================= */
 $returnUrl = $_POST['return_to'] ?? $_GET['return_to'] ?? 'applications.php?msg=admitted';

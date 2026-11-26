@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 
 $currentRole = $_SESSION['admin_role'] ?? 'viewer';
 $currentStaffName = $_SESSION['admin_name'] ?? 'Staff Officer';
+$isSuperAdmin = (($currentRole ?? '') === 'super_admin' || in_array('super_admin', $_SESSION['admin_roles'] ?? []));
 
 // Branding
 $school_name = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
@@ -338,9 +339,27 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 
             <!-- Flash Message Alert -->
             <?php if($msg): ?>
-            <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 p-3.5 sm:p-4 rounded-xl flex items-center gap-3 shadow-2xs animate-pulse text-xs sm:text-sm font-semibold">
+            <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 p-3.5 sm:p-4 rounded-xl flex items-center gap-3 shadow-2xs text-xs sm:text-sm font-semibold">
                 <i class="fa-solid fa-circle-check text-lg text-emerald-500"></i>
-                <span>Action completed successfully.</span>
+                <span>
+                    <?php 
+                        if ($msg === 'bulk_deleted') {
+                            $delCount = (int)($_GET['count'] ?? 0);
+                            echo "Successfully deleted " . ($delCount > 0 ? "<strong>{$delCount}</strong>" : '') . " application dossier(s) permanently.";
+                        } elseif ($msg === 'admitted') {
+                            echo "Candidate officially admitted and provisional admission offer dispatched.";
+                        } else {
+                            echo "Action completed successfully.";
+                        }
+                    ?>
+                </span>
+            </div>
+            <?php endif; ?>
+
+            <?php if(!empty($_GET['error'])): ?>
+            <div class="bg-rose-50 border-l-4 border-rose-500 text-rose-800 p-3.5 sm:p-4 rounded-xl flex items-center gap-3 shadow-2xs text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-lg text-rose-500"></i>
+                <span><?= htmlspecialchars($_GET['error']) ?></span>
             </div>
             <?php endif; ?>
 
@@ -471,11 +490,39 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                     </div>
                 </div>
 
+                <?php if($isSuperAdmin): ?>
+                <!-- Super Admin Bulk Actions Bar -->
+                <div id="bulkActionsBar" class="hidden mb-3 p-3 bg-rose-50 border border-rose-200 rounded-xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200 shadow-xs">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                            <i class="fa-solid fa-check-double"></i>
+                        </span>
+                        <span class="text-xs font-bold text-rose-900">
+                            <span id="selectedCountBadge" class="px-2 py-0.5 bg-rose-200 text-rose-900 rounded-full font-mono text-[11px] font-black mr-1">0</span>
+                            Applications Selected
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="deselectAllApps()" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-white bg-slate-100 transition border border-slate-200 cursor-pointer">
+                            Deselect All
+                        </button>
+                        <button type="button" onclick="openBulkDeleteModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i> Delete Selected Entries
+                        </button>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Candidate Registry Table View (Single Unified View) -->
                 <div id="candidateTableContainer" class="w-full overflow-hidden rounded-xl border border-slate-200">
                     <table class="w-full text-left border-collapse text-xs table-auto">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                                <?php if($isSuperAdmin): ?>
+                                <th class="p-2.5 w-8 text-center">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllApps(this)" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer" title="Select All On Page">
+                                </th>
+                                <?php endif; ?>
                                 <th class="p-2.5 w-10 text-center">Photo</th>
                                 <th class="p-3">Applicant Name</th>
                                 <th class="p-3 text-center">Class</th>
@@ -496,6 +543,11 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 $primaryPhone = !empty($app['father_phone']) ? $app['father_phone'] : (!empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_phone']) ? $app['mother_phone'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_phone'] ?? ($app['guardian_contact'] ?? ($app['parent_phone'] ?? ''))))));
                             ?>
                             <tr class="hover:bg-slate-50/80 transition duration-150">
+                                <?php if($isSuperAdmin): ?>
+                                <td class="p-2 text-center" onclick="event.stopPropagation();">
+                                    <input type="checkbox" name="selected_ids[]" value="<?= $app['id'] ?>" class="app-row-checkbox rounded border-slate-300 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer" onchange="updateBulkSelectionState()">
+                                </td>
+                                <?php endif; ?>
                                 <!-- Photo -->
                                 <td class="p-2 text-center">
                                     <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-slate-100 mx-auto flex items-center justify-center">
@@ -640,6 +692,11 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                                 </a>
                                             <?php endif; ?>
                                         <?php endif; ?>
+                                        <?php if($isSuperAdmin): ?>
+                                            <button type="button" onclick="confirmSingleDelete(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>')" class="inline-flex items-center justify-center px-1.5 py-1 h-6 text-[10px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition duration-150 shadow-2xs cursor-pointer" title="Delete Application Permanently">
+                                                <i class="fa-solid fa-trash-can text-[9px]"></i>
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
@@ -647,7 +704,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 
                             <?php if (count($applications) === 0): ?>
                             <tr>
-                                <td colspan="10" class="px-6 py-12 text-center text-slate-400 font-semibold">
+                                <td colspan="<?= $isSuperAdmin ? '11' : '10' ?>" class="px-6 py-12 text-center text-slate-400 font-semibold">
                                     <i class="fa-solid fa-folder-open text-3xl block mb-2 text-slate-300"></i>
                                     No application entries found.
                                 </td>
@@ -1304,6 +1361,48 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         </div>
     </div>
 
+    <?php if($isSuperAdmin): ?>
+    <!-- Super Admin Bulk Delete Confirmation Modal -->
+    <div id="bulkDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-rose-200 animate-in fade-in zoom-in-95 duration-150">
+            <div class="px-6 py-4 bg-rose-600 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sm font-bold border border-white/20 text-rose-100">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold uppercase tracking-tight">Confirm Deletion</h3>
+                        <p class="text-[11px] text-rose-100">Super Administrator Restricted Action</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBulkDeleteModal()" class="text-white/70 hover:text-white p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <form method="POST" action="bulk_delete_applications.php" id="bulkDeleteForm" class="p-6 space-y-4">
+                <div id="bulkDeleteHiddenInputs"></div>
+                <div class="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 leading-relaxed flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
+                    <div>
+                        <p class="font-bold">This action is permanent and cannot be undone.</p>
+                        <p class="mt-1 text-[11.5px] text-rose-800">
+                            You are about to permanently delete <strong id="deleteModalCount" class="underline">0</strong> selected application record(s), along with all stored UNEB result slips, passport photos, and caregiver ID uploads.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeBulkDeleteModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-trash-can"></i> Yes, Permanently Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Floating Back to Top Button (Strictly Round Circle) -->
     <button id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
             class="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center aspect-square text-white shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 focus:outline-none"
@@ -1318,6 +1417,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     const canManageSettings = <?= (hasPermission($pdo, $currentRole, 'can_manage_settings') || ($_SESSION['admin_role'] ?? '') === 'super_admin') ? 'true' : 'false' ?>;
     const canTakeAppActions = <?= hasPermission($pdo, $currentRole, 'can_take_application_actions') ? 'true' : 'false' ?>;
     const isManualStudentNumber = <?= $isManualStudentNumber ? 'true' : 'false' ?>;
+    const isSuperAdmin = <?= $isSuperAdmin ? 'true' : 'false' ?>;
 
     const applicationsRegistry = <?= json_encode($applicationsById ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
@@ -1335,6 +1435,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
             closeAdmitS5Modal();
             closeNlscModal();
             closeChangeCombModal();
+            closeBulkDeleteModal();
         }
     });
 
@@ -1345,7 +1446,115 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                 if (e.target === this) closeFullAppModal();
             });
         }
+        const bulkDelModal = document.getElementById('bulkDeleteModal');
+        if (bulkDelModal) {
+            bulkDelModal.addEventListener('click', function(e) {
+                if (e.target === this) closeBulkDeleteModal();
+            });
+        }
     });
+
+    /* ================= SUPER ADMIN BULK APPLICATION ACTIONS ================= */
+    function getSelectedAppIds() {
+        const checkboxes = document.querySelectorAll('.app-row-checkbox:checked');
+        const ids = [];
+        checkboxes.forEach(cb => {
+            if (cb.value) ids.push(cb.value);
+        });
+        return ids;
+    }
+
+    function updateBulkSelectionState() {
+        const selectedIds = getSelectedAppIds();
+        const count = selectedIds.length;
+        const bar = document.getElementById('bulkActionsBar');
+        const badge = document.getElementById('selectedCountBadge');
+        const selectAllCb = document.getElementById('selectAllCheckbox');
+
+        if (badge) badge.textContent = count;
+
+        if (bar) {
+            if (count > 0) {
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
+
+        if (selectAllCb) {
+            const allCbs = document.querySelectorAll('.app-row-checkbox');
+            const totalRows = allCbs.length;
+            selectAllCb.checked = (totalRows > 0 && count === totalRows);
+            selectAllCb.indeterminate = (count > 0 && count < totalRows);
+        }
+    }
+
+    function toggleSelectAllApps(masterCb) {
+        const isChecked = masterCb ? masterCb.checked : false;
+        const checkboxes = document.querySelectorAll('.app-row-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+        });
+        updateBulkSelectionState();
+    }
+
+    function deselectAllApps() {
+        const checkboxes = document.querySelectorAll('.app-row-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+        });
+        const selectAllCb = document.getElementById('selectAllCheckbox');
+        if (selectAllCb) {
+            selectAllCb.checked = false;
+            selectAllCb.indeterminate = false;
+        }
+        updateBulkSelectionState();
+    }
+
+    function openBulkDeleteModal() {
+        const selectedIds = getSelectedAppIds();
+        if (selectedIds.length === 0) {
+            alert('Please select at least one application entry using the checkboxes.');
+            return;
+        }
+
+        const countEl = document.getElementById('deleteModalCount');
+        if (countEl) countEl.textContent = selectedIds.length;
+
+        const container = document.getElementById('bulkDeleteHiddenInputs');
+        if (container) {
+            container.innerHTML = '';
+            selectedIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id;
+                container.appendChild(input);
+            });
+        }
+
+        const modal = document.getElementById('bulkDeleteModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeBulkDeleteModal() {
+        const modal = document.getElementById('bulkDeleteModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmSingleDelete(id, name) {
+        if (!id) return;
+        const countEl = document.getElementById('deleteModalCount');
+        if (countEl) countEl.textContent = '1 (' + name + ')';
+
+        const container = document.getElementById('bulkDeleteHiddenInputs');
+        if (container) {
+            container.innerHTML = `<input type="hidden" name="ids[]" value="${id}">`;
+        }
+
+        const modal = document.getElementById('bulkDeleteModal');
+        if (modal) modal.classList.remove('hidden');
+    }
 
     function setSafeText(id, val) {
         const el = document.getElementById(id);
@@ -1727,6 +1936,12 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                     <i class="fa-solid fa-file-pdf"></i> View Admission Letter
                 </a>`;
             }
+        }
+
+        if (isSuperAdmin) {
+            actionsContainer.innerHTML += `<button type="button" onclick="closeFullAppModal(); confirmSingleDelete(${app.id}, '${escapeJs(fullName)}');" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition shadow-2xs flex items-center gap-1.5 cursor-pointer" title="Delete Application Permanently">
+                <i class="fa-solid fa-trash-can"></i> Delete
+            </button>`;
         }
 
         document.getElementById('fullApplicationModal').classList.remove('hidden');

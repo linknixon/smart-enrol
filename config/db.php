@@ -148,7 +148,7 @@ try {
 $isSchemaReady = false;
 try {
     $chkInit = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'system_schema_initialized' LIMIT 1");
-    if ($chkInit && $chkInit->fetchColumn() === '2026_v2') {
+    if ($chkInit && $chkInit->fetchColumn() === '2026_v3') {
         $isSchemaReady = true;
     }
 } catch (Exception $e) {
@@ -220,7 +220,10 @@ if (!$isSchemaReady) {
       parent_phone VARCHAR(50) NOT NULL,
       parent_address VARCHAR(255) NOT NULL,
       parent_email VARCHAR(100) NOT NULL,
+      student_number VARCHAR(100) DEFAULT NULL,
       application_status VARCHAR(20) DEFAULT 'pending',
+      admitted_by VARCHAR(150) DEFAULT NULL,
+      admitted_at DATETIME DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
@@ -246,7 +249,12 @@ if (!$isSchemaReady) {
       parent_nin VARCHAR(50) NOT NULL,
       parent_phone VARCHAR(50) NOT NULL,
       parent_address VARCHAR(255) NOT NULL,
-      parent_email VARCHAR(100) NOT NULL
+      parent_email VARCHAR(100) NOT NULL,
+      student_number VARCHAR(100) DEFAULT NULL,
+      application_status VARCHAR(20) DEFAULT 'pending',
+      admitted_by VARCHAR(150) DEFAULT NULL,
+      admitted_at DATETIME DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
@@ -293,7 +301,10 @@ if (!$isSchemaReady) {
       parent_phone VARCHAR(50) NOT NULL,
       parent_address VARCHAR(255) NOT NULL,
       parent_email VARCHAR(100) NOT NULL,
+      student_number VARCHAR(100) DEFAULT NULL,
       application_status VARCHAR(20) DEFAULT 'pending',
+      admitted_by VARCHAR(150) DEFAULT NULL,
+      admitted_at DATETIME DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
@@ -602,9 +613,30 @@ if (!$isSchemaReady) {
 
     // Mark schema initialization complete so this heavy DDL block is bypassed on subsequent requests
     try {
-        $pdo->exec("INSERT INTO system_settings (setting_key, setting_value) VALUES ('system_schema_initialized', '2026_v2') ON DUPLICATE KEY UPDATE setting_value = '2026_v2'");
+        $pdo->exec("INSERT INTO system_settings (setting_key, setting_value) VALUES ('system_schema_initialized', '2026_v3') ON DUPLICATE KEY UPDATE setting_value = '2026_v3'");
     } catch (Exception $e) {}
 }
+
+// Proactive runtime verification: ensure student_number, admitted_by, and admitted_at exist across applications tables
+try {
+    foreach (['applications', 's1_applications', 's5_applications'] as $t) {
+        $tblCheck = $pdo->query("SHOW TABLES LIKE '$t'");
+        if ($tblCheck && $tblCheck->rowCount() > 0) {
+            $colSn = $pdo->query("SHOW COLUMNS FROM $t LIKE 'student_number'");
+            if ($colSn && $colSn->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE $t ADD student_number VARCHAR(100) DEFAULT NULL");
+            }
+            $colAdmBy = $pdo->query("SHOW COLUMNS FROM $t LIKE 'admitted_by'");
+            if ($colAdmBy && $colAdmBy->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE $t ADD admitted_by VARCHAR(150) DEFAULT NULL");
+            }
+            $colAdmAt = $pdo->query("SHOW COLUMNS FROM $t LIKE 'admitted_at'");
+            if ($colAdmAt && $colAdmAt->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE $t ADD admitted_at DATETIME DEFAULT NULL");
+            }
+        }
+    }
+} catch (Exception $e) {}
 
 } catch (Exception $e) {
     if (php_sapi_name() === 'cli' && !isset($_SERVER['HTTP_HOST'])) {
