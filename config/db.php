@@ -406,6 +406,7 @@ if (!$isSchemaReady) {
                 }
                 // Ensure academic year, LIN, and extended subfields exist
                 $addressFields = [
+                    'student_number'            => "VARCHAR(100) DEFAULT NULL",
                     'academic_year'             => "VARCHAR(20) DEFAULT NULL",
                     'lin'                       => "VARCHAR(50) DEFAULT NULL",
                     'nationality'               => "VARCHAR(50) DEFAULT 'Ugandan'",
@@ -932,6 +933,48 @@ if (!function_exists('getFeesStructureMatrix')) {
             }
         }
         return getDefaultFeesStructureMatrix($year);
+    }
+}
+
+// O-Level Curriculum Subjects List for S5 Evaluation & Admission Form
+if (!function_exists('getDefaultUceSubjectsList')) {
+    function getDefaultUceSubjectsList() {
+        return [
+            ['code' => 'ENG', 'name' => 'English Language', 'is_core' => 1],
+            ['code' => 'MAT', 'name' => 'Mathematics', 'is_core' => 1],
+            ['code' => 'PHY', 'name' => 'Physics', 'is_core' => 1],
+            ['code' => 'CHE', 'name' => 'Chemistry', 'is_core' => 1],
+            ['code' => 'BIO', 'name' => 'Biology', 'is_core' => 1],
+            ['code' => 'HIS', 'name' => 'History & Political Educ.', 'is_core' => 1],
+            ['code' => 'GEO', 'name' => 'Geography', 'is_core' => 1],
+            ['code' => 'CRE_IRE', 'name' => 'Religious Educ. (CRE/IRE)', 'is_core' => 0],
+            ['code' => 'AGR', 'name' => 'Agriculture', 'is_core' => 0],
+            ['code' => 'ICT', 'name' => 'Information & Comm. Tech (ICT)', 'is_core' => 0],
+            ['code' => 'LIT', 'name' => 'Literature in English', 'is_core' => 0],
+            ['code' => 'ART', 'name' => 'Art & Design', 'is_core' => 0],
+            ['code' => 'ENT', 'name' => 'Entrepreneurship', 'is_core' => 0],
+            ['code' => 'PHE', 'name' => 'Physical Education', 'is_core' => 0],
+            ['code' => 'MUS', 'name' => 'Performing Arts / Music', 'is_core' => 0],
+            ['code' => 'FRN', 'name' => 'French Language', 'is_core' => 0],
+            ['code' => 'ARB', 'name' => 'Arabic Language', 'is_core' => 0],
+            ['code' => 'LUG', 'name' => 'Luganda Language', 'is_core' => 0],
+            ['code' => 'RRK', 'name' => 'Runyankore-Rukiga', 'is_core' => 0],
+        ];
+    }
+}
+
+if (!function_exists('getUceSubjectsList')) {
+    function getUceSubjectsList($pdo = null) {
+        if ($pdo) {
+            $raw = getSetting($pdo, 'uce_subjects_list', '');
+            if (!empty($raw)) {
+                $decoded = is_array($raw) ? $raw : json_decode($raw, true);
+                if (is_array($decoded) && !empty($decoded)) {
+                    return $decoded;
+                }
+            }
+        }
+        return getDefaultUceSubjectsList();
     }
 }
 
@@ -1956,6 +1999,21 @@ if (!function_exists('getAdmissionNumber')) {
             $pdo = $GLOBALS['pdo'];
         }
 
+        // If an explicit student number / payment code has already been assigned, use it
+        if (is_array($app) && !empty($app['student_number'])) {
+            return trim($app['student_number']);
+        }
+        if (is_numeric($app) && $pdo) {
+            try {
+                $q = $pdo->prepare("SELECT student_number FROM applications WHERE id = ?");
+                $q->execute([(int)$app]);
+                $sn = $q->fetchColumn();
+                if (!empty($sn)) {
+                    return trim($sn);
+                }
+            } catch (Exception $e) {}
+        }
+
         if (is_numeric($app)) {
             $id = (int)$app;
             $class = 'S1';
@@ -2019,6 +2077,13 @@ if (!function_exists('getAdmissionNumber')) {
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $format);
+    }
+}
+
+// Check whether SchoolPay code / Student Number is manually assigned by admin on admission
+if (!function_exists('isManualStudentNumberEnabled')) {
+    function isManualStudentNumberEnabled($pdo = null) {
+        return $pdo ? (getSetting($pdo, 'manual_student_number_assignment', '0') === '1') : false;
     }
 }
 

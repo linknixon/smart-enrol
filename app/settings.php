@@ -24,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $settingsKeys = [
                 'academic_year',
                 'a_level_combinations',
+                'uce_subjects_list',
+                'manual_student_number_assignment',
                 'ai_auto_admit_enabled', 'ai_auto_combination_enabled',
                 'show_parent_id_upload', 'show_passport_photo_upload',
                 'admission_s1_start_date', 'admission_s1_end_date',
@@ -51,7 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'head_teacher_name', 'head_teacher_title', 'school_code', 'academic_year',
                 'student_number_format',
                 'school_gender_type',
+                'manual_student_number_assignment',
                 'a_level_combinations',
+                'uce_subjects_list',
                 'ai_auto_admit_enabled', 'ai_auto_combination_enabled',
                 'show_parent_id_upload', 'show_passport_photo_upload',
                 'cf_turnstile_enabled', 'cf_turnstile_site_key', 'cf_turnstile_secret_key',
@@ -97,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (in_array($key, $checkboxKeys)) {
                 continue;
             }
-            // Strictly enforce: Only Super Admin can change school gender admission policy
-            if ($key === 'school_gender_type' && ($_SESSION['admin_role'] ?? '') !== 'super_admin') {
+            // Strictly enforce: Only Super Admin can change school gender admission policy or manual student number policy
+            if (($key === 'school_gender_type' || $key === 'manual_student_number_assignment') && ($_SESSION['admin_role'] ?? '') !== 'super_admin') {
                 continue;
             }
             if (isset($_POST[$key])) {
@@ -351,6 +355,8 @@ $cf_turnstile_site_key   = getSetting($pdo, 'cf_turnstile_site_key', '');
 $cf_turnstile_secret_key = getSetting($pdo, 'cf_turnstile_secret_key', '');
 $staff_mfa_enabled       = getSetting($pdo, 'staff_mfa_enabled', '1');
 $a_level_combinations    = getSetting($pdo, 'a_level_combinations', '');
+$uce_subjects_list       = getUceSubjectsList($pdo);
+$manual_student_number_assignment = getSetting($pdo, 'manual_student_number_assignment', '0');
 
 $slider_images_json      = getSetting($pdo, 'hero_slider_images', '');
 $current_slider_images   = [];
@@ -822,6 +828,60 @@ if (empty($current_slider_images)) {
                             <?php endif; ?>
                         </div>
 
+                        <!-- SchoolPay Payment Code / Student Number Assignment Mode (Super Admin Restricted) -->
+                        <div class="pt-5 border-t border-slate-100 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-barcode text-brand-700"></i> SchoolPay Payment Code &amp; Student Number Assignment Mode
+                                    </h4>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Control whether admitting an applicant prompts the school administrator to manually enter their SchoolPay payment code or auto-generates the student number.</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <?php if (($_SESSION['admin_role'] ?? '') === 'super_admin'): ?>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                        <label class="flex items-start gap-3 p-3.5 rounded-xl border <?= ($manual_student_number_assignment === '1') ? 'border-brand-700 bg-brand-50/20' : 'border-slate-200 hover:bg-slate-50' ?> cursor-pointer transition">
+                                            <input type="radio" name="manual_student_number_assignment" value="1" <?= ($manual_student_number_assignment === '1') ? 'checked' : '' ?> class="mt-1 text-brand-700">
+                                            <div>
+                                                <span class="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-keyboard text-brand-700"></i> Manual SchoolPay Code Assignment (ON)
+                                                </span>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                                    When an administrator clicks <strong>Admit</strong>, the system prompts them to enter the student's <strong>SchoolPay Payment Code</strong>. This code becomes their official Student Number printed on the admission letter and emails.
+                                                </span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-start gap-3 p-3.5 rounded-xl border <?= ($manual_student_number_assignment !== '1') ? 'border-brand-700 bg-brand-50/20' : 'border-slate-200 hover:bg-slate-50' ?> cursor-pointer transition">
+                                            <input type="radio" name="manual_student_number_assignment" value="0" <?= ($manual_student_number_assignment !== '1') ? 'checked' : '' ?> class="mt-1 text-brand-700">
+                                            <div>
+                                                <span class="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-wand-magic-sparkles text-brand-700"></i> Automatic System Generation (OFF)
+                                                </span>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                                    The system automatically generates unique Student Numbers using the configured pattern (e.g. <code><?= htmlspecialchars($student_number_format) ?></code>) upon admission without prompting for manual entry.
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                        <div class="flex items-center gap-2 text-xs font-bold text-amber-800">
+                                            <i class="fa-solid fa-lock text-amber-600"></i>
+                                            <span>Restricted Setting: Only Super Administrator can configure the SchoolPay code assignment policy.</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 pt-1">
+                                            <span class="text-xs text-slate-500 font-semibold">Active Institutional Policy:</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider <?= ($manual_student_number_assignment === '1') ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-slate-100 text-slate-800 border border-slate-300' ?>">
+                                                <?= ($manual_student_number_assignment === '1') ? 'Manual SchoolPay Code Assignment (Prompt on Admit)' : 'Automatic Student Number Generation' ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
                         <div class="pt-4 border-t border-slate-100">
                             <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Intake Calendars & Cutoff Passmarks</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -1064,6 +1124,78 @@ if (empty($current_slider_images)) {
                                 <i class="fa-solid fa-circle-info mr-1 text-brand-700"></i> Organize combinations by category (e.g. Sciences, Arts & Humanities). Each code maps to its full title and subsidiary (ICT or Sub-Math).
                             </p>
                         </div>
+                    </div>
+
+                    <!-- O-Level & S5 Evaluation Subjects Management Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-book-bookmark text-brand-700"></i> Senior Five (S5) Curriculum Subjects Management
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Add or remove subjects evaluated on the Senior Five application form. Changes sync live to public applicants.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="openAddSubjectModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="fa-solid fa-plus text-xs"></i> Add Subject
+                                </button>
+                                <button type="button" onclick="resetDefaultSubjects()" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Standard
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add Subject Inline Box (Collapsible) -->
+                        <div id="addSubjectInlineBox" class="hidden p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-plus text-brand-700"></i> Add New Evaluation Subject
+                                </span>
+                                <button type="button" onclick="closeAddSubjectModal()" class="text-slate-400 hover:text-slate-600 text-xs">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Subject Code *</label>
+                                    <input type="text" id="newSubjectCode" placeholder="e.g. GER, KIS, PHE" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-700 bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Subject Name *</label>
+                                    <input type="text" id="newSubjectName" placeholder="e.g. German Language" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:border-brand-700 bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Classification *</label>
+                                    <select id="newSubjectClassification" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:border-brand-700 bg-white">
+                                        <option value="1">Core Compulsory Subject</option>
+                                        <option value="0" selected>Elective (Optional) Subject</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-2 pt-1">
+                                <button type="button" onclick="closeAddSubjectModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition">Cancel</button>
+                                <button type="button" onclick="saveNewSubject()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition">Save & Add Subject</button>
+                            </div>
+                        </div>
+
+                        <!-- Subjects List Table -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table class="w-full text-xs text-left border-collapse" id="uceSubjectsTable">
+                                <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10.5px] border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3 w-12 text-center border-r border-slate-200">#</th>
+                                        <th class="py-2.5 px-3 w-28 border-r border-slate-200">Code</th>
+                                        <th class="py-2.5 px-3 border-r border-slate-200">Subject Name</th>
+                                        <th class="py-2.5 px-3 w-44 border-r border-slate-200 text-center">Classification</th>
+                                        <th class="py-2.5 px-3 w-24 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 font-medium text-slate-800" id="uceSubjectsTbody">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <input type="hidden" name="uce_subjects_list" id="uceSubjectsListInput" value="<?= htmlspecialchars(json_encode($uce_subjects_list)) ?>">
                     </div>
                 </div>
 
@@ -1989,6 +2121,152 @@ if (empty($current_slider_images)) {
             textarea.value = JSON.stringify(defaultObj, null, 4);
         }
     }
+
+    // Curriculum Subjects Management for S5 Form
+    let currentUceSubjects = <?= json_encode($uce_subjects_list ?: getDefaultUceSubjectsList()) ?>;
+
+    function renderUceSubjectsTable() {
+        const tbody = document.getElementById('uceSubjectsTbody');
+        const input = document.getElementById('uceSubjectsListInput');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (input) {
+            input.value = JSON.stringify(currentUceSubjects);
+        }
+        
+        if (!Array.isArray(currentUceSubjects) || currentUceSubjects.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-slate-400 text-xs italic">No subjects configured. Click "Add Subject" or "Reset Standard" to populate.</td></tr>';
+            return;
+        }
+
+        currentUceSubjects.forEach((subj, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50/80 transition";
+            const isCore = (subj.is_core == 1 || subj.is_core === true || subj.is_core === '1');
+            const badgeClass = isCore ? 'bg-brand-50 text-brand-800 border-brand-200' : 'bg-slate-100 text-slate-600 border-slate-200';
+            const badgeText = isCore ? '<i class="fa-solid fa-lock text-[9px] mr-1"></i> Core Compulsory' : '<i class="fa-solid fa-tag text-[9px] mr-1"></i> Elective';
+            
+            tr.innerHTML = `
+                <td class="py-2 px-3 text-center text-slate-400 font-mono text-[11px] border-r border-slate-100">${idx + 1}</td>
+                <td class="py-2 px-3 font-mono font-bold text-slate-900 border-r border-slate-100 uppercase">${escapeHtml(subj.code)}</td>
+                <td class="py-2 px-3 font-bold text-slate-800 border-r border-slate-100">${escapeHtml(subj.name)}</td>
+                <td class="py-2 px-3 text-center border-r border-slate-100">
+                    <button type="button" onclick="toggleUceSubjectCore(${idx})" title="Click to toggle between Core and Elective" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition ${badgeClass}">
+                        ${badgeText}
+                    </button>
+                </td>
+                <td class="py-2 px-3 text-center">
+                    <button type="button" onclick="deleteUceSubject(${idx})" class="w-7 h-7 rounded-lg text-rose-600 hover:text-white hover:bg-rose-600 transition inline-flex items-center justify-center" title="Remove Subject">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openAddSubjectModal() {
+        const box = document.getElementById('addSubjectInlineBox');
+        if (box) {
+            box.classList.remove('hidden');
+            document.getElementById('newSubjectCode')?.focus();
+        }
+    }
+
+    function closeAddSubjectModal() {
+        const box = document.getElementById('addSubjectInlineBox');
+        if (box) {
+            box.classList.add('hidden');
+            const cInp = document.getElementById('newSubjectCode');
+            const nInp = document.getElementById('newSubjectName');
+            if (cInp) cInp.value = '';
+            if (nInp) nInp.value = '';
+        }
+    }
+
+    function saveNewSubject() {
+        const codeInp = document.getElementById('newSubjectCode');
+        const nameInp = document.getElementById('newSubjectName');
+        const typeInp = document.getElementById('newSubjectClassification');
+        
+        const code = (codeInp ? codeInp.value : '').trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
+        const name = (nameInp ? nameInp.value : '').trim();
+        const isCore = (typeInp && typeInp.value === '1') ? 1 : 0;
+        
+        if (!code) {
+            alert('Please enter a valid Subject Code (e.g. GER, PHE, AGR).');
+            codeInp?.focus();
+            return;
+        }
+        if (!name) {
+            alert('Please enter the Subject Name (e.g. German Language).');
+            nameInp?.focus();
+            return;
+        }
+        
+        const exists = currentUceSubjects.some(s => (s.code || '').toUpperCase() === code);
+        if (exists) {
+            alert('A subject with the code "' + code + '" already exists.');
+            return;
+        }
+        
+        currentUceSubjects.push({
+            code: code,
+            name: name,
+            is_core: isCore
+        });
+        
+        renderUceSubjectsTable();
+        closeAddSubjectModal();
+    }
+
+    function deleteUceSubject(idx) {
+        if (idx < 0 || idx >= currentUceSubjects.length) return;
+        const subj = currentUceSubjects[idx];
+        if (confirm('Are you sure you want to remove the subject "' + subj.name + ' (' + subj.code + ')"?')) {
+            currentUceSubjects.splice(idx, 1);
+            renderUceSubjectsTable();
+        }
+    }
+
+    function toggleUceSubjectCore(idx) {
+        if (idx < 0 || idx >= currentUceSubjects.length) return;
+        const current = currentUceSubjects[idx].is_core;
+        currentUceSubjects[idx].is_core = (current == 1 || current === true) ? 0 : 1;
+        renderUceSubjectsTable();
+    }
+
+    function resetDefaultSubjects() {
+        if (confirm('Reset all subjects to the standard UNEB O-Level curriculum subjects? Any custom subjects will be replaced with defaults.')) {
+            currentUceSubjects = [
+                { code: 'ENG', name: 'English Language', is_core: 1 },
+                { code: 'MAT', name: 'Mathematics', is_core: 1 },
+                { code: 'PHY', name: 'Physics', is_core: 1 },
+                { code: 'CHE', name: 'Chemistry', is_core: 1 },
+                { code: 'BIO', name: 'Biology', is_core: 1 },
+                { code: 'HIS', name: 'History & Political Educ.', is_core: 1 },
+                { code: 'GEO', name: 'Geography', is_core: 1 },
+                { code: 'CRE_IRE', name: 'Religious Educ. (CRE/IRE)', is_core: 0 },
+                { code: 'AGR', name: 'Agriculture', is_core: 0 },
+                { code: 'ICT', name: 'Information & Comm. Tech (ICT)', is_core: 0 },
+                { code: 'LIT', name: 'Literature in English', is_core: 0 },
+                { code: 'ART', name: 'Art & Design', is_core: 0 },
+                { code: 'ENT', name: 'Entrepreneurship', is_core: 0 },
+                { code: 'PHE', name: 'Physical Education', is_core: 0 },
+                { code: 'MUS', name: 'Performing Arts / Music', is_core: 0 },
+                { code: 'FRN', name: 'French Language', is_core: 0 },
+                { code: 'ARB', name: 'Arabic Language', is_core: 0 },
+                { code: 'LUG', name: 'Luganda Language', is_core: 0 },
+                { code: 'RRK', name: 'Runyankore-Rukiga', is_core: 0 }
+            ];
+            renderUceSubjectsTable();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderUceSubjectsTable();
+    });
 
     // Profile Dropdown Hover Support
     const profileContainer = document.getElementById('profileDropdownBtn')?.parentElement;

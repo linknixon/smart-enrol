@@ -119,6 +119,9 @@ if (!empty($configuredCombsJson)) {
         $aLevelCombinations = $decoded;
     }
 }
+
+// Dynamic UCE Subjects List for S5 Form
+$uceSubjectsList = getUceSubjectsList($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -678,168 +681,16 @@ html, body {
                             </span>
                         </div>
 
-                        <!-- UNEB NLSC Curriculum Banner & Interactive Descriptors Drawer -->
-                        <div class="bg-gradient-to-r from-slate-50 via-brand-50/30 to-slate-50 p-4 rounded-2xl border border-brand-200/60 shadow-2xs space-y-3">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-brand-700 text-white flex flex-col items-center justify-center font-black text-xs shadow-sm shrink-0">
-                                        <span class="text-[9px] font-semibold opacity-80">UNEB</span>
-                                        <span>NLSC</span>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs font-black text-slate-900 uppercase tracking-wide">UCE New Lower Secondary Curriculum (NLSC)</span>
-                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-brand-100 text-brand-800 border border-brand-200 uppercase">2024+ Cohort</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-500 mt-0.5">Official Letter Grading (A – E), Continuous Assessment Project Work & Certification Results.</p>
-                                    </div>
+                        <!-- Senior Five Academic Notice -->
+                        <div class="p-3 bg-brand-50/40 rounded-xl border border-brand-200/50 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-8 h-8 rounded-lg bg-brand-700 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                </span>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-800 uppercase">Senior Five (S5) Academic Performance (UCE)</span>
+                                    <span class="block text-[11px] text-slate-500">Provide your official UNEB UCE results, subject grades, and desired A-Level combination below.</span>
                                 </div>
-                                <button type="button" onclick="toggleUceDescriptors()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-brand-700 bg-white border border-brand-200 hover:bg-brand-50 transition shadow-2xs self-start sm:self-auto cursor-pointer whitespace-nowrap flex-nowrap shrink-0">
-                                    <i class="fa-solid fa-book-open text-brand-600"></i>
-                                    <span id="descToggleText">View Achievement Descriptors</span>
-                                    <i id="descToggleIcon" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
-                                </button>
-                            </div>
-
-                            <!-- Collapsible UNEB Descriptors Guide (Attachment 2 Standard Matrix) -->
-                            <div id="uceDescriptorsGuide" class="hidden pt-3 border-t border-slate-200 space-y-3">
-                                <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400 font-bold shrink-0">
-                                            <i class="fa-solid fa-award text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs font-black tracking-wide uppercase">Uganda National Examinations Board (UNEB)</p>
-                                            <p class="text-[11px] text-amber-200 font-semibold">UCE NLSC ACHIEVEMENT LEVELS AND THEIR DESCRIPTORS</p>
-                                        </div>
-                                    </div>
-                                    <span class="text-[10px] font-mono text-slate-300 self-start sm:self-auto bg-white/10 px-2 py-0.5 rounded uppercase">Official Standard</span>
-                                </div>
-
-                                <!-- Responsive UNEB NLSC Matrix (Desktop Table & Mobile Clean Cards - Zero Horizontal Scroll) -->
-                                <div class="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
-                                    <table class="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr class="bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider">
-                                                <th class="py-2.5 px-4 w-28 text-center border-r border-slate-800">Grade</th>
-                                                <th class="py-2.5 px-4 w-40 border-r border-slate-800">Achievement Level</th>
-                                                <th class="py-2.5 px-4">Descriptor (Curriculum Competency)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 text-xs">
-                                            <!-- Grade A -->
-                                            <tr class="hover:bg-emerald-50/50 transition">
-                                                <td class="py-3 px-4 text-center border-r border-slate-100">
-                                                    <span class="inline-block px-3 py-1 rounded-lg font-black text-xs bg-[#0f8b54] text-white shadow-xs">Grade A</span>
-                                                </td>
-                                                <td class="py-3 px-4 border-r border-slate-100">
-                                                    <div class="font-bold text-slate-900 text-sm">Exceptional</div>
-                                                    <span class="inline-block font-mono text-[10px] text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded font-bold mt-0.5">5 Points (Max)</span>
-                                                </td>
-                                                <td class="py-3 px-4 text-slate-700 leading-relaxed text-[11.5px]">
-                                                    Demonstrates an <strong class="text-slate-900 font-bold">extraordinary level of competency</strong> by applying innovatively and creatively the acquired knowledge and skills in real life situations.
-                                                </td>
-                                            </tr>
-                                            <!-- Grade B -->
-                                            <tr class="hover:bg-rose-50/40 transition">
-                                                <td class="py-3 px-4 text-center border-r border-slate-100">
-                                                    <span class="inline-block px-3 py-1 rounded-lg font-black text-xs bg-[#8c232c] text-white shadow-xs">Grade B</span>
-                                                </td>
-                                                <td class="py-3 px-4 border-r border-slate-100">
-                                                    <div class="font-bold text-slate-900 text-sm">Outstanding</div>
-                                                    <span class="inline-block font-mono text-[10px] text-sky-800 bg-sky-100/80 px-1.5 py-0.5 rounded font-bold mt-0.5">4 Points</span>
-                                                </td>
-                                                <td class="py-3 px-4 text-slate-700 leading-relaxed text-[11.5px]">
-                                                    Demonstrates a <strong class="text-slate-900 font-bold">high level of competency</strong> by applying the acquired knowledge and skills in real life situations.
-                                                </td>
-                                            </tr>
-                                            <!-- Grade C -->
-                                            <tr class="hover:bg-emerald-50/50 transition">
-                                                <td class="py-3 px-4 text-center border-r border-slate-100">
-                                                    <span class="inline-block px-3 py-1 rounded-lg font-black text-xs bg-[#0f8b54] text-white shadow-xs">Grade C</span>
-                                                </td>
-                                                <td class="py-3 px-4 border-r border-slate-100">
-                                                    <div class="font-bold text-slate-900 text-sm">Satisfactory</div>
-                                                    <span class="inline-block font-mono text-[10px] text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded font-bold mt-0.5">3 Points</span>
-                                                </td>
-                                                <td class="py-3 px-4 text-slate-700 leading-relaxed text-[11.5px]">
-                                                    Demonstrates an <strong class="text-slate-900 font-bold">adequate level of competency</strong> by applying the acquired knowledge and skills in real life situations.
-                                                </td>
-                                            </tr>
-                                            <!-- Grade D -->
-                                            <tr class="hover:bg-rose-50/40 transition">
-                                                <td class="py-3 px-4 text-center border-r border-slate-100">
-                                                    <span class="inline-block px-3 py-1 rounded-lg font-black text-xs bg-[#8c232c] text-white shadow-xs">Grade D</span>
-                                                </td>
-                                                <td class="py-3 px-4 border-r border-slate-100">
-                                                    <div class="font-bold text-slate-900 text-sm">Basic</div>
-                                                    <span class="inline-block font-mono text-[10px] text-orange-800 bg-orange-100/80 px-1.5 py-0.5 rounded font-bold mt-0.5">2 Points</span>
-                                                </td>
-                                                <td class="py-3 px-4 text-slate-700 leading-relaxed text-[11.5px]">
-                                                    Demonstrates a <strong class="text-slate-900 font-bold">minimum level of competency</strong> in applying the acquired knowledge and skills in real life situations.
-                                                </td>
-                                            </tr>
-                                            <!-- Grade E -->
-                                            <tr class="hover:bg-emerald-50/50 transition">
-                                                <td class="py-3 px-4 text-center border-r border-slate-100">
-                                                    <span class="inline-block px-3 py-1 rounded-lg font-black text-xs bg-[#0c663e] text-white shadow-xs">Grade E</span>
-                                                </td>
-                                                <td class="py-3 px-4 border-r border-slate-100">
-                                                    <div class="font-bold text-slate-900 text-sm">Elementary</div>
-                                                    <span class="inline-block font-mono text-[10px] text-rose-800 bg-rose-100/80 px-1.5 py-0.5 rounded font-bold mt-0.5">1 Point</span>
-                                                </td>
-                                                <td class="py-3 px-4 text-slate-700 leading-relaxed text-[11.5px]">
-                                                    Demonstrates below the <strong class="text-slate-900 font-bold">basic level of competency</strong> in applying the acquired knowledge and skills in real life situations.
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <!-- Mobile Native Stacked Cards (Visible only on small phones, 0 horizontal scroll) -->
-                                <div class="block sm:hidden space-y-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                    <div class="p-2.5 rounded-lg bg-white border border-emerald-200 space-y-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#0f8b54] text-white">Grade A</span>
-                                            <span class="font-bold text-slate-900 text-xs">Exceptional</span>
-                                            <span class="text-[10px] font-mono text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded font-bold">5 Pts (Max)</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 leading-tight">Extraordinary competency; applies innovative & creative skills in real life.</p>
-                                    </div>
-                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#8c232c] text-white">Grade B</span>
-                                            <span class="font-bold text-slate-900 text-xs">Outstanding</span>
-                                            <span class="text-[10px] font-mono text-sky-800 bg-sky-100 px-1.5 py-0.2 rounded font-bold">4 Pts</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 leading-tight">High level of competency; applies acquired knowledge in real life.</p>
-                                    </div>
-                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#0f8b54] text-white">Grade C</span>
-                                            <span class="font-bold text-slate-900 text-xs">Satisfactory</span>
-                                            <span class="text-[10px] font-mono text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded font-bold">3 Pts</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 leading-tight">Adequate competency in applying acquired knowledge in real life.</p>
-                                    </div>
-                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#8c232c] text-white">Grade D</span>
-                                            <span class="font-bold text-slate-900 text-xs">Basic</span>
-                                            <span class="text-[10px] font-mono text-orange-800 bg-orange-100 px-1.5 py-0.2 rounded font-bold">2 Pts</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 leading-tight">Minimum level of competency in applying knowledge in real life.</p>
-                                    </div>
-                                    <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="px-2 py-0.5 rounded font-black text-[11px] bg-[#0c663e] text-white">Grade E</span>
-                                            <span class="font-bold text-slate-900 text-xs">Elementary</span>
-                                            <span class="text-[10px] font-mono text-rose-800 bg-rose-100 px-1.5 py-0.2 rounded font-bold">1 Pt</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 leading-tight">Below basic competency in applying acquired knowledge in real life.</p>
-                                    </div>
-                                </div>
-                                <p class="text-[10px] text-slate-400 italic text-right">Reference: UNEB NLSC Assessment Framework · 35 Martyrs' Way Ntinda, P.O Box 7066, Kampala Uganda</p>
                             </div>
                         </div>
 
@@ -884,38 +735,31 @@ html, body {
                             </div>
                         </div>
 
-                        <!-- UCE NLSC Subjects Breakdown & Real-Time Competency Meter -->
-                        <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-3">
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-800 uppercase tracking-wide">UCE Subject Achievement Levels <span class="text-rose-500 font-bold">*</span></span>
-                                    <span class="block text-[11px] text-slate-500">Select the official Letter Grade (A, B, C, D, or E) obtained in each subject.</span>
-                                </div>
-                                <!-- Real-time Profile Pill -->
-                                <div class="flex items-center gap-2">
-                                    <div id="nlscProfileBadge" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold text-brand-900 shadow-2xs flex items-center gap-2">
-                                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><strong id="countA">0</strong> A</span>
-                                        <span class="text-slate-300">|</span>
-                                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span><strong id="countB">0</strong> B</span>
-                                        <span class="text-slate-300">|</span>
-                                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span><strong id="countC">0</strong> C</span>
-                                        <span class="text-slate-300">|</span>
-                                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span><strong id="countOther">0</strong> D/E</span>
-                                    </div>
-                                    <div class="px-3 py-1.5 rounded-xl bg-brand-700 text-white text-xs font-bold shadow-2xs">
-                                        Score: <span id="competencyScoreDisplay" class="font-mono">0</span> pts
-                                    </div>
-                                </div>
+                        <!-- UCE Subjects & Letter Grades Grid (Data-Efficient & Dynamic) -->
+                        <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-3">
+                            <div class="border-b border-slate-200 pb-2">
+                                <span class="block text-xs font-bold text-slate-800 uppercase tracking-wide">UCE Subject Letter Grades <span class="text-rose-500 font-bold">*</span></span>
+                                <span class="block text-[11px] text-slate-500">Select the official letter grade (A – E) obtained for each subject taken.</span>
                             </div>
 
-                            <!-- 8 Core Subjects Grid -->
-                            <div class="space-y-1">
-                                <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">1. Core Compulsory Subjects (8 Subjects)</span>
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                                <?php foreach ($uceSubjectsList as $subj): 
+                                    $sCode = strtoupper(trim($subj['code']));
+                                    $sName = trim($subj['name']);
+                                    $isCore = (!empty($subj['is_core']) && $subj['is_core'] != '0');
+                                    $fieldId = 'uce_' . strtolower(preg_replace('/[^a-z0-9_]/i', '_', $sCode));
+                                ?>
                                     <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">English (ENG) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_eng" id="uce_eng" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1" for="<?= $fieldId ?>">
+                                            <?= htmlspecialchars($sName) ?> (<?= htmlspecialchars($sCode) ?>)
+                                            <?php if ($isCore): ?>
+                                                <span class="text-rose-500 font-bold" title="Compulsory Core Subject">*</span>
+                                            <?php else: ?>
+                                                <span class="text-[10px] text-slate-400 font-normal">(Elective)</span>
+                                            <?php endif; ?>
+                                        </label>
+                                        <select name="<?= $fieldId ?>" id="<?= $fieldId ?>" data-core="<?= $isCore ? '1' : '0' ?>" data-name="<?= htmlspecialchars($sName) ?>" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
+                                            <option value=""><?= $isCore ? 'Select Grade' : 'Optional / Not Taken' ?></option>
                                             <option value="A">Grade A (Exceptional)</option>
                                             <option value="B">Grade B (Outstanding)</option>
                                             <option value="C">Grade C (Satisfactory)</option>
@@ -923,153 +767,7 @@ html, body {
                                             <option value="E">Grade E (Elementary)</option>
                                         </select>
                                     </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Mathematics (MAT) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_mat" id="uce_mat" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Physics (PHY) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_phy" id="uce_phy" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Chemistry (CHE) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_che" id="uce_che" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Biology (BIO) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_bio" id="uce_bio" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">History & Political (HIS) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_his" id="uce_his" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Geography (GEO) <span class="text-rose-500 font-bold">*</span></label>
-                                        <select name="uce_geo" id="uce_geo" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">Select Grade</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Religious Educ. (CRE/IRE) <span class="text-[10px] text-slate-400 font-normal ml-1">(Elective)</span></label>
-                                        <select name="uce_cre_ire" id="uce_cre_ire" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                            <option value="">No Grade / Optional</option>
-                                            <option value="A">Grade A (Exceptional)</option>
-                                            <option value="B">Grade B (Outstanding)</option>
-                                            <option value="C">Grade C (Satisfactory)</option>
-                                            <option value="D">Grade D (Basic)</option>
-                                            <option value="E">Grade E (Elementary)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Electives Section -->
-                            <div class="space-y-1 pt-2 border-t border-slate-200/80">
-                                <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">2. Elective / Optional Subjects (1 or 2 Subjects)</span>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                                    <!-- Elective 1 -->
-                                    <div class="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-[11px] font-bold text-slate-800 uppercase">Elective Subject 1 <span class="text-rose-500 font-bold">*</span></span>
-                                            <span class="text-[10px] text-slate-400">e.g. Agriculture / ICT</span>
-                                        </div>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <select name="uce_elec1_name" id="uce_elec1_name" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                                <option value="Agriculture (AGR)" selected>Agriculture (AGR)</option>
-                                                <option value="Information & Comm. Tech (ICT)">Information & Comm. Tech (ICT)</option>
-                                                <option value="Literature in English (LIT)">Literature in English (LIT)</option>
-                                                <option value="Art & Design (ART)">Art & Design (ART)</option>
-                                                <option value="Entrepreneurship (ENT)">Entrepreneurship (ENT)</option>
-                                                <option value="Performing Arts / Music (MUS)">Performing Arts / Music (MUS)</option>
-                                                <option value="Physical Education (PHE)">Physical Education (PHE)</option>
-                                                <option value="French Language (FRN)">French Language (FRN)</option>
-                                                <option value="Arabic Language (ARB)">Arabic Language (ARB)</option>
-                                                <option value="Luganda (LUG)">Luganda (LUG)</option>
-                                                <option value="Runyankore-Rukiga (RRK)">Runyankore-Rukiga (RRK)</option>
-                                                <option value="Other Language / Elective">Other Language / Elective</option>
-                                            </select>
-                                            <select name="uce_elec1_grade" id="uce_elec1_grade" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                                <option value="">Select Grade</option>
-                                                <option value="A">Grade A (Exceptional)</option>
-                                                <option value="B">Grade B (Outstanding)</option>
-                                                <option value="C">Grade C (Satisfactory)</option>
-                                                <option value="D">Grade D (Basic)</option>
-                                                <option value="E">Grade E (Elementary)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <!-- Elective 2 (Optional) -->
-                                    <div class="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-[11px] font-bold text-slate-800 uppercase">Elective Subject 2 (Optional)</span>
-                                            <span class="text-[10px] text-slate-400">If 10 subjects taken</span>
-                                        </div>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <select name="uce_elec2_name" id="uce_elec2_name" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                                <option value="">None / Not Applicable</option>
-                                                <option value="Information & Comm. Tech (ICT)">Information & Comm. Tech (ICT)</option>
-                                                <option value="Literature in English (LIT)">Literature in English (LIT)</option>
-                                                <option value="Art & Design (ART)">Art & Design (ART)</option>
-                                                <option value="Entrepreneurship (ENT)">Entrepreneurship (ENT)</option>
-                                                <option value="Performing Arts / Music (MUS)">Performing Arts / Music (MUS)</option>
-                                                <option value="Physical Education (PHE)">Physical Education (PHE)</option>
-                                                <option value="French Language (FRN)">French Language (FRN)</option>
-                                                <option value="Arabic Language (ARB)">Arabic Language (ARB)</option>
-                                                <option value="Luganda (LUG)">Luganda (LUG)</option>
-                                                <option value="Runyankore-Rukiga (RRK)">Runyankore-Rukiga (RRK)</option>
-                                                <option value="Other Language / Elective">Other Language / Elective</option>
-                                            </select>
-                                            <select name="uce_elec2_grade" id="uce_elec2_grade" class="nlsc-grade-select w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:border-brand-700">
-                                                <option value="">No Grade</option>
-                                                <option value="A">Grade A (Exceptional)</option>
-                                                <option value="B">Grade B (Outstanding)</option>
-                                                <option value="C">Grade C (Satisfactory)</option>
-                                                <option value="D">Grade D (Basic)</option>
-                                                <option value="E">Grade E (Elementary)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
 
                             <!-- Hidden Aggregates equivalent input used by cutoff enforcement -->
@@ -1184,7 +882,7 @@ html, body {
                                 <label class="block text-xs font-bold text-slate-700 uppercase">Attach Official UNEB UCE Result Slip <span class="text-rose-500 font-bold">*</span></label>
                             </div>
                             <input type="file" name="result_slip_s5" id="resultSlipS5" accept="image/*,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer">
-                            <p class="text-[10px] text-slate-500 mt-1"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Accepted: Upload from camera, photo gallery, downloads or files (official slip, provisional slip, or UNEB SMS).</p>
+                            <p class="text-[10px] text-slate-500 mt-1"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Accepted: Upload from camera, photo gallery, downloads or files (official slip or provisional result slip).</p>
                         </div>
                     </div>
 
@@ -1638,17 +1336,16 @@ html, body {
             if (s6TransferFields) s6TransferFields.classList.add('hidden');
             academicBadge.textContent = "Senior Five (UCE NLSC)";
 
-            // Mandatory fields for S5 (Religious Educ CRE/IRE is an Elective, not compulsory)
-            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'uce_elec1_name', 'resultSlipS5'].forEach(id => {
+            // Mandatory fields for S5
+            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'resultSlipS5'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.setAttribute('required', 'required');
             });
-            document.querySelectorAll('#uceContainer .nlsc-grade-select').forEach(el => {
-                if (el.id !== 'uce_elec2_grade' && el.id !== 'uce_cre_ire') {
-                    el.setAttribute('required', 'required');
-                } else {
-                    el.removeAttribute('required');
-                }
+            document.querySelectorAll('#uceContainer .nlsc-grade-select[data-core="1"]').forEach(el => {
+                el.setAttribute('required', 'required');
+            });
+            document.querySelectorAll('#uceContainer .nlsc-grade-select[data-core="0"]').forEach(el => {
+                el.removeAttribute('required');
             });
         } else if (val === 'S6') {
             uceContainer.classList.remove('hidden');
@@ -1658,16 +1355,15 @@ html, body {
             academicBadge.textContent = "Senior Six (A-Level Transfer & UCE NLSC)";
 
             // Mandatory fields for S6 (Foundational UCE NLSC + S5 Transfer credentials)
-            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'uce_elec1_name', 'resultSlipS5', 's6FormerSchool', 's6PrincipalPasses', 's6TransferReason', 's6ReportFile'].forEach(id => {
+            ['formerSchoolS5', 'indexNumberS5', 'divisionS5', 'uceProjectWork', 'resultSlipS5', 's6FormerSchool', 's6PrincipalPasses', 's6TransferReason', 's6ReportFile'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.setAttribute('required', 'required');
             });
-            document.querySelectorAll('#uceContainer .nlsc-grade-select').forEach(el => {
-                if (el.id !== 'uce_elec2_grade' && el.id !== 'uce_cre_ire') {
-                    el.setAttribute('required', 'required');
-                } else {
-                    el.removeAttribute('required');
-                }
+            document.querySelectorAll('#uceContainer .nlsc-grade-select[data-core="1"]').forEach(el => {
+                el.setAttribute('required', 'required');
+            });
+            document.querySelectorAll('#uceContainer .nlsc-grade-select[data-core="0"]').forEach(el => {
+                el.removeAttribute('required');
             });
         } else {
             // S2, S3, S4
@@ -2038,6 +1734,17 @@ html, body {
                     showFieldWarning(idx5, "You have not entered the candidate's UNEB UCE Index Number.");
                     return false;
                 }
+                const indexPattern = /^U[0-9]{4}\/[0-9]{3,4}$/i;
+                if (!indexPattern.test(idx5.value.trim())) {
+                    showFieldWarning(idx5, "Please enter a valid UNEB Index Number format (e.g. U0000/001).");
+                    return false;
+                }
+
+                const div5 = document.getElementById('divisionS5');
+                if (!div5 || !div5.value) {
+                    showFieldWarning(div5, "Please select the Overall Certification Result / Division.");
+                    return false;
+                }
 
                 const pw = document.getElementById('uceProjectWork');
                 if (!pw || !pw.value) {
@@ -2045,41 +1752,25 @@ html, body {
                     return false;
                 }
 
-                // Check S5 Compulsory Subjects
-                const uceSubjects = [
-                    { id: 'uce_eng', name: 'English Language' },
-                    { id: 'uce_mat', name: 'Mathematics' },
-                    { id: 'uce_phy', name: 'Physics' },
-                    { id: 'uce_che', name: 'Chemistry' },
-                    { id: 'uce_bio', name: 'Biology' },
-                    { id: 'uce_his', name: 'History & Political Educ.' },
-                    { id: 'uce_geo', name: 'Geography' }
-                ];
-                for (let subj of uceSubjects) {
-                    const elem = document.getElementById(subj.id);
-                    if (!elem || !elem.value) {
-                        showFieldWarning(elem, "You have not selected a grade for " + subj.name + ".");
+                // Check all Core Compulsory Subjects dynamically
+                const coreSelects = document.querySelectorAll('#uceContainer select.nlsc-grade-select[data-core="1"]');
+                for (let sel of coreSelects) {
+                    if (!sel.value) {
+                        const subjName = sel.getAttribute('data-name') || 'this compulsory subject';
+                        showFieldWarning(sel, "You have not selected a grade for " + subjName + ".");
                         return false;
                     }
                 }
 
-                // Elective Subject 1 Check
-                const el1Grade = document.getElementById('uce_elec1_grade');
-                if (!el1Grade || !el1Grade.value) {
-                    showFieldWarning(el1Grade, "You have not selected a grade for Elective Subject 1.");
+                // S5 Subject Combination Check
+                const combValS5 = ((document.getElementById('combinationS5') || {}).value || '').trim();
+                if (!combValS5) {
+                    const selBox = document.getElementById('combinationSelectS5');
+                    showFieldWarning(selBox, "Please select or type your desired A-Level Subject Combination.");
                     return false;
                 }
 
-                // Cutoff verification
-                const uceAgg = parseInt(document.getElementById('aggregatesS5').value, 10) || 0;
-                if (cutoffPassmarks['S5'] !== null && cutoffPassmarks['S5'] !== '') {
-                    const cutoffS5 = parseInt(cutoffPassmarks['S5'], 10);
-                    if (uceAgg > cutoffS5) {
-                        showFieldWarning(document.getElementById('aggregatesS5'), "Your calculated UCE aggregates (" + uceAgg + ") exceed the maximum admission cutoff of " + cutoffS5 + " aggregates for Senior Five.");
-                        return false;
-                    }
-                }
-
+                // UCE Result slip
                 const s5Slip = document.getElementById('resultSlipS5');
                 if (!s5Slip || !s5Slip.files || s5Slip.files.length === 0) {
                     showFieldWarning(s5Slip, "You have not uploaded the official UNEB UCE Result Slip.");
@@ -2091,12 +1782,14 @@ html, body {
                     return false;
                 }
 
-                // S5 Subject Combination Check
-                const combValS5 = ((document.getElementById('combinationS5') || {}).value || '').trim();
-                if (!combValS5) {
-                    const selBox = document.getElementById('combinationSelectS5');
-                    showFieldWarning(selBox, "Please select or type your desired A-Level Subject Combination.");
-                    return false;
+                // Cutoff verification
+                const uceAgg = parseInt(document.getElementById('aggregatesS5').value, 10) || 0;
+                if (cutoffPassmarks['S5'] !== null && cutoffPassmarks['S5'] !== '') {
+                    const cutoffS5 = parseInt(cutoffPassmarks['S5'], 10);
+                    if (uceAgg > cutoffS5) {
+                        showFieldWarning(document.getElementById('aggregatesS5'), "Your calculated UCE aggregates (" + uceAgg + ") exceed the maximum admission cutoff of " + cutoffS5 + " aggregates for Senior Five.");
+                        return false;
+                    }
                 }
             } else if (classVal === 'S6') {
                 const s6School = document.getElementById('s6FormerSchool');

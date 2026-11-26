@@ -27,6 +27,94 @@ $isAdmin = !empty($_SESSION['admin_user']) || !empty($_SESSION['role']);
 $appStatus = strtolower($student['application_status'] ?? 'pending');
 $isAdmitted = ($appStatus === 'admitted');
 
+// The official admission letter should ONLY be generated and available after a student has officially been admitted
+if (!$isAdmitted && !$isAdmin) {
+    if (ob_get_length()) ob_end_clean();
+    $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+    $school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+    $school_logo       = getSchoolLogoSrc($pdo);
+    $studentFullName   = strtoupper(trim(($student['surname'] ?? '') . ' ' . ($student['firstname'] ?? '') . ' ' . ($student['othernames'] ?? '')));
+    $studentClass      = $student['class_of_entry'] ?? 'S1';
+    $refNumber         = getAdmissionNumber($student, $pdo);
+    $statusText        = ($appStatus === 'rejected') ? 'Application Unsuccessful' : 'Application Under Review';
+    $statusBadgeClass  = ($appStatus === 'rejected') ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-900 border-amber-300';
+    $statusIconClass   = ($appStatus === 'rejected') ? 'fa-circle-xmark text-rose-600' : 'fa-clock text-amber-600';
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Status - <?= htmlspecialchars($studentFullName) ?> | <?= htmlspecialchars($school_short_name) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
+    <?= renderThemeConfig($pdo) ?>
+    </head>
+    <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 text-center space-y-5">
+            <div class="w-20 h-20 bg-white rounded-2xl p-2 border-2 border-gold-500/30 shadow-md mx-auto flex items-center justify-center">
+                <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain">
+            </div>
+            
+            <div class="space-y-1">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border <?= $statusBadgeClass ?>">
+                    <i class="fa-solid <?= $statusIconClass ?>"></i> <?= $statusText ?>
+                </span>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight pt-2">Admission Letter Not Available</h2>
+                <p class="text-xs text-slate-500">Official admission offer letters are only issued upon official admission approval.</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
+                <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                    <span class="text-slate-500 font-semibold">Candidate:</span>
+                    <span class="font-bold text-slate-900"><?= htmlspecialchars($studentFullName) ?></span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                    <span class="text-slate-500 font-semibold">Reference ID:</span>
+                    <span class="font-mono font-bold text-brand-700"><?= htmlspecialchars($refNumber) ?></span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                    <span class="text-slate-500 font-semibold">Class Applied:</span>
+                    <span class="font-bold text-slate-800"><?= htmlspecialchars($studentClass) ?></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-semibold">Current Status:</span>
+                    <span class="font-bold capitalize <?= ($appStatus === 'rejected') ? 'text-rose-600' : 'text-amber-600' ?>">
+                        <?= htmlspecialchars($student['application_status'] ?? 'Under Review') ?>
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs text-emerald-950 space-y-2">
+                <div class="flex items-center gap-2 font-black text-emerald-900">
+                    <i class="fa-solid fa-circle-info text-emerald-600 text-sm"></i>
+                    <span class="uppercase tracking-wider text-[11px]">Admission &amp; Payment Policy</span>
+                </div>
+                <p class="text-[11.5px] leading-relaxed text-emerald-900">
+                    Your application and academic documents are currently undergoing evaluation by the Admissions Committee. <strong>The official Provisional Admission Letter and payment details will be made available here and sent to your registered email address once you are officially admitted.</strong>
+                </p>
+                <p class="text-[11px] text-emerald-800 italic">
+                    No school fees or payments are accepted until your application has been officially approved.
+                </p>
+            </div>
+
+            <div class="pt-2 flex flex-col gap-2">
+                <a href="../track.php" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
+                    <i class="fa-solid fa-location-crosshairs text-xs"></i> Track Admission Status Online
+                </a>
+                <a href="../index.php" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-house text-xs"></i> Back to Homepage
+                </a>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 /* ================= SYSTEM CONFIGURATION ================= */
 $school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
 $school_short_name  = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
@@ -283,13 +371,13 @@ if ($isAdmitted) {
     $conditionsList = '<table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt; line-height: 1.35; margin: 0; font-family: \'trebuchetms\', sans-serif;">' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">1.</td><td width="97%" style="text-align: justify;"><strong>Reporting Date &amp; Forfeiture:</strong> You are expected to report to the school on <strong>' . $reportingNotice . '</strong> between 8:00 AM and 4:00 PM. Please take note that this provisional vacancy will automatically lapse and be re-allocated if you fail to report within five (5) working days from the opening date without prior written permission approved by the Head Teacher.</td></tr>' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">2.</td><td width="97%" style="text-align: justify;"><strong>Verification of Credentials:</strong> Admission is strictly provisional and conditional upon the physical presentation and verification of your original UNEB Result Slip, Primary Leaving / UCE Certificate, Birth Certificate, and two (2) recent passport-sized photographs on arrival.</td></tr>' .
-        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Payment of School Fees:</strong> All prescribed school dues must be cleared prior to or upon reporting. Details on how to pay will be shared.</td></tr>' .
+        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Payment of School Fees:</strong> All prescribed school dues must be cleared prior to or upon reporting. Details on how to pay have been shared via your registered email address.</td></tr>' .
         '</table>';
 } else {
     $conditionsList = '<table cellpadding="1.5" cellspacing="0" style="width: 100%; border: none; font-size: 7.2pt; line-height: 1.35; margin: 0; font-family: \'trebuchetms\', sans-serif;">' .
         '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">1.</td><td width="97%" style="text-align: justify;"><strong>Evaluation Notice:</strong> Admission is competitive and subject to the availability of vacancies and verification of submitted academic results against official UNEB records.</td></tr>' .
-        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">2.</td><td width="97%" style="text-align: justify;"><strong>Payment Notice:</strong> No payment is required until an official offer of admission has been issued. Details on how to pay will be shared upon confirmation of admission.</td></tr>' .
-        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Status Tracking:</strong> You will be notified of the committee\'s decision via SMS to your registered telephone contact (' . htmlspecialchars($student['parent_phone'] ?: 'Parent Contact') . ') and updates will be accessible on the school portal (' . htmlspecialchars($school_website) . ').</td></tr>' .
+        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">2.</td><td width="97%" style="text-align: justify;"><strong>Payment Notice:</strong> No payment is required until an official offer of admission has been issued. Details on how to pay will be shared via email upon confirmation of admission.</td></tr>' .
+        '<tr><td width="3%" style="vertical-align: top; font-weight: bold;">3.</td><td width="97%" style="text-align: justify;"><strong>Status Tracking:</strong> You will be notified of the committee\'s decision via email to your registered email contact (' . htmlspecialchars($student['parent_email'] ?: 'Registered Email') . ') and updates will be accessible on the school portal (' . htmlspecialchars($school_website) . ').</td></tr>' .
         '</table>';
 }
 

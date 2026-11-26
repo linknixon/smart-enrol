@@ -484,7 +484,7 @@ if ($searched) {
                                         <span>Automated Notifications:</span>
                                     </div>
                                     <p class="text-[11px] text-slate-500">
-                                        You will receive an official notification via email at <strong class="text-slate-800"><?= htmlspecialchars($application['parent_email']) ?></strong> and SMS on <strong class="text-slate-800"><?= htmlspecialchars($application['parent_phone']) ?></strong> immediately when a decision is published.
+                                        You will receive an official notification via email at <strong class="text-slate-800"><?= htmlspecialchars($application['parent_email']) ?></strong> immediately when a decision is published.
                                     </p>
                                 </div>
                             </div>

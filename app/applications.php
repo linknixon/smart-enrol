@@ -11,6 +11,7 @@ $logo_source = getSchoolLogoSrc($pdo, '../');
 $curYear = getAcademicYear($pdo);
 $school_website_url = getSchoolWebsiteUrl($pdo);
 $primary_color = getPrimaryColor($pdo);
+$isManualStudentNumber = isManualStudentNumberEnabled($pdo);
 
 $msg = $_GET['msg'] ?? '';
 
@@ -584,12 +585,12 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                         <?php if(hasPermission($pdo, $currentRole, 'can_take_application_actions')): ?>
                                             <?php if($status === 'pending'): ?>
                                                 <?php if(hasPermission($pdo, $currentRole, 'can_admit_students')): ?>
-                                                    <?php if(in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
-                                                        <button type="button" onclick="openAdmitS5Modal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit & Assign Combination">
+                                                    <?php if($isManualStudentNumber || in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
+                                                        <button type="button" onclick="openAdmitModal(<?= $app['id'] ?>, '<?= htmlspecialchars(addslashes($fullName), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['class_of_entry']), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['combination'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($app['student_number'] ?? ''), ENT_QUOTES) ?>')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="<?= $isManualStudentNumber ? 'Admit & Assign SchoolPay Payment Code' : 'Admit & Assign Combination' ?>">
                                                             <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
                                                         </button>
                                                     <?php else: ?>
-                                                        <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes($fullName)) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>?')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit Candidate">
+                                                        <a href="admit.php?id=<?= $app['id'] ?>" onclick="return confirm('Confirm admission of <?= htmlspecialchars(addslashes($fullName)) ?> to <?= htmlspecialchars($app['class_of_entry']) ?>? Official student number will be auto-generated.')" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition duration-150 shadow-2xs" title="Admit Candidate">
                                                             <i class="fa-solid fa-check mr-1 text-[9px]"></i> Admit
                                                         </a>
                                                     <?php endif; ?>
@@ -1130,8 +1131,8 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         </div>
     </div>
 
-    <!-- Admit S5/S6 Candidate & Confirm Subject Combination Modal -->
-    <div id="admitS5Modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <!-- Admit Candidate & Confirm Subject Combination / SchoolPay Code Modal -->
+    <div id="admitModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <div class="px-6 py-4 bg-emerald-800 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -1139,37 +1140,50 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                         <i class="fa-solid fa-graduation-cap"></i>
                     </span>
                     <div>
-                        <h3 class="text-sm font-bold uppercase tracking-tight">Admit Candidate & Assign Combination</h3>
-                        <p class="text-[11px] text-emerald-200">Admissions Committee Manual Review & Assignment</p>
+                        <h3 class="text-sm font-bold uppercase tracking-tight" id="admitModalTitle">Admit Candidate</h3>
+                        <p class="text-[11px] text-emerald-200" id="admitModalSubtitle">Admissions Committee Review & Student Number Assignment</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAdmitS5Modal()" class="text-white/70 hover:text-white p-1">
+                <button type="button" onclick="closeAdmitModal()" class="text-white/70 hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
-            <form method="POST" action="admit.php" class="p-6 space-y-4">
-                <input type="hidden" name="id" id="admitS5ApplicantId" value="">
+            <form method="POST" action="admit.php" class="p-6 space-y-4" onsubmit="return validateAdmitForm();">
+                <input type="hidden" name="id" id="admitApplicantId" value="">
+                <input type="hidden" name="return_to" value="applications.php?msg=admitted">
                 
                 <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-slate-500 font-semibold">Candidate:</span>
-                        <span id="admitS5StudentName" class="font-bold text-slate-900 text-sm"></span>
+                        <span id="admitStudentName" class="font-bold text-slate-900 text-sm"></span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-slate-500 font-semibold">Class of Entry:</span>
-                        <span id="admitS5Class" class="font-black text-brand-800 bg-brand-50 px-2 py-0.5 rounded border border-brand-200"></span>
+                        <span id="admitClass" class="font-black text-brand-800 bg-brand-50 px-2 py-0.5 rounded border border-brand-200"></span>
                     </div>
-                    <div class="flex justify-between items-center">
+                    <div id="admitDesiredCombRow" class="flex justify-between items-center hidden">
                         <span class="text-slate-500 font-semibold">Candidate Desired Combination:</span>
-                        <span id="admitS5DesiredComb" class="font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200"></span>
+                        <span id="admitDesiredComb" class="font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200"></span>
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
+                <!-- SchoolPay Payment Code / Student Number Field -->
+                <div id="admitStudentNumberWrap" class="space-y-1.5 <?= $isManualStudentNumber ? '' : 'hidden' ?>">
+                    <label class="block text-xs font-bold text-slate-700 uppercase">
+                        SchoolPay Payment Code / Student Number <span class="text-rose-600" id="admitStudentNumReqStar">*</span>
+                    </label>
+                    <input type="text" name="student_number" id="admitStudentNumberInput" placeholder="e.g. 1002345678 or SCH/2026/001" class="w-full px-3.5 py-2.5 border-2 border-slate-200 rounded-xl text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-700 text-slate-800" <?= $isManualStudentNumber ? 'required' : '' ?>>
+                    <p class="text-[10.5px] text-slate-500">
+                        Enter the official student payment reference code. This code will be printed on the official Admission Letter.
+                    </p>
+                </div>
+
+                <!-- A-Level Combination Field (Visible for S5/S6) -->
+                <div id="admitCombWrap" class="space-y-1.5 hidden">
                     <label class="block text-xs font-bold text-slate-700 uppercase">
                         Select Official Assigned Combination <span class="text-rose-600">*</span>
                     </label>
-                    <select name="combination" id="admitS5CombSelect" onchange="toggleAdmitCustomComb(this.value)" required class="w-full px-3.5 py-2.5 border-2 border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none focus:border-brand-700 text-slate-800">
+                    <select name="combination" id="admitCombSelect" onchange="toggleAdmitCustomComb(this.value)" class="w-full px-3.5 py-2.5 border-2 border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none focus:border-brand-700 text-slate-800">
                         <option value="">-- Choose Assigned Combination --</option>
                         <?php foreach($aLevelCombinations as $c): ?>
                             <option value="<?= htmlspecialchars($c['code']) ?>"><?= htmlspecialchars($c['code']) ?> - <?= htmlspecialchars($c['name']) ?> (<?= htmlspecialchars($c['category']) ?>)</option>
@@ -1178,23 +1192,29 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                     </select>
                 </div>
 
-                <div id="admitS5CustomWrap" class="hidden space-y-1">
+                <div id="admitCustomWrap" class="hidden space-y-1">
                     <label class="block text-[11px] font-bold text-slate-700 uppercase">Type Custom Combination Code:</label>
-                    <input type="text" name="custom_combination" id="admitS5CustomInput" placeholder="e.g. PCB/ICT, BCM/ICT, MEG/ICT" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-700">
+                    <input type="text" name="custom_combination" id="admitCustomInput" placeholder="e.g. PCB/ICT, BCM/ICT, MEG/ICT" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-700">
                     <p class="text-[10px] text-slate-400">All combinations with Principal Mathematics take on Subsidiary ICT (not Sub-Math).</p>
+                </div>
+
+                <!-- Auto-generation notice when manual assignment is OFF -->
+                <div id="admitAutoNumNotice" class="p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-[11px] text-blue-900 leading-relaxed flex items-start gap-2 <?= $isManualStudentNumber ? 'hidden' : '' ?>">
+                    <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 shrink-0"></i>
+                    <span><strong>Student Number:</strong> The system will automatically generate a sequential student admission number upon confirmation according to school settings.</span>
                 </div>
 
                 <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
                     <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 shrink-0"></i>
-                    <span>Confirming this will officially admit the candidate, register their assigned combination, and dispatch their official Provisional Admission Offer Letter.</span>
+                    <span>Confirming this will officially admit the candidate and dispatch their official Provisional Admission Offer Letter with payment details via registered email.</span>
                 </div>
 
                 <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeAdmitS5Modal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                    <button type="button" onclick="closeAdmitModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
                         Cancel
                     </button>
                     <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-check"></i> Confirm Admission & Assign Combination
+                        <i class="fa-solid fa-check"></i> Confirm Admission
                     </button>
                 </div>
             </form>
@@ -1275,6 +1295,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     const canRejectStudents = <?= hasPermission($pdo, $currentRole, 'can_reject_students') ? 'true' : 'false' ?>;
     const canManageSettings = <?= (hasPermission($pdo, $currentRole, 'can_manage_settings') || ($_SESSION['admin_role'] ?? '') === 'super_admin') ? 'true' : 'false' ?>;
     const canTakeAppActions = <?= hasPermission($pdo, $currentRole, 'can_take_application_actions') ? 'true' : 'false' ?>;
+    const isManualStudentNumber = <?= $isManualStudentNumber ? 'true' : 'false' ?>;
 
     const applicationsRegistry = <?= json_encode($applicationsById ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
@@ -1568,12 +1589,12 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         if (canTakeAppActions) {
             if (st === 'pending') {
                 if (canAdmitStudents) {
-                    if (app.class_of_entry === 'S5' || app.class_of_entry === 'S6') {
-                        actionsContainer.innerHTML += `<button type="button" onclick="closeFullAppModal(); openAdmitS5Modal(${app.id}, '${escapeJs(fullName)}', '${escapeJs(app.class_of_entry)}', '${escapeJs(app.combination || '')}');" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-2xs flex items-center gap-1.5">
-                            <i class="fa-solid fa-check"></i> Admit & Assign Combination
+                    if (isManualStudentNumber || app.class_of_entry === 'S5' || app.class_of_entry === 'S6') {
+                        actionsContainer.innerHTML += `<button type="button" onclick="closeFullAppModal(); openAdmitModal(${app.id}, '${escapeJs(fullName)}', '${escapeJs(app.class_of_entry)}', '${escapeJs(app.combination || '')}', '${escapeJs(app.student_number || '')}');" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-2xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i> Admit Candidate
                         </button>`;
                     } else {
-                        actionsContainer.innerHTML += `<a href="admit.php?id=${app.id}" onclick="return confirm('Confirm admission of ${escapeJs(fullName)}?')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-2xs flex items-center gap-1.5">
+                        actionsContainer.innerHTML += `<a href="admit.php?id=${app.id}" onclick="return confirm('Confirm admission of ${escapeJs(fullName)} to ${escapeJs(app.class_of_entry)}? Official student number will be auto-generated.')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-2xs flex items-center gap-1.5">
                             <i class="fa-solid fa-check"></i> Admit Candidate
                         </a>`;
                     }
@@ -1614,7 +1635,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         document.getElementById('rejectApplicantId').value = id;
         document.getElementById('rejectCandidateName').textContent = name;
         document.getElementById('rejectCandidateClass').textContent = cls;
-        document.getElementById('rejectCandidateEmail').textContent = email || 'No email on record (SMS notification)';
+        document.getElementById('rejectCandidateEmail').textContent = email || 'No email on record';
         document.getElementById('presetReasons').value = 'Did not satisfy institutional admission cut-off pass mark / aggregates requirement.';
         document.getElementById('rejectionReasonText').value = 'Did not satisfy institutional admission cut-off pass mark / aggregates requirement.';
         document.getElementById('rejectModal').classList.remove('hidden');
@@ -1687,37 +1708,113 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         document.getElementById('nlscModal').classList.add('hidden');
     }
 
-    // Admit S5 Modal
-    function openAdmitS5Modal(id, name, classVal, currentComb) {
-        document.getElementById('admitS5ApplicantId').value = id;
-        document.getElementById('admitS5StudentName').textContent = name;
-        document.getElementById('admitS5Class').textContent = (classVal === 'S6') ? 'Senior Six (S6)' : 'Senior Five (S5)';
-        document.getElementById('admitS5DesiredComb').textContent = currentComb || 'None Specified';
-        
-        const sel = document.getElementById('admitS5CombSelect');
-        const customWrap = document.getElementById('admitS5CustomWrap');
-        const customInp = document.getElementById('admitS5CustomInput');
-        if (customWrap) customWrap.classList.add('hidden');
-        if (customInp) customInp.value = '';
+    // Unified Admit Modal (with SchoolPay Code / Student Number & A-Level Combination support)
+    function openAdmitModal(id, name, classVal, currentComb, currentStudentNum) {
+        const modal = document.getElementById('admitModal');
+        if (!modal) return;
 
-        if (sel) {
-            sel.value = currentComb || '';
-            if (currentComb && sel.value !== currentComb) {
-                sel.value = 'CUSTOM';
-                if (customWrap) customWrap.classList.remove('hidden');
-                if (customInp) customInp.value = currentComb;
+        document.getElementById('admitApplicantId').value = id;
+        document.getElementById('admitStudentName').textContent = name;
+        
+        let displayClass = classVal;
+        if (classVal === 'S5') displayClass = 'Senior Five (S5)';
+        else if (classVal === 'S6') displayClass = 'Senior Six (S6)';
+        else if (classVal === 'S1') displayClass = 'Senior One (S1)';
+        else if (classVal === 'S2') displayClass = 'Senior Two (S2)';
+        else if (classVal === 'S3') displayClass = 'Senior Three (S3)';
+        else if (classVal === 'S4') displayClass = 'Senior Four (S4)';
+        document.getElementById('admitClass').textContent = displayClass;
+
+        const studentNumWrap = document.getElementById('admitStudentNumberWrap');
+        const studentNumInp = document.getElementById('admitStudentNumberInput');
+        const autoNumNotice = document.getElementById('admitAutoNumNotice');
+        const studentNumReqStar = document.getElementById('admitStudentNumReqStar');
+
+        if (studentNumInp) {
+            studentNumInp.value = currentStudentNum || '';
+        }
+
+        if (isManualStudentNumber) {
+            if (studentNumWrap) studentNumWrap.classList.remove('hidden');
+            if (studentNumInp) studentNumInp.required = true;
+            if (autoNumNotice) autoNumNotice.classList.add('hidden');
+            if (studentNumReqStar) studentNumReqStar.classList.remove('hidden');
+        } else {
+            if (currentStudentNum) {
+                if (studentNumWrap) studentNumWrap.classList.remove('hidden');
+                if (studentNumInp) studentNumInp.required = false;
+                if (autoNumNotice) autoNumNotice.classList.add('hidden');
+                if (studentNumReqStar) studentNumReqStar.classList.add('hidden');
+            } else {
+                if (studentNumWrap) studentNumWrap.classList.add('hidden');
+                if (studentNumInp) studentNumInp.required = false;
+                if (autoNumNotice) autoNumNotice.classList.remove('hidden');
+                if (studentNumReqStar) studentNumReqStar.classList.add('hidden');
             }
         }
-        document.getElementById('admitS5Modal').classList.remove('hidden');
+
+        const isALevel = (classVal === 'S5' || classVal === 'S6');
+        const combWrap = document.getElementById('admitCombWrap');
+        const desiredRow = document.getElementById('admitDesiredCombRow');
+        const combSelect = document.getElementById('admitCombSelect');
+        const customWrap = document.getElementById('admitCustomWrap');
+        const customInp = document.getElementById('admitCustomInput');
+
+        if (customWrap) customWrap.classList.add('hidden');
+        if (customInp) {
+            customInp.value = '';
+            customInp.required = false;
+        }
+
+        if (isALevel) {
+            if (desiredRow) desiredRow.classList.remove('hidden');
+            const desiredEl = document.getElementById('admitDesiredComb');
+            if (desiredEl) desiredEl.textContent = currentComb || 'None Specified';
+
+            if (combWrap) combWrap.classList.remove('hidden');
+            if (combSelect) {
+                combSelect.required = true;
+                combSelect.value = currentComb || '';
+                if (currentComb && combSelect.value !== currentComb) {
+                    combSelect.value = 'CUSTOM';
+                    if (customWrap) customWrap.classList.remove('hidden');
+                    if (customInp) {
+                        customInp.value = currentComb;
+                        customInp.required = true;
+                    }
+                }
+            }
+        } else {
+            if (desiredRow) desiredRow.classList.add('hidden');
+            if (combWrap) combWrap.classList.add('hidden');
+            if (combSelect) {
+                combSelect.required = false;
+                combSelect.value = '';
+            }
+        }
+
+        modal.classList.remove('hidden');
+        if (isManualStudentNumber && studentNumInp) {
+            setTimeout(() => studentNumInp.focus(), 80);
+        }
+    }
+
+    function closeAdmitModal() {
+        const modal = document.getElementById('admitModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function openAdmitS5Modal(id, name, classVal, currentComb) {
+        openAdmitModal(id, name, classVal, currentComb, '');
     }
 
     function closeAdmitS5Modal() {
-        document.getElementById('admitS5Modal').classList.add('hidden');
+        closeAdmitModal();
     }
 
     function toggleAdmitCustomComb(val) {
-        const wrap = document.getElementById('admitS5CustomWrap');
-        const inp = document.getElementById('admitS5CustomInput');
+        const wrap = document.getElementById('admitCustomWrap');
+        const inp = document.getElementById('admitCustomInput');
         if (val === 'CUSTOM') {
             if (wrap) wrap.classList.remove('hidden');
             if (inp) { inp.focus(); inp.required = true; }
@@ -1725,6 +1822,35 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
             if (wrap) wrap.classList.add('hidden');
             if (inp) { inp.required = false; }
         }
+    }
+
+    function validateAdmitForm() {
+        if (isManualStudentNumber) {
+            const inp = document.getElementById('admitStudentNumberInput');
+            if (inp && !inp.value.trim()) {
+                alert('Please enter the SchoolPay Payment Code / Student Number before confirming admission.');
+                inp.focus();
+                return false;
+            }
+        }
+        const combWrap = document.getElementById('admitCombWrap');
+        if (combWrap && !combWrap.classList.contains('hidden')) {
+            const sel = document.getElementById('admitCombSelect');
+            if (sel && !sel.value) {
+                alert('Please select an official subject combination for this A-Level candidate.');
+                sel.focus();
+                return false;
+            }
+            if (sel && sel.value === 'CUSTOM') {
+                const cust = document.getElementById('admitCustomInput');
+                if (cust && !cust.value.trim()) {
+                    alert('Please type the custom combination code.');
+                    cust.focus();
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     // Change Combination Modal

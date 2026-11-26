@@ -44,6 +44,39 @@ if (!empty($assignedCombination)) {
     $applicant['combination'] = $assignedCombination;
 }
 
+/* ================= SCHOOLPAY / STUDENT NUMBER ASSIGNMENT ================= */
+$isManual = isManualStudentNumberEnabled($pdo);
+$inputStudentNumber = trim($_POST['student_number'] ?? $_GET['student_number'] ?? '');
+
+if ($isManual) {
+    if (empty($inputStudentNumber) && empty($applicant['student_number'])) {
+        die("Error: Manual SchoolPay Payment Code / Student Number is required before admitting candidate. Please return and enter the code.");
+    }
+    if (!empty($inputStudentNumber)) {
+        $cleanStudentNumber = strtoupper(preg_replace('/[^A-Za-z0-9\/\-_]/', '', $inputStudentNumber));
+        $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$cleanStudentNumber, $id]);
+        $applicant['student_number'] = $cleanStudentNumber;
+        $student_number = $cleanStudentNumber;
+    } else {
+        $student_number = $applicant['student_number'];
+    }
+} else {
+    if (!empty($inputStudentNumber)) {
+        $cleanStudentNumber = strtoupper(preg_replace('/[^A-Za-z0-9\/\-_]/', '', $inputStudentNumber));
+        $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$cleanStudentNumber, $id]);
+        $applicant['student_number'] = $cleanStudentNumber;
+        $student_number = $cleanStudentNumber;
+    } elseif (!empty($applicant['student_number'])) {
+        $student_number = $applicant['student_number'];
+    } else {
+        $student_number = getAdmissionNumber($applicant, $pdo);
+        try {
+            $pdo->prepare("UPDATE applications SET student_number = ? WHERE id = ?")->execute([$student_number, $id]);
+            $applicant['student_number'] = $student_number;
+        } catch (Exception $e) {}
+    }
+}
+
 $academic_year = getAcademicYear($pdo, $applicant['class_of_entry'] ?? 'S1');
 
 /* ================= RESOLVE ADMITTING ADMIN ================= */
@@ -68,10 +101,10 @@ $update->execute([$adminFullName, $id]);
 
 // Log activity
 $combLog = !empty($applicant['combination']) ? " - Assigned Combination: " . $applicant['combination'] : "";
-logActivity($pdo, $_SESSION['admin_username'], "Admit Student", "Admitted applicant: " . $applicant['firstname'] . " " . $applicant['surname'] . " (" . $applicant['class_of_entry'] . "){$combLog}");
+$codeLog = !empty($student_number) ? " - Student No / SchoolPay Code: " . $student_number : "";
+logActivity($pdo, $_SESSION['admin_username'], "Admit Student", "Admitted applicant: " . $applicant['firstname'] . " " . $applicant['surname'] . " (" . $applicant['class_of_entry'] . "){$combLog}{$codeLog}");
 
 /* ================= PDF & REPORTING DETAILS ================= */
-$student_number = getAdmissionNumber($applicant, $pdo);
 $pdfLink = getBaseUrl($pdo) . "/app/admission_offer.php?id=" . $id;
 $reportingDate = getReportingDate($pdo, $applicant['class_of_entry'] ?? 'S1');
 $primary_color = getPrimaryColor($pdo);
@@ -180,19 +213,17 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
             <!-- Official Payment Code Box -->
             <div class='inner-box' style='background-color: #f0fdf4; border: 2px solid #86efac; border-radius: 12px; padding: 18px 16px; margin: 20px 0; text-align: left;'>
                 <div style='font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 1px;'>
-                    <span style='background-color: #dcfce7; padding: 3px 8px; border-radius: 6px;'>Official School Fees Payment Reference Code</span>
+                    <span style='background-color: #dcfce7; padding: 3px 8px; border-radius: 6px;'>Official School Fees Payment Reference</span>
                 </div>
                 <div style='font-size: 24px; font-weight: 900; font-family: monospace; color: #15803d; letter-spacing: 1px; margin: 8px 0 10px 0;'>
                     {$student_number}
                 </div>
                 <p style='margin: 0 0 8px 0; font-size: 13.5px; font-weight: 700; color: #0f172a;'>
-                    How to Pay School Fees Using This Code:
+                    Payment Details:
                 </p>
-                <ul style='margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6;'>
-                    <li><strong>SchoolPay via Mobile Money:</strong> Dial <strong>*165#</strong> (MTN) or <strong>*185#</strong> (Airtel) &rarr; Select <em>School Fees / SchoolPay</em> &rarr; Enter Payment Code: <strong>{$student_number}</strong>.</li>
-                    <li><strong>Partner Bank Branches:</strong> Present this payment code (<strong>{$student_number}</strong>) across Uganda at any <strong>Stanbic, Centenary, PostBank, or DFCU Bank</strong> branch.</li>
-                    <li><strong>School Bursar's Office:</strong> Present your printed Admission Offer Letter at the school bursary desk upon reporting.</li>
-                </ul>
+                <p style='margin: 0; font-size: 13px; color: #334155; line-height: 1.6;'>
+                    Your payment details have been shared with you via email. Please reference your unique student identification code (<strong>{$student_number}</strong>) when making school fees payments as detailed in your official offer packet.
+                </p>
             </div>
 
             <!-- What to do next instructions -->
@@ -202,8 +233,8 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
                 </h4>
                 <ol style='margin: 8px 0 0 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.65;'>
                     <li><strong>Download and Print:</strong> Click the button below to download and print the official Provisional Admission Offer Letter (PDF).</li>
-                    <li><strong>Secure Vacancy:</strong> Pay the admission commitment fee or full term fees using your SchoolPay Payment Code <strong>{$student_number}</strong>.</li>
-                    <li><strong>Reporting Day:</strong> Arrive at school on <strong>" . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : "the official reporting date") . "</strong> with this printed offer letter, original UNEB result slips, bank/mobile money deposit receipt, 2 physical passport-size photographs, and student requirements.</li>
+                    <li><strong>Secure Vacancy:</strong> Complete the admission commitment fee or full term fees using the official payment instructions shared on your email.</li>
+                    <li><strong>Reporting Day:</strong> Arrive at school on <strong>" . (!empty($reportingDate) ? htmlspecialchars($reportingDate) : "the official reporting date") . "</strong> with this printed offer letter, original UNEB result slips, bank deposit receipt, 2 physical passport-size photographs, and student requirements.</li>
                 </ol>
             </div>
 
@@ -245,5 +276,9 @@ sendEmail(
 );
 
 /* ================= REDIRECT ================= */
-header("Location: dashboard.php?msg=admitted");
+$returnUrl = $_POST['return_to'] ?? $_GET['return_to'] ?? 'applications.php?msg=admitted';
+if (!str_starts_with($returnUrl, 'applications.php') && !str_starts_with($returnUrl, 'dashboard.php')) {
+    $returnUrl = 'applications.php?msg=admitted';
+}
+header("Location: " . $returnUrl);
 exit;

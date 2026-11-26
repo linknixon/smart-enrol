@@ -268,25 +268,37 @@ if ($class === 'S1') {
     $pointsMap = ['A' => 5, 'B' => 4, 'C' => 3, 'D' => 2, 'E' => 1];
     $equivMap  = ['A' => 1, 'B' => 2, 'C' => 3, 'D' => 4, 'E' => 5];
 
-    $subjects = [
-        'ENG' => ['name' => 'English Language', 'grade' => strtoupper(trim($_POST['uce_eng'] ?? ''))],
-        'MAT' => ['name' => 'Mathematics', 'grade' => strtoupper(trim($_POST['uce_mat'] ?? ''))],
-        'PHY' => ['name' => 'Physics', 'grade' => strtoupper(trim($_POST['uce_phy'] ?? ''))],
-        'CHE' => ['name' => 'Chemistry', 'grade' => strtoupper(trim($_POST['uce_che'] ?? ''))],
-        'BIO' => ['name' => 'Biology', 'grade' => strtoupper(trim($_POST['uce_bio'] ?? ''))],
-        'HIS' => ['name' => 'History & Political Educ.', 'grade' => strtoupper(trim($_POST['uce_his'] ?? ''))],
-        'GEO' => ['name' => 'Geography', 'grade' => strtoupper(trim($_POST['uce_geo'] ?? ''))],
-    ];
-
-    // Religious Education (CRE / IRE) is an Elective in NLSC (not compulsory)
-    $creGrade = strtoupper(trim($_POST['uce_cre_ire'] ?? ''));
-    if (!empty($creGrade)) {
-        $subjects['CRE_IRE'] = [
-            'name' => 'Religious Education (CRE/IRE)',
-            'grade' => $creGrade
-        ];
+    $configuredSubjects = getUceSubjectsList($pdo);
+    $subjects = [];
+    foreach ($configuredSubjects as $cs) {
+        $cCode = strtoupper(trim($cs['code']));
+        $fieldKey = 'uce_' . strtolower(preg_replace('/[^a-z0-9_]/i', '_', $cCode));
+        $grade = strtoupper(trim($_POST[$fieldKey] ?? ''));
+        if (!empty($grade)) {
+            $subjects[$cCode] = [
+                'name' => $cs['name'],
+                'grade' => $grade,
+                'is_core' => !empty($cs['is_core'])
+            ];
+        }
     }
 
+    // Fallback for legacy form fields if present
+    if (empty($subjects) && !empty($_POST['uce_eng'])) {
+        $legacyList = [
+            'ENG' => ['name' => 'English Language', 'key' => 'uce_eng'],
+            'MAT' => ['name' => 'Mathematics', 'key' => 'uce_mat'],
+            'PHY' => ['name' => 'Physics', 'key' => 'uce_phy'],
+            'CHE' => ['name' => 'Chemistry', 'key' => 'uce_che'],
+            'BIO' => ['name' => 'Biology', 'key' => 'uce_bio'],
+            'HIS' => ['name' => 'History & Political Educ.', 'key' => 'uce_his'],
+            'GEO' => ['name' => 'Geography', 'key' => 'uce_geo'],
+        ];
+        foreach ($legacyList as $c => $info) {
+            $g = strtoupper(trim($_POST[$info['key']] ?? ''));
+            if ($g) $subjects[$c] = ['name' => $info['name'], 'grade' => $g, 'is_core' => 1];
+        }
+    }
     if (!empty($_POST['uce_elec1_name']) && !empty($_POST['uce_elec1_grade'])) {
         $subjects['ELEC1'] = [
             'name' => trim($_POST['uce_elec1_name']),
@@ -657,16 +669,16 @@ $parentMessage .= "
 
             <div class='inner-box' style='background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; padding: 16px 14px; border-radius: 10px; margin: 20px 0;'>
                 <h4 style='margin-top: 0; color: #166534; font-size: 15px; font-weight: 700; border-bottom: 1px solid #bbf7d0; padding-bottom: 8px;'>
-                    What to Do Next & School Fees Payment Code Guidance
+                    What to Do Next & Fees Payment Guidance
                 </h4>
                 <p style='margin: 8px 0; font-size: 13.5px; color: #1e293b; line-height: 1.6;'>
-                    <strong>1. Application Review:</strong> The School Admissions Committee is currently reviewing your academic documents and credentials. <em>No payments are required during this evaluation phase.</em>
+                    <strong>1. Application Review:</strong> The School Admissions Committee is currently reviewing your academic documents and credentials. <em>No payments are required or accepted during this evaluation phase.</em>
                 </p>
                 <p style='margin: 8px 0; font-size: 13.5px; color: #1e293b; line-height: 1.6;'>
-                    <strong>2. When & How You Receive Your Payment Code:</strong> As soon as the Admissions Committee approves your child's application, an official <strong>Provisional Admission Offer Letter</strong> will be issued. Your unique <strong>Student SchoolPay / Bank Payment Reference Code</strong> will be generated automatically and printed prominently on the admission letter, as well as sent to this email address and via SMS.
+                    <strong>2. Official Payment Details via Email:</strong> Official payment details are only sent once an applicant has been officially admitted. As soon as the Admissions Committee approves your child's application, official notification and verified payment details will be shared directly with you via email.
                 </p>
                 <p style='margin: 8px 0; font-size: 13.5px; color: #1e293b; line-height: 1.6;'>
-                    <strong>3. Authorized Payment Channels:</strong> Once you receive your official payment code, school fees can be paid via <strong>SchoolPay Mobile Money</strong> (dial *165# for MTN or *185# for Airtel under School Fees), at any commercial bank branch across Uganda (Stanbic, Centenary, PostBank, DFCU), or at the School Bursar's Office.
+                    <strong>3. Authorized Payment Channels:</strong> Once admitted, school fees should be paid in accordance with the official school bank and payment instructions sent to this email address.
                 </p>
             </div>
 
