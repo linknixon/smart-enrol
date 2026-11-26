@@ -170,6 +170,25 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     <style>
         body { font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif; }
         .shadow-2xs { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .sticky-actions-header {
+            position: sticky !important;
+            right: 0 !important;
+            background-color: #f1f5f9 !important;
+            z-index: 20 !important;
+            border-left: 1px solid #e2e8f0 !important;
+            box-shadow: -4px 0 8px -2px rgba(0, 0, 0, 0.06) !important;
+        }
+        .sticky-actions-cell {
+            position: sticky !important;
+            right: 0 !important;
+            background-color: #ffffff !important;
+            z-index: 10 !important;
+            border-left: 1px solid #e2e8f0 !important;
+            box-shadow: -4px 0 8px -2px rgba(0, 0, 0, 0.06) !important;
+        }
+        tr:hover .sticky-actions-cell {
+            background-color: #f8fafc !important;
+        }
     </style>
     <?= renderThemeConfig($pdo) ?>
 </head>
@@ -514,7 +533,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                 <?php endif; ?>
 
                 <!-- Candidate Registry Table View (Single Unified View) -->
-                <div id="candidateTableContainer" class="w-full overflow-hidden rounded-xl border border-slate-200">
+                <div id="candidateTableContainer" class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
                     <table class="w-full text-left border-collapse text-xs table-auto">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
@@ -527,12 +546,12 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 <th class="p-3">Applicant Name</th>
                                 <th class="p-3 text-center">Class</th>
                                 <th class="p-3 text-center">UNEB / NLSC Results</th>
-                                <th class="p-3 text-center hidden lg:table-cell">Gender / Religion</th>
-                                <th class="p-3 hidden md:table-cell">Former School</th>
-                                <th class="p-3 hidden xl:table-cell">Caregiver Details</th>
-                                <th class="p-3 text-center hidden sm:table-cell">Applied On</th>
+                                <th class="p-3 text-center hidden 2xl:table-cell">Gender / Religion</th>
+                                <th class="p-3 hidden xl:table-cell">Former School</th>
+                                <th class="p-3 hidden 2xl:table-cell">Caregiver Details</th>
+                                <th class="p-3 text-center hidden xl:table-cell">Applied On</th>
                                 <th class="p-3 text-center">Status</th>
-                                <th class="p-3 text-center w-36 whitespace-nowrap">Actions</th>
+                                <th class="p-3 text-center sticky right-0 bg-slate-100 z-20 shadow-[-4px_0_8px_rgba(0,0,0,0.06)] border-l border-slate-200 whitespace-nowrap min-w-[140px] sticky-actions-header">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
@@ -542,7 +561,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 $primaryParent = !empty($app['father_name']) ? $app['father_name'] : (!empty($app['mother_name']) ? $app['mother_name'] : ($app['guardian_name'] ?? ($app['parent_name'] ?? '—')));
                                 $primaryPhone = !empty($app['father_phone']) ? $app['father_phone'] : (!empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_phone']) ? $app['mother_phone'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_phone'] ?? ($app['guardian_contact'] ?? ($app['parent_phone'] ?? ''))))));
                             ?>
-                            <tr class="hover:bg-slate-50/80 transition duration-150">
+                            <tr class="hover:bg-slate-50/80 transition duration-150 group">
                                 <?php if($isSuperAdmin): ?>
                                 <td class="p-2 text-center" onclick="event.stopPropagation();">
                                     <input type="checkbox" name="selected_ids[]" value="<?= $app['id'] ?>" class="app-row-checkbox rounded border-slate-300 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer" onchange="updateBulkSelectionState()">
@@ -560,13 +579,13 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 </td>
                                 <!-- Name -->
                                 <td class="p-3 font-semibold text-slate-800">
-                                    <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="hover:text-brand-700 text-left font-bold">
+                                    <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="hover:text-brand-700 text-left font-bold block truncate max-w-[150px] sm:max-w-[210px]" title="<?= htmlspecialchars($fullName) ?>">
                                         <?= htmlspecialchars($fullName) ?>
                                     </button>
                                     <span class="block text-[10px] text-slate-400 font-mono">ID: #<?= str_pad((string)$app['id'], 5, '0', STR_PAD_LEFT) ?></span>
                                 </td>
                                 <!-- Class -->
-                                <td class="p-3 text-center">
+                                <td class="p-3 text-center whitespace-nowrap">
                                     <span class="px-2 py-0.5 rounded font-black text-xs bg-brand-50 text-brand-700 border border-brand-200">
                                         <?= htmlspecialchars($app['class_of_entry']) ?>
                                     </span>
@@ -575,7 +594,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                     <?php endif; ?>
                                 </td>
                                 <!-- Results -->
-                                <td class="p-3 text-center text-xs">
+                                <td class="p-3 text-center text-xs whitespace-nowrap">
                                     <?php if ($app['class_of_entry'] === 'S1'): ?>
                                         <?php 
                                             $s1Div = !empty($app['division']) ? $app['division'] : (!empty($app['ple_division']) ? $app['ple_division'] : '');
@@ -616,16 +635,16 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                     <?php endif; ?>
                                 </td>
                                 <!-- Gender & Religion -->
-                                <td class="p-3 text-center text-xs text-slate-600 hidden lg:table-cell">
+                                <td class="p-3 text-center text-xs text-slate-600 hidden 2xl:table-cell">
                                     <span><?= htmlspecialchars($app['sex'] ?? $app['gender'] ?? '—') ?></span>
                                     <span class="text-[10px] text-slate-400 block"><?= htmlspecialchars($app['religion'] ?? '—') ?></span>
                                 </td>
                                 <!-- Former School -->
-                                <td class="p-3 text-xs text-slate-600 max-w-[140px] truncate hidden md:table-cell" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>">
+                                <td class="p-3 text-xs text-slate-600 max-w-[140px] truncate hidden xl:table-cell" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>">
                                     <?= htmlspecialchars($app['former_school'] ?? '—') ?>
                                 </td>
                                 <!-- Caregiver -->
-                                <td class="p-3 text-xs hidden xl:table-cell">
+                                <td class="p-3 text-xs hidden 2xl:table-cell">
                                     <span class="font-semibold text-slate-800 block truncate max-w-[140px]"><?= htmlspecialchars($primaryParent) ?></span>
                                     <?php if(!empty($primaryPhone)): ?>
                                         <a href="tel:<?= htmlspecialchars($primaryPhone) ?>" class="text-[10.5px] text-brand-700 hover:underline font-mono">
@@ -634,11 +653,11 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                     <?php endif; ?>
                                 </td>
                                 <!-- Applied On -->
-                                <td class="p-3 text-center text-[11px] text-slate-500 font-mono whitespace-nowrap hidden sm:table-cell">
+                                <td class="p-3 text-center text-[11px] text-slate-500 font-mono whitespace-nowrap hidden xl:table-cell">
                                     <?= date('d M Y', strtotime($app['created_at'])) ?>
                                 </td>
                                 <!-- Status -->
-                                <td class="p-3 text-center">
+                                <td class="p-3 text-center whitespace-nowrap">
                                     <?php
                                     $sClass = 'bg-amber-100 text-amber-800';
                                     $sText = 'Pending';
@@ -651,7 +670,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                     </span>
                                 </td>
                                 <!-- Actions -->
-                                <td class="p-3 text-center">
+                                <td class="p-2.5 text-center sticky right-0 bg-white group-hover:bg-slate-50 shadow-[-4px_0_8px_rgba(0,0,0,0.06)] border-l border-slate-200 z-10 whitespace-nowrap min-w-[140px] sticky-actions-cell">
                                     <div class="flex items-center justify-center gap-1">
                                         <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="inline-flex items-center justify-center px-2 py-1 h-6 text-[10.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition duration-150" title="View Candidate Dossier">
                                             <i class="fa-solid fa-eye mr-1 text-[9px]"></i> View
