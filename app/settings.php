@@ -1239,9 +1239,6 @@ if (empty($current_slider_images)) {
                         </div>
 
                         <!-- Interactive Table Editor -->
-                        <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 mb-1.5 font-medium">
-                            <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to edit columns
-                        </div>
                         <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs bg-white" style="-webkit-overflow-scrolling: touch;">
                             <table class="w-full text-xs text-left border-collapse min-w-[780px]" id="feesMatrixEditorTable">
                                 <thead id="feesMatrixTableHead">

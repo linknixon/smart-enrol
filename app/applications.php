@@ -157,7 +157,7 @@ $reportedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE application_status = 'rejected'")->fetchColumn();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -172,7 +172,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     </style>
     <?= renderThemeConfig($pdo) ?>
 </head>
-<body class="bg-slate-50 text-slate-700 antialiased flex min-h-screen">
+<body class="bg-slate-50 text-slate-700 antialiased flex min-h-screen overflow-x-hidden">
 
     <!-- Mobile Drawer Overlay & Sidebar -->
     <div id="mobileSidebarBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden" onclick="toggleMobileSidebar()"></div>
@@ -290,7 +290,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
 
         <!-- Top Header Bar -->
         <header class="bg-white border-b border-slate-200 px-4 sm:px-6 md:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
@@ -472,23 +472,20 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                 </div>
 
                 <!-- Candidate Registry Table View (Single Unified View) -->
-                <div id="candidateTableContainer" class="overflow-x-auto w-full" style="-webkit-overflow-scrolling: touch;">
-                    <div class="flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium md:hidden">
-                        <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all columns
-                    </div>
-                    <table class="w-full text-left border-collapse text-xs table-auto min-w-[850px]">
+                <div id="candidateTableContainer" class="w-full overflow-hidden rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-xs table-auto">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                                <th class="p-3 w-12 text-center">Photo</th>
+                                <th class="p-2.5 w-10 text-center">Photo</th>
                                 <th class="p-3">Applicant Name</th>
                                 <th class="p-3 text-center">Class</th>
                                 <th class="p-3 text-center">UNEB / NLSC Results</th>
-                                <th class="p-3 text-center">Gender / Religion</th>
-                                <th class="p-3">Former School</th>
-                                <th class="p-3">Caregiver Details</th>
-                                <th class="p-3 text-center">Applied On</th>
+                                <th class="p-3 text-center hidden lg:table-cell">Gender / Religion</th>
+                                <th class="p-3 hidden md:table-cell">Former School</th>
+                                <th class="p-3 hidden xl:table-cell">Caregiver Details</th>
+                                <th class="p-3 text-center hidden sm:table-cell">Applied On</th>
                                 <th class="p-3 text-center">Status</th>
-                                <th class="p-3 text-center w-36">Actions</th>
+                                <th class="p-3 text-center w-36 whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
@@ -496,11 +493,11 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 $status = strtolower($app['application_status'] ?? 'pending');
                                 $fullName = trim($app['firstname'].' '.$app['surname'].' '.($app['othernames'] ?? ''));
                                 $primaryParent = !empty($app['father_name']) ? $app['father_name'] : (!empty($app['mother_name']) ? $app['mother_name'] : ($app['guardian_name'] ?? ($app['parent_name'] ?? '—')));
-                                $primaryPhone = !empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_contact'] ?? ($app['parent_phone'] ?? '')));
+                                $primaryPhone = !empty($app['father_phone']) ? $app['father_phone'] : (!empty($app['father_contact']) ? $app['father_contact'] : (!empty($app['mother_phone']) ? $app['mother_phone'] : (!empty($app['mother_contact']) ? $app['mother_contact'] : ($app['guardian_phone'] ?? ($app['guardian_contact'] ?? ($app['parent_phone'] ?? ''))))));
                             ?>
                             <tr class="hover:bg-slate-50/80 transition duration-150">
                                 <!-- Photo -->
-                                <td class="p-2.5 text-center">
+                                <td class="p-2 text-center">
                                     <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-slate-100 mx-auto flex items-center justify-center">
                                         <?php if(!empty($app['photo_url']) && !str_starts_with($app['photo_url'], 'data:image/svg')): ?>
                                             <img src="<?= htmlspecialchars($app['photo_url']) ?>" alt="Photo" class="w-full h-full object-cover">
@@ -511,7 +508,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 </td>
                                 <!-- Name -->
                                 <td class="p-3 font-semibold text-slate-800">
-                                    <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="hover:text-brand-700 text-left">
+                                    <button type="button" onclick="openAppModalById(<?= $app['id'] ?>)" class="hover:text-brand-700 text-left font-bold">
                                         <?= htmlspecialchars($fullName) ?>
                                     </button>
                                     <span class="block text-[10px] text-slate-400 font-mono">ID: #<?= str_pad((string)$app['id'], 5, '0', STR_PAD_LEFT) ?></span>
@@ -528,30 +525,55 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 <!-- Results -->
                                 <td class="p-3 text-center text-xs">
                                     <?php if ($app['class_of_entry'] === 'S1'): ?>
-                                        <span class="font-bold text-slate-700"><?= $app['ple_division'] ? 'Div '.$app['ple_division'] : '—' ?></span>
-                                        <span class="text-[10px] text-slate-400 block"><?= $app['ple_aggregates'] ? $app['ple_aggregates'].' Aggs' : '' ?></span>
+                                        <?php 
+                                            $s1Div = !empty($app['division']) ? $app['division'] : (!empty($app['ple_division']) ? $app['ple_division'] : '');
+                                            $s1Aggs = !empty($app['aggregates']) ? $app['aggregates'] : (!empty($app['ple_aggregates']) ? $app['ple_aggregates'] : '');
+                                        ?>
+                                        <span class="font-bold text-slate-800"><?= !empty($s1Div) ? 'Div ' . htmlspecialchars($s1Div) : '—' ?></span>
+                                        <span class="text-[10px] text-slate-400 block font-semibold"><?= !empty($s1Aggs) ? htmlspecialchars($s1Aggs) . ' Aggs' : '' ?></span>
                                     <?php elseif (in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
-                                        <?php if(!empty($app['uce_result_level'])): ?>
-                                            <span class="font-bold text-brand-700"><?= htmlspecialchars($app['uce_result_level']) ?></span>
-                                            <span class="text-[10px] text-slate-400 block font-mono"><?= $app['nlsc_competency_score'] ?? '' ?> pts</span>
+                                        <?php 
+                                            $s5Level = !empty($app['division']) ? $app['division'] : (!empty($app['uce_result_level']) ? $app['uce_result_level'] : (!empty($app['uce_division']) ? 'Div ' . $app['uce_division'] : ''));
+                                            $s5Project = !empty($app['uce_project_work']) ? $app['uce_project_work'] : (!empty($app['project_score']) ? $app['project_score'] : ($app['project_work'] ?? ''));
+                                            $s5Score = $app['nlsc_competency_score'] ?? '';
+                                            if (empty($s5Score) && !empty($app['uce_subjects_json'])) {
+                                                $dJson = json_decode($app['uce_subjects_json'], true);
+                                                if (!empty($dJson['competency_score'])) {
+                                                    $s5Score = $dJson['competency_score'];
+                                                }
+                                                if (empty($s5Level) && !empty($dJson['result_level'])) {
+                                                    $s5Level = $dJson['result_level'];
+                                                }
+                                                if (empty($s5Project) && !empty($dJson['project_work'])) {
+                                                    $s5Project = $dJson['project_work'];
+                                                }
+                                            }
+                                        ?>
+                                        <?php if(!empty($s5Level)): ?>
+                                            <span class="font-bold text-brand-700"><?= htmlspecialchars($s5Level) ?></span>
+                                            <?php if(!empty($s5Score)): ?>
+                                                <span class="text-[10px] text-slate-500 block font-mono font-bold"><?= htmlspecialchars($s5Score) ?> pts</span>
+                                            <?php elseif(!empty($s5Project)): ?>
+                                                <span class="text-[10px] text-slate-500 block font-mono font-bold">Proj: Gr <?= htmlspecialchars($s5Project) ?></span>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <span class="font-bold text-slate-700"><?= $app['uce_division'] ? 'Div '.$app['uce_division'] : '—' ?></span>
+                                            <span class="font-bold text-slate-400">—</span>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span class="text-slate-400 text-xs">Transfer</span>
+                                        <span class="text-slate-400 text-xs font-semibold">Transfer</span>
                                     <?php endif; ?>
                                 </td>
                                 <!-- Gender & Religion -->
-                                <td class="p-3 text-center text-xs text-slate-600">
+                                <td class="p-3 text-center text-xs text-slate-600 hidden lg:table-cell">
                                     <span><?= htmlspecialchars($app['sex'] ?? $app['gender'] ?? '—') ?></span>
                                     <span class="text-[10px] text-slate-400 block"><?= htmlspecialchars($app['religion'] ?? '—') ?></span>
                                 </td>
                                 <!-- Former School -->
-                                <td class="p-3 text-xs text-slate-600 max-w-[150px] truncate" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>">
+                                <td class="p-3 text-xs text-slate-600 max-w-[140px] truncate hidden md:table-cell" title="<?= htmlspecialchars($app['former_school'] ?? '—') ?>">
                                     <?= htmlspecialchars($app['former_school'] ?? '—') ?>
                                 </td>
                                 <!-- Caregiver -->
-                                <td class="p-3 text-xs">
+                                <td class="p-3 text-xs hidden xl:table-cell">
                                     <span class="font-semibold text-slate-800 block truncate max-w-[140px]"><?= htmlspecialchars($primaryParent) ?></span>
                                     <?php if(!empty($primaryPhone)): ?>
                                         <a href="tel:<?= htmlspecialchars($primaryPhone) ?>" class="text-[10.5px] text-brand-700 hover:underline font-mono">
@@ -560,7 +582,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                     <?php endif; ?>
                                 </td>
                                 <!-- Applied On -->
-                                <td class="p-3 text-center text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                                <td class="p-3 text-center text-[11px] text-slate-500 font-mono whitespace-nowrap hidden sm:table-cell">
                                     <?= date('d M Y', strtotime($app['created_at'])) ?>
                                 </td>
                                 <!-- Status -->
@@ -1404,23 +1426,24 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 
         // Bio-data
         document.getElementById('modalSex').textContent = app.sex || app.gender || 'N/A';
-        const dobStr = app.date_of_birth ? app.date_of_birth : '';
+        const dobStr = app.dob || app.date_of_birth || '';
         let dobDisplay = dobStr || 'Not Provided';
-        if (dobStr && !isNaN(Date.parse(dobStr))) {
-            const birthYear = new Date(dobStr).getFullYear();
-            const age = new Date().getFullYear() - birthYear;
-            if (age > 0 && age < 60) dobDisplay += ` (${age} yrs)`;
+        const ageVal = app.age || (dobStr && !isNaN(Date.parse(dobStr)) ? (new Date().getFullYear() - new Date(dobStr).getFullYear()) : '');
+        if (ageVal && ageVal > 0 && ageVal < 80) {
+            dobDisplay += ` (${ageVal} yrs)`;
         }
         document.getElementById('modalDobAge').textContent = dobDisplay;
         document.getElementById('modalReligion').textContent = app.religion || 'Not Specified';
         document.getElementById('modalNationality').textContent = app.nationality || 'Ugandan';
-        document.getElementById('modalResidence').textContent = app.residence_place || 'Not Provided';
+        document.getElementById('modalResidence').textContent = app.residence || app.residence_place || 'Not Provided';
 
         // Health / Medical status
         const healthEl = document.getElementById('modalHealthStatus');
-        if (app.health_problem && app.health_problem.toLowerCase() === 'yes') {
+        const healthProb = (app.health_problem || '').toLowerCase();
+        const healthDet = app.health_details || app.health_problem_details || '';
+        if (healthProb === 'yes' || (healthDet && healthDet !== 'None' && healthDet !== 'No')) {
             healthEl.innerHTML = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
-                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Special Condition: ${escapeHtml(app.health_problem_details || 'Specified Yes, details not specified')}
+                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Special Condition: ${escapeHtml(healthDet || 'Specified Yes')}
             </span>`;
         } else {
             healthEl.innerHTML = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -1429,33 +1452,40 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         }
 
         document.getElementById('modalLin').textContent = app.lin || 'N/A';
-        document.getElementById('modalVillage').textContent = app.village || '—';
-        document.getElementById('modalParish').textContent = app.parish || '—';
-        document.getElementById('modalSubcounty').textContent = app.subcounty || '—';
-        document.getElementById('modalDistrict').textContent = app.district || '—';
+        const v = app.parent_village || app.village || '—';
+        const p = app.parent_parish || app.parish || '—';
+        const sc = app.parent_subcounty || app.subcounty || '—';
+        const d = app.parent_district || app.district || '—';
+        document.getElementById('modalVillage').textContent = v;
+        document.getElementById('modalParish').textContent = p;
+        document.getElementById('modalSubcounty').textContent = sc;
+        document.getElementById('modalDistrict').textContent = d;
 
-        const addressParts = [app.village, app.parish, app.subcounty, app.district].filter(Boolean);
-        document.getElementById('modalConsolidatedAddress').textContent = addressParts.length ? addressParts.join(', ') : 'Not Specified';
+        const addressParts = [v !== '—' ? v : '', p !== '—' ? p : '', sc !== '—' ? sc : '', d !== '—' ? d : ''].filter(Boolean);
+        document.getElementById('modalConsolidatedAddress').textContent = app.parent_address || (addressParts.length ? addressParts.join(', ') : 'Not Specified');
 
         // Parent / Guardian
         let fatherHtml = '<span class="text-slate-400 italic">Not provided</span>';
         if (app.father_name) {
+            const fPhone = app.father_phone || app.father_contact || '';
             fatherHtml = `<strong>${escapeHtml(app.father_name)}</strong>`;
-            if (app.father_contact) fatherHtml += `<br><a href="tel:${escapeHtml(app.father_contact)}" class="text-brand-700 font-mono hover:underline"><i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(app.father_contact)}</a>`;
+            if (fPhone) fatherHtml += `<br><a href="tel:${escapeHtml(fPhone)}" class="text-brand-700 font-mono hover:underline"><i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(fPhone)}</a>`;
         }
         document.getElementById('modalFatherDetails').innerHTML = fatherHtml;
 
         let motherHtml = '<span class="text-slate-400 italic">Not provided</span>';
         if (app.mother_name) {
+            const mPhone = app.mother_phone || app.mother_contact || '';
             motherHtml = `<strong>${escapeHtml(app.mother_name)}</strong>`;
-            if (app.mother_contact) motherHtml += `<br><a href="tel:${escapeHtml(app.mother_contact)}" class="text-brand-700 font-mono hover:underline"><i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(app.mother_contact)}</a>`;
+            if (mPhone) motherHtml += `<br><a href="tel:${escapeHtml(mPhone)}" class="text-brand-700 font-mono hover:underline"><i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(mPhone)}</a>`;
         }
         document.getElementById('modalMotherDetails').innerHTML = motherHtml;
 
         let guardianHtml = '<span class="text-slate-400 italic">None specified</span>';
         if (app.guardian_name) {
+            const gPhone = app.guardian_phone || app.guardian_contact || '';
             guardianHtml = `<strong>${escapeHtml(app.guardian_name)}</strong>`;
-            if (app.guardian_contact) guardianHtml += `<br><a href="tel:${escapeHtml(app.guardian_contact)}" class="text-brand-700 font-mono hover:underline"><i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(app.guardian_contact)}</a>`;
+            if (gPhone) guardianHtml += `<br><a href="tel:${escapeHtml(gPhone)}" class="text-brand-700 font-mono hover:underline"><i class="fa-solid fa-phone text-[9px]"></i> ${escapeHtml(gPhone)}</a>`;
         }
         document.getElementById('modalGuardianDetails').innerHTML = guardianHtml;
 
@@ -1465,8 +1495,9 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         document.getElementById('modalParentNin').textContent = app.parent_nin || '—';
 
         const parentIdEl = document.getElementById('modalParentIdFile');
-        if (app.parent_id_file) {
-            parentIdEl.innerHTML = `<a href="../${escapeHtml(app.parent_id_file.replace(/^\.?\//, ''))}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+        const idFile = app.parent_id_file || app.parent_nin_file || '';
+        if (idFile) {
+            parentIdEl.innerHTML = `<a href="../${escapeHtml(idFile.replace(/^\.?\//, ''))}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
                 <i class="fa-solid fa-id-card"></i> View National ID File
             </a>`;
         } else {
@@ -1478,8 +1509,9 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         document.getElementById('modalIndexNumber').textContent = app.index_number || '—';
 
         const slipEl = document.getElementById('modalResultSlipLink');
-        if (app.result_slip) {
-            slipEl.innerHTML = `<a href="../${escapeHtml(app.result_slip.replace(/^\.?\//, ''))}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+        const slipFile = app.result_slip || app.result_slip_file || '';
+        if (slipFile) {
+            slipEl.innerHTML = `<a href="../${escapeHtml(slipFile.replace(/^\.?\//, ''))}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
                 <i class="fa-solid fa-file-pdf"></i> View Result Slip
             </a>`;
         } else {
@@ -1496,18 +1528,46 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 
         if (app.class_of_entry === 'S1') {
             pleBox.classList.remove('hidden');
-            document.getElementById('modalPleEng').textContent = app.ple_english || '—';
-            document.getElementById('modalPleMath').textContent = app.ple_mathematics || '—';
-            document.getElementById('modalPleSci').textContent = app.ple_science || '—';
-            document.getElementById('modalPleSst').textContent = app.ple_sst || '—';
-            document.getElementById('modalPleAggs').textContent = app.ple_aggregates || '—';
-            document.getElementById('modalPleDiv').textContent = app.ple_division ? 'Division ' + app.ple_division : '—';
+            const eng = app.english || app.ple_english || '—';
+            const math = app.mathematics || app.ple_mathematics || '—';
+            const sci = app.science || app.ple_science || '—';
+            const sst = app.sst || app.ple_sst || '—';
+            const aggs = app.aggregates || app.ple_aggregates || '—';
+            const div = app.division || app.ple_division || '';
+
+            document.getElementById('modalPleEng').textContent = eng;
+            document.getElementById('modalPleMath').textContent = math;
+            document.getElementById('modalPleSci').textContent = sci;
+            document.getElementById('modalPleSst').textContent = sst;
+            document.getElementById('modalPleAggs').textContent = aggs;
+            document.getElementById('modalPleDiv').textContent = div ? ('Division ' + div) : '—';
         } else if (app.class_of_entry === 'S5' || app.class_of_entry === 'S6') {
             alevelBox.classList.remove('hidden');
             document.getElementById('modalCombination').textContent = app.combination || 'Not Assigned';
-            document.getElementById('modalUceDivision').textContent = app.uce_result_level || (app.uce_division ? 'Div ' + app.uce_division : '—');
-            document.getElementById('modalProjectWork').textContent = app.project_score || app.project_work || '—';
-            document.getElementById('modalNlscScore').textContent = app.nlsc_competency_score ? app.nlsc_competency_score + ' pts' : '—';
+
+            // Parse UCE JSON payload (either uce_subjects_json or uce_scores)
+            let rawJson = app.uce_subjects_json || app.uce_scores;
+            let parsed = null;
+            if (rawJson) {
+                try {
+                    parsed = (typeof rawJson === 'string') ? JSON.parse(rawJson) : rawJson;
+                } catch(e) {}
+            }
+
+            // Division / Result Level
+            let resLevel = app.division || app.uce_result_level || (app.uce_division ? 'Div ' + app.uce_division : '');
+            if (parsed && parsed.result_level) resLevel = parsed.result_level;
+            document.getElementById('modalUceDivision').textContent = resLevel || '—';
+
+            // Project Work
+            let projWork = app.uce_project_work || app.project_score || app.project_work || '';
+            if (parsed && parsed.project_work) projWork = parsed.project_work;
+            document.getElementById('modalProjectWork').textContent = projWork ? ('Grade ' + projWork) : '—';
+
+            // Competency Score
+            let compScore = app.nlsc_competency_score || (app.aggregates ? (app.aggregates + ' pts') : '');
+            if (parsed && parsed.competency_score) compScore = parsed.competency_score + ' pts';
+            document.getElementById('modalNlscScore').textContent = compScore || '—';
 
             // Change comb button hook
             const chgBtn = document.getElementById('modalChangeCombBtn');
@@ -1525,27 +1585,68 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                 };
             }
 
-            // Populate NLSC subjects table if present
+            // Extract subjects map
+            let subjectsMap = {};
+            if (parsed) {
+                if (parsed.subjects && typeof parsed.subjects === 'object') {
+                    subjectsMap = parsed.subjects;
+                } else if (typeof parsed === 'object') {
+                    for (const [k, v] of Object.entries(parsed)) {
+                        if (['curriculum', 'result_level', 'project_work', 'competency_score', 'counts', 's6_details'].includes(k)) continue;
+                        subjectsMap[k] = v;
+                    }
+                }
+            }
+
             const subjectsTbody = document.getElementById('modalAlevelSubjectsTbody');
             subjectsTbody.innerHTML = '';
-            let parsedScores = null;
-            try {
-                if (app.uce_scores) parsedScores = typeof app.uce_scores === 'string' ? JSON.parse(app.uce_scores) : app.uce_scores;
-            } catch(e){}
+            const subjKeys = Object.keys(subjectsMap);
 
-            if (parsedScores && typeof parsedScores === 'object' && Object.keys(parsedScores).length > 0) {
-                document.getElementById('modalAlevelSubjectCount').textContent = Object.keys(parsedScores).length + ' Subjects';
-                for (const [subj, val] of Object.entries(parsedScores)) {
-                    let grade = '—', pts = '—', desc = 'Basic Competence';
+            if (subjKeys.length > 0) {
+                document.getElementById('modalAlevelSubjectCount').textContent = subjKeys.length + ' Subjects';
+                for (const [code, val] of Object.entries(subjectsMap)) {
+                    let sName = code;
+                    let grade = '—';
+                    let pts = '—';
+                    let desc = 'Basic Competence';
+
                     if (typeof val === 'object' && val !== null) {
+                        sName = val.name ? (val.name + ' (' + code + ')') : code;
                         grade = val.grade || val.score || '—';
-                        pts = val.points || '—';
+                        pts = (val.points !== undefined && val.points !== null) ? val.points : '—';
                         desc = val.descriptor || '';
                     } else {
                         grade = String(val);
                     }
+
+                    if (pts === '—' || !desc) {
+                        const uGrade = grade.trim().toUpperCase();
+                        if (uGrade === 'A') {
+                            if (pts === '—') pts = '3';
+                            if (!desc) desc = 'High Competence (Outstanding)';
+                        } else if (uGrade === 'B') {
+                            if (pts === '—') pts = '2';
+                            if (!desc) desc = 'Moderate Competence (Proficient)';
+                        } else if (uGrade === 'C') {
+                            if (pts === '—') pts = '1';
+                            if (!desc) desc = 'Basic Competence (Achieved)';
+                        } else if (uGrade === 'D' || uGrade === 'E') {
+                            if (pts === '—') pts = '0';
+                            if (!desc) desc = 'Developing (Needs Support)';
+                        } else if (uGrade.startsWith('D1') || uGrade.startsWith('D2')) {
+                            if (pts === '—') pts = 'Distinction';
+                            if (!desc) desc = 'Distinction';
+                        } else if (uGrade.startsWith('C')) {
+                            if (pts === '—') pts = 'Credit';
+                            if (!desc) desc = 'Credit';
+                        } else if (uGrade.startsWith('P')) {
+                            if (pts === '—') pts = 'Pass';
+                            if (!desc) desc = 'Pass';
+                        }
+                    }
+
                     subjectsTbody.innerHTML += `<tr>
-                        <td class="px-3 py-1.5 font-bold text-slate-800">${escapeHtml(subj)}</td>
+                        <td class="px-3 py-1.5 font-bold text-slate-800">${escapeHtml(sName)}</td>
                         <td class="px-3 py-1.5 text-center font-black text-brand-700">${escapeHtml(grade)}</td>
                         <td class="px-3 py-1.5 text-center font-mono font-bold text-slate-600">${escapeHtml(pts)}</td>
                         <td class="px-3 py-1.5 text-slate-600">${escapeHtml(desc)}</td>
@@ -1558,14 +1659,19 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
 
             // S6 transfer details
             const s6Block = document.getElementById('modalS6TransferDetails');
-            if (app.class_of_entry === 'S6' && (app.s5_former_school || app.s5_passes)) {
+            const s6School = app.s6_former_school || app.s5_former_school || (parsed && parsed.s6_details ? parsed.s6_details.s5_school : '');
+            const s6Passes = app.s6_principal_passes || app.s5_passes || (parsed && parsed.s6_details ? parsed.s6_details.s5_principal_passes : '');
+            const s6Reason = app.transfer_reason || (parsed && parsed.s6_details ? parsed.s6_details.transfer_reason : '');
+            const s6Report = app.s6_report_file || app.s5_report_card || (parsed && parsed.s6_details ? parsed.s6_details.report_file : '');
+
+            if (app.class_of_entry === 'S6' && (s6School || s6Passes || s6Report)) {
                 s6Block.classList.remove('hidden');
-                document.getElementById('modalS5FormerSchool').textContent = app.s5_former_school || '—';
-                document.getElementById('modalS5Passes').textContent = app.s5_passes || '—';
-                document.getElementById('modalS5Reason').textContent = app.transfer_reason || '—';
+                document.getElementById('modalS5FormerSchool').textContent = s6School || '—';
+                document.getElementById('modalS5Passes').textContent = s6Passes || '—';
+                document.getElementById('modalS5Reason').textContent = s6Reason || '—';
                 const s6Rep = document.getElementById('modalS6ReportLink');
-                if (app.s5_report_card) {
-                    s6Rep.innerHTML = `<a href="../${escapeHtml(app.s5_report_card.replace(/^\.?\//, ''))}" target="_blank" class="text-emerald-700 font-bold hover:underline"><i class="fa-solid fa-file-lines"></i> View S5 Report Card</a>`;
+                if (s6Report) {
+                    s6Rep.innerHTML = `<a href="../${escapeHtml(s6Report.replace(/^\.?\//, ''))}" target="_blank" class="text-emerald-700 font-bold hover:underline"><i class="fa-solid fa-file-lines"></i> View Transfer Report Card</a>`;
                 } else {
                     s6Rep.innerHTML = '';
                 }
@@ -1662,43 +1768,102 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         document.getElementById('nlscClassComb').textContent = (data.class_of_entry || 'S5') + (data.combination ? ' · ' + data.combination : '');
         document.getElementById('nlscIndexNumber').textContent = data.index_number || '—';
         document.getElementById('nlscFormerSchool').textContent = data.former_school || '—';
-        document.getElementById('nlscResultLevel').textContent = data.uce_result_level || '—';
-        document.getElementById('nlscProjectWork').textContent = data.project_score || data.project_work || '—';
-        document.getElementById('nlscCompetencyScore').textContent = data.nlsc_competency_score || '0';
+
+        let rawJson = data.uce_subjects_json || data.uce_scores;
+        let parsed = null;
+        if (rawJson) {
+            try {
+                parsed = (typeof rawJson === 'string') ? JSON.parse(rawJson) : rawJson;
+            } catch(e) {}
+        }
+
+        let resLevel = data.division || data.uce_result_level || (data.uce_division ? 'Div ' + data.uce_division : '');
+        if (parsed && parsed.result_level) resLevel = parsed.result_level;
+        document.getElementById('nlscResultLevel').textContent = resLevel || '—';
+
+        let projWork = data.uce_project_work || data.project_score || data.project_work || '';
+        if (parsed && parsed.project_work) projWork = parsed.project_work;
+        document.getElementById('nlscProjectWork').textContent = projWork ? ('Grade ' + projWork) : '—';
+
+        let compScore = data.nlsc_competency_score || (data.aggregates ? (data.aggregates + ' pts') : '0');
+        if (parsed && parsed.competency_score) compScore = parsed.competency_score + ' pts';
+        document.getElementById('nlscCompetencyScore').textContent = compScore;
 
         const slipLink = document.getElementById('nlscResultSlipLink');
-        if (data.result_slip) {
-            slipLink.innerHTML = `<a href="../${escapeHtml(data.result_slip.replace(/^\.?\//, ''))}" target="_blank" class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold hover:bg-brand-100 transition"><i class="fa-solid fa-file-pdf"></i> Result Slip</a>`;
+        const sSlip = data.result_slip || data.result_slip_file || '';
+        if (sSlip) {
+            slipLink.innerHTML = `<a href="../${escapeHtml(sSlip.replace(/^\.?\//, ''))}" target="_blank" class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold hover:bg-brand-100 transition"><i class="fa-solid fa-file-pdf"></i> Result Slip</a>`;
         } else {
             slipLink.innerHTML = '';
         }
 
         const tbody = document.getElementById('nlscSubjectsTbody');
         tbody.innerHTML = '';
-        let scores = null;
-        try {
-            if (data.uce_scores) scores = typeof data.uce_scores === 'string' ? JSON.parse(data.uce_scores) : data.uce_scores;
-        } catch(e){}
 
-        if (scores && typeof scores === 'object') {
-            for (const [subj, val] of Object.entries(scores)) {
-                let grade = '—', pts = '—', desc = 'Basic Competence';
+        let subjectsMap = {};
+        if (parsed) {
+            if (parsed.subjects && typeof parsed.subjects === 'object') {
+                subjectsMap = parsed.subjects;
+            } else if (typeof parsed === 'object') {
+                for (const [k, v] of Object.entries(parsed)) {
+                    if (['curriculum', 'result_level', 'project_work', 'competency_score', 'counts', 's6_details'].includes(k)) continue;
+                    subjectsMap[k] = v;
+                }
+            }
+        }
+
+        const subjKeys = Object.keys(subjectsMap);
+        if (subjKeys.length > 0) {
+            for (const [code, val] of Object.entries(subjectsMap)) {
+                let sName = code;
+                let grade = '—';
+                let pts = '—';
+                let desc = 'Basic Competence';
+
                 if (typeof val === 'object' && val !== null) {
+                    sName = val.name ? (val.name + ' (' + code + ')') : code;
                     grade = val.grade || val.score || '—';
-                    pts = val.points || '—';
+                    pts = (val.points !== undefined && val.points !== null) ? val.points : '—';
                     desc = val.descriptor || '';
                 } else {
                     grade = String(val);
                 }
+
+                if (pts === '—' || !desc) {
+                    const uGrade = grade.trim().toUpperCase();
+                    if (uGrade === 'A') {
+                        if (pts === '—') pts = '3';
+                        if (!desc) desc = 'High Competence (Outstanding)';
+                    } else if (uGrade === 'B') {
+                        if (pts === '—') pts = '2';
+                        if (!desc) desc = 'Moderate Competence (Proficient)';
+                    } else if (uGrade === 'C') {
+                        if (pts === '—') pts = '1';
+                        if (!desc) desc = 'Basic Competence (Achieved)';
+                    } else if (uGrade === 'D' || uGrade === 'E') {
+                        if (pts === '—') pts = '0';
+                        if (!desc) desc = 'Developing (Needs Support)';
+                    } else if (uGrade.startsWith('D1') || uGrade.startsWith('D2')) {
+                        if (pts === '—') pts = 'Distinction';
+                        if (!desc) desc = 'Distinction';
+                    } else if (uGrade.startsWith('C')) {
+                        if (pts === '—') pts = 'Credit';
+                        if (!desc) desc = 'Credit';
+                    } else if (uGrade.startsWith('P')) {
+                        if (pts === '—') pts = 'Pass';
+                        if (!desc) desc = 'Pass';
+                    }
+                }
+
                 tbody.innerHTML += `<tr>
-                    <td class="px-3.5 py-2 font-bold text-slate-800">${escapeHtml(subj)}</td>
+                    <td class="px-3.5 py-2 font-bold text-slate-800">${escapeHtml(sName)}</td>
                     <td class="px-3.5 py-2 text-center font-black text-brand-700">${escapeHtml(grade)}</td>
                     <td class="px-3.5 py-2 text-center font-mono font-bold text-slate-700">${escapeHtml(pts)}</td>
                     <td class="px-3.5 py-2 text-slate-600">${escapeHtml(desc)}</td>
                 </tr>`;
             }
         } else {
-            tbody.innerHTML = '<tr><td colspan="4" class="px-3.5 py-4 text-center text-slate-400">No subject competencies found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="px-3.5 py-4 text-center text-slate-400 italic">No subject level scores recorded</td></tr>';
         }
 
         document.getElementById('nlscModal').classList.remove('hidden');

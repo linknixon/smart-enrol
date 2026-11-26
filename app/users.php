@@ -732,11 +732,6 @@ $isFormExpanded = ($editUser !== null || !empty($error));
                     </div>
                 </div>
 
-                <!-- Table View -->
-                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium">
-                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways
-                </div>
-
                 <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
                     <table id="staffTable" class="w-full text-left border-collapse min-w-[760px]">
                         <thead>

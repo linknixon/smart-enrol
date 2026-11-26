@@ -447,9 +447,6 @@ $count = count($applications);
                     <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded">Total Records: <?= $totalRecords ?></span>
                 </div>
 
-                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 py-1.5 px-4 bg-slate-50 border-b border-slate-100 font-medium no-print">
-                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table horizontally to view all report columns
-                </div>
                 <div class="w-full overflow-x-auto print:overflow-visible" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full min-w-[980px] print:min-w-0 print:table-fixed text-left border-collapse text-xs sm:text-sm">
                         <thead>
