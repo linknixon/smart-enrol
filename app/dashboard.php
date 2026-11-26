@@ -562,36 +562,37 @@ $msg = $_GET['msg'] ?? '';
             </div>
 
             <!-- Analysed Categorical Data Summary Panel -->
-            <div id="categoricalDataCard" class="bg-gradient-to-r from-slate-900 via-slate-800 to-brand-950 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-700/80 space-y-4">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <!-- Categorical Data Analysis Card (Bright, Elegant & Branded with School Colors) -->
+            <div id="categoricalDataCard" class="bg-white text-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                     <div class="flex items-center gap-2.5">
-                        <span class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center font-bold text-sm shrink-0 border border-gold-500/30">
+                        <span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center font-bold text-sm shrink-0 border border-gold-200">
                             <i class="fa-solid fa-layer-group"></i>
                         </span>
                         <div>
-                            <span id="catHeaderTitle" class="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                            <span id="catHeaderTitle" class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-900">
                                 Categorical Data Analysis · All Historical Years
                             </span>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Holistic demographic overview, intake distribution, and performance merit.</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Holistic demographic overview, intake distribution, and admissions merit.</p>
                         </div>
                     </div>
                     <!-- KPI Counter Chips in Responsive 2x2 Grid on Mobile -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs w-full lg:w-auto">
-                        <div class="px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 flex items-center gap-1.5 shadow-2xs">
-                            <span class="text-slate-400 text-[11px]">Total Applied:</span>
-                            <span id="catTotalApps" class="font-black text-amber-300 font-mono">0</span>
+                        <div class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1.5 shadow-2xs">
+                            <span class="text-slate-500 text-[11px] font-semibold">Total Applied:</span>
+                            <span id="catTotalApps" class="font-black text-slate-900 font-mono">0</span>
                         </div>
-                        <div class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300 shadow-2xs">
-                            <span class="text-[11px]">Admitted:</span>
-                            <span id="catTotalAdmitted" class="font-black font-mono">0</span>
+                        <div class="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-1.5 text-emerald-800 shadow-2xs">
+                            <span class="text-[11px] font-semibold">Admitted:</span>
+                            <span id="catTotalAdmitted" class="font-black font-mono text-emerald-700">0</span>
                         </div>
-                        <div class="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center gap-1.5 text-purple-300 shadow-2xs">
-                            <span class="text-[11px]">Enrolled:</span>
-                            <span id="catTotalEnrolled" class="font-black font-mono">0</span>
+                        <div class="px-2.5 py-1.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center gap-1.5 text-purple-800 shadow-2xs">
+                            <span class="text-[11px] font-semibold">Enrolled:</span>
+                            <span id="catTotalEnrolled" class="font-black font-mono text-purple-700">0</span>
                         </div>
-                        <div class="px-2.5 py-1 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center gap-1.5 text-gold-300 shadow-2xs">
-                            <span class="text-[11px]">Yield Rate:</span>
-                            <span id="catYieldRate" class="font-black font-mono">0%</span>
+                        <div class="px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-1.5 text-amber-800 shadow-2xs">
+                            <span class="text-[11px] font-semibold">Yield Rate:</span>
+                            <span id="catYieldRate" class="font-black font-mono text-amber-700">0%</span>
                         </div>
                     </div>
                 </div>
@@ -599,9 +600,9 @@ $msg = $_GET['msg'] ?? '';
                 <!-- 3 Categorical Breakdown Modules: Class Intake, Gender Balance, Academic Divisions -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <!-- 1. Class Intake Distribution -->
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
-                        <div class="flex items-center justify-between text-[11px] uppercase font-bold text-slate-300 tracking-wider">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-gold-400"></i> Class Intake (S1 - S6)</span>
+                    <div class="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between text-[11px] uppercase font-bold text-slate-700 tracking-wider">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-brand-700"></i> Class Intake (S1 - S6)</span>
                             <span class="text-[10px] text-slate-400 font-mono lowercase">total / admitted</span>
                         </div>
                         <div id="catClassPills" class="grid grid-cols-3 gap-1.5 text-center">
@@ -610,25 +611,25 @@ $msg = $_GET['msg'] ?? '';
                     </div>
 
                     <!-- 2. Gender Demographics -->
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
-                        <div class="flex items-center justify-between text-[11px] uppercase font-bold text-slate-300 tracking-wider">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-venus-mars text-sky-400"></i> Gender Distribution</span>
-                            <span id="catGenderRatioText" class="text-white font-mono text-[11px]">0F : 0M</span>
+                    <div class="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between text-[11px] uppercase font-bold text-slate-700 tracking-wider">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-venus-mars text-sky-600"></i> Gender Distribution</span>
+                            <span id="catGenderRatioText" class="text-slate-800 font-mono text-[11px] font-bold">0F : 0M</span>
                         </div>
-                        <div class="w-full bg-slate-700/80 rounded-full h-3 overflow-hidden flex shadow-inner">
+                        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden flex shadow-inner">
                             <div id="catGenderFemaleBar" class="bg-pink-500 h-3 transition-all duration-300" style="width: 50%" title="Female"></div>
                             <div id="catGenderMaleBar" class="bg-sky-500 h-3 transition-all duration-300" style="width: 50%" title="Male"></div>
                         </div>
                         <div class="flex justify-between items-center text-xs font-semibold pt-0.5">
-                            <span id="catFemaleCount" class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 text-[11px]">Female: 0 (0%)</span>
-                            <span id="catMaleCount" class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[11px]">Male: 0 (0%)</span>
+                            <span id="catFemaleCount" class="px-2 py-0.5 rounded-lg bg-pink-50 text-pink-700 border border-pink-200 text-[11px] font-bold">Female: 0 (0%)</span>
+                            <span id="catMaleCount" class="px-2 py-0.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold">Male: 0 (0%)</span>
                         </div>
                     </div>
 
                     <!-- 3. Academic Division / Standing Profile -->
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
-                        <div class="flex items-center justify-between text-[11px] uppercase font-bold text-slate-300 tracking-wider">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-award text-amber-400"></i> Performance Divisions</span>
+                    <div class="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between text-[11px] uppercase font-bold text-slate-700 tracking-wider">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-award text-amber-600"></i> Performance Divisions</span>
                             <span class="text-[10px] text-slate-400 font-mono lowercase">candidates</span>
                         </div>
                         <div id="catDivisionBadges" class="flex flex-wrap gap-1.5 text-xs">
@@ -638,10 +639,10 @@ $msg = $_GET['msg'] ?? '';
                 </div>
             </div>
 
-            <!-- Multi-Year Intake Trends & Academic Performance Charts Grid -->
+            <!-- Multi-Year Intake Trends Charts Grid (Bright, Branded, Clean) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 
-                <!-- Graph 1: Admitted Students by Year -->
+                <!-- Graph 1: Admitted Students (School Primary Emerald) -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                         <div class="flex items-center gap-2.5">
@@ -653,20 +654,20 @@ $msg = $_GET['msg'] ?? '';
                                 <p id="admittedGraphSubtitle" class="text-[10.5px] text-slate-400">Total offers extended vs. Years</p>
                             </div>
                         </div>
-                        <span id="admittedGraphBadge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                        <span id="admittedGraphBadge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
                             <?= end($admittedTrend) ?> Admitted (<?= end($yearLabels) ?>)
                         </span>
                     </div>
-                    <div class="pt-3 h-44 relative">
+                    <div class="pt-3 h-48 relative">
                         <canvas id="admittedChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Graph 2: Enrolled / Reported Students by Year -->
+                <!-- Graph 2: Enrolled / Reported Students (School Gold / Amber) -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                         <div class="flex items-center gap-2.5">
-                            <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold border border-purple-200">
+                            <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-bold border border-amber-200">
                                 <i class="fa-solid fa-user-check"></i>
                             </span>
                             <div>
@@ -674,59 +675,36 @@ $msg = $_GET['msg'] ?? '';
                                 <p id="enrolledGraphSubtitle" class="text-[10.5px] text-slate-400">Physically reported & active vs. Years</p>
                             </div>
                         </div>
-                        <span id="enrolledGraphBadge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-900">
+                        <span id="enrolledGraphBadge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">
                             <?= end($enrolledTrend) ?> Enrolled (<?= end($yearLabels) ?>)
                         </span>
                     </div>
-                    <div class="pt-3 h-44 relative">
+                    <div class="pt-3 h-48 relative">
                         <canvas id="enrolledChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Graph 3: Rejected Students by Year -->
+                <!-- Graph 3: Application Decisions / Review -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                         <div class="flex items-center gap-2.5">
                             <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center text-sm font-bold border border-rose-200">
-                                <i class="fa-solid fa-circle-xmark"></i>
+                                <i class="fa-solid fa-chart-column"></i>
                             </span>
                             <div>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-tight">Rejected Applications</h3>
-                                <p id="rejectedGraphSubtitle" class="text-[10.5px] text-slate-400">Declined submissions vs. Years</p>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-tight">Application Decisions</h3>
+                                <p id="rejectedGraphSubtitle" class="text-[10.5px] text-slate-400">Status breakdown vs. Years</p>
                             </div>
                         </div>
-                        <span id="rejectedGraphBadge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">
+                        <span id="rejectedGraphBadge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-200">
                             <?= end($rejectedTrend) ?> Declined (<?= end($yearLabels) ?>)
                         </span>
                     </div>
-                    <div class="pt-3 h-44 relative">
+                    <div class="pt-3 h-48 relative">
                         <canvas id="rejectedChart"></canvas>
                     </div>
                 </div>
 
-            </div>
-
-            <!-- Academic Performance Trend Card -->
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-100">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center text-sm font-bold border border-gold-200">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </span>
-                        <div>
-                            <h3 id="academicGraphTitle" class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-tight">Academic Performance Trends Across Years</h3>
-                            <p id="academicGraphSubtitle" class="text-[10.5px] text-slate-400">Mean UNEB Aggregates of Applicants (Lower score = Higher Distinction standing in Uganda)</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 text-xs">
-                        <span class="inline-flex items-center gap-1.5 font-bold text-slate-600">
-                            <span class="w-3 h-3 rounded-full bg-gold-500 inline-block"></span> Mean Score Standing
-                        </span>
-                    </div>
-                </div>
-                <div class="pt-3 h-44 relative">
-                    <canvas id="academicPerformanceChart"></canvas>
-                </div>
             </div>
 
         </div>
@@ -780,12 +758,10 @@ $msg = $_GET['msg'] ?? '';
     const multiYearAdmitted = <?= json_encode($admittedTrend) ?>;
     const multiYearEnrolled = <?= json_encode($enrolledTrend) ?>;
     const multiYearRejected = <?= json_encode($rejectedTrend) ?>;
-    const multiYearAcademic = <?= json_encode($academicTrend) ?>;
 
     let admittedChartInstance = null;
     let enrolledChartInstance = null;
     let rejectedChartInstance = null;
-    let academicChartInstance = null;
 
     const commonBarOptions = {
         responsive: true,
@@ -793,21 +769,26 @@ $msg = $_GET['msg'] ?? '';
         plugins: {
             legend: { display: false },
             tooltip: {
-                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                padding: 9,
-                cornerRadius: 8,
+                backgroundColor: '#ffffff',
+                titleColor: '#0f172a',
+                bodyColor: '#334155',
+                borderColor: '#e2e8f0',
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 10,
+                boxPadding: 4,
                 titleFont: { size: 11, weight: 'bold' },
-                bodyFont: { size: 10.5 }
+                bodyFont: { size: 11 }
             }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { precision: 0, font: { size: 9.5 } },
-                grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                ticks: { precision: 0, font: { size: 10, weight: '600' }, color: '#64748b' },
+                grid: { color: 'rgba(241, 245, 249, 1)' }
             },
             x: {
-                ticks: { font: { size: 10, weight: 'bold' } },
+                ticks: { font: { size: 10.5, weight: 'bold' }, color: '#475569' },
                 grid: { display: false }
             }
         }
@@ -840,17 +821,17 @@ $msg = $_GET['msg'] ?? '';
             yieldEl.textContent = (cat.enrollment_rate || 0) + '%';
         }
 
-        // 3. Update Class Intake Pills (Detailed & High Contrast)
+        // 3. Update Class Intake Pills (Bright, School-Branded)
         const classPillsEl = document.getElementById('catClassPills');
         if (classPillsEl) {
             const classes = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
             const classCounts = cat.classes || {};
             const admCounts = cat.admitted_by_class || {};
             classPillsEl.innerHTML = classes.map(c => `
-                <div class="p-2 bg-slate-900/90 rounded-xl border border-slate-700/80 text-center shadow-xs">
-                    <span class="block text-[10.5px] font-black text-amber-300 uppercase">${c}</span>
-                    <span class="block text-sm font-black text-white leading-tight mt-0.5">${classCounts[c] || 0}</span>
-                    <span class="block text-[9.5px] text-emerald-400 font-bold mt-0.5">${admCounts[c] || 0} adm</span>
+                <div class="p-2 bg-white rounded-xl border border-slate-200 text-center shadow-2xs">
+                    <span class="block text-[10.5px] font-black text-brand-700 uppercase">${c}</span>
+                    <span class="block text-sm font-black text-slate-800 leading-tight mt-0.5">${classCounts[c] || 0}</span>
+                    <span class="block text-[9.5px] text-emerald-600 font-bold mt-0.5">${admCounts[c] || 0} adm</span>
                 </div>
             `).join('');
         }
@@ -876,21 +857,21 @@ $msg = $_GET['msg'] ?? '';
         if (fCount) fCount.textContent = `Female: ${gender.Female || 0} (${fPercent}%)`;
         if (mCount) mCount.textContent = `Male: ${gender.Male || 0} (${mPercent}%)`;
 
-        // 5. Update Academic Divisions
+        // 5. Update Academic Divisions (Light, Clear Badges)
         const divContainer = document.getElementById('catDivisionBadges');
         if (divContainer) {
             const divs = cat.divisions || {};
             const divList = [
-                { key: 'Division 1', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-                { key: 'Division 2', color: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
-                { key: 'Division 3', color: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-                { key: 'Division 4', color: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
-                { key: 'Division U', color: 'bg-rose-500/20 text-rose-300 border-rose-500/40' }
+                { key: 'Division 1', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+                { key: 'Division 2', color: 'bg-sky-50 text-sky-800 border-sky-200' },
+                { key: 'Division 3', color: 'bg-amber-50 text-amber-800 border-amber-200' },
+                { key: 'Division 4', color: 'bg-orange-50 text-orange-800 border-orange-200' },
+                { key: 'Division U', color: 'bg-rose-50 text-rose-800 border-rose-200' }
             ];
             divContainer.innerHTML = divList.map(d => `
                 <span class="px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 ${d.color} shadow-2xs">
                     <span>${d.key}:</span>
-                    <strong class="font-mono text-white">${divs[d.key] || 0}</strong>
+                    <strong class="font-mono text-slate-900">${divs[d.key] || 0}</strong>
                 </span>
             `).join('');
         }
@@ -910,10 +891,8 @@ $msg = $_GET['msg'] ?? '';
         const enrSub = document.getElementById('enrolledGraphSubtitle');
         const rejBadge = document.getElementById('rejectedGraphBadge');
         const rejSub = document.getElementById('rejectedGraphSubtitle');
-        const acTitle = document.getElementById('academicGraphTitle');
-        const acSub = document.getElementById('academicGraphSubtitle');
 
-        let admLabels, admValues, enrLabels, enrValues, rejLabels, rejValues, acLabels, acValues;
+        let admLabels, admValues, enrLabels, enrValues, rejLabels, rejValues;
 
         if (isAll) {
             admLabels = multiYearLabels;
@@ -930,16 +909,10 @@ $msg = $_GET['msg'] ?? '';
             rejValues = multiYearRejected;
             if (rejBadge) rejBadge.textContent = (multiYearRejected[multiYearRejected.length - 1] || 0) + ' Declined (Latest)';
             if (rejSub) rejSub.textContent = 'Declined submissions vs. Years';
-
-            acLabels = multiYearLabels;
-            acValues = multiYearAcademic;
-            if (acTitle) acTitle.textContent = 'Academic Performance Trends Across Years';
-            if (acSub) acSub.textContent = 'Mean UNEB Aggregates of Applicants (Lower score = Higher Distinction standing in Uganda)';
         } else {
             // Specific Year: Categorical Breakdown by Class
             const admByClass = cat.admitted_by_class || {};
             const enrByClass = cat.enrolled_by_class || {};
-            const avgByClass = cat.avg_aggs_by_class || {};
 
             admLabels = classes;
             admValues = classes.map(c => admByClass[c] || 0);
@@ -956,15 +929,9 @@ $msg = $_GET['msg'] ?? '';
             rejValues = [cat.admitted || 0, cat.enrolled || 0, cat.pending || 0, cat.rejected || 0];
             if (rejBadge) rejBadge.textContent = (cat.rejected || 0) + ' Rejected (' + year + ')';
             if (rejSub) rejSub.textContent = 'Application status breakdown in ' + year;
-
-            // Chart 4: Academic Performance by Class
-            acLabels = classes;
-            acValues = classes.map(c => avgByClass[c] || 0);
-            if (acTitle) acTitle.textContent = 'Class-by-Class Mean Aggregates (' + year + ')';
-            if (acSub) acSub.textContent = 'Average entry aggregates per class level in ' + year + ' (Lower score = Higher Distinction standing)';
         }
 
-        // 1. Admitted Chart (Emerald)
+        // 1. Admitted Chart (School Primary Emerald)
         const ctxAdmitted = document.getElementById('admittedChart');
         if (ctxAdmitted) {
             if (admittedChartInstance) admittedChartInstance.destroy();
@@ -976,6 +943,8 @@ $msg = $_GET['msg'] ?? '';
                         label: isAll ? 'Admitted Students' : 'Admitted (' + year + ')',
                         data: admValues,
                         backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: 'rgba(5, 150, 105, 1)',
+                        borderWidth: 1.5,
                         hoverBackgroundColor: 'rgba(5, 150, 105, 1)',
                         borderRadius: 6,
                         maxBarThickness: 32
@@ -985,7 +954,7 @@ $msg = $_GET['msg'] ?? '';
             });
         }
 
-        // 2. Enrolled Chart (Purple)
+        // 2. Enrolled Chart (School Accent Gold / Amber)
         const ctxEnrolled = document.getElementById('enrolledChart');
         if (ctxEnrolled) {
             if (enrolledChartInstance) enrolledChartInstance.destroy();
@@ -996,8 +965,10 @@ $msg = $_GET['msg'] ?? '';
                     datasets: [{
                         label: isAll ? 'Enrolled Students' : 'Enrolled (' + year + ')',
                         data: enrValues,
-                        backgroundColor: 'rgba(126, 34, 206, 0.85)',
-                        hoverBackgroundColor: 'rgba(107, 33, 168, 1)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                        borderColor: 'rgba(217, 119, 6, 1)',
+                        borderWidth: 1.5,
+                        hoverBackgroundColor: 'rgba(217, 119, 6, 1)',
                         borderRadius: 6,
                         maxBarThickness: 32
                     }]
@@ -1006,13 +977,16 @@ $msg = $_GET['msg'] ?? '';
             });
         }
 
-        // 3. Rejected / Status Decisions Chart
+        // 3. Rejected / Application Decisions Chart (Light & Branded)
         const ctxRejected = document.getElementById('rejectedChart');
         if (ctxRejected) {
             if (rejectedChartInstance) rejectedChartInstance.destroy();
             const colors = isAll 
                 ? 'rgba(244, 63, 94, 0.85)' 
-                : ['rgba(16, 185, 129, 0.85)', 'rgba(126, 34, 206, 0.85)', 'rgba(245, 158, 11, 0.85)', 'rgba(244, 63, 94, 0.85)'];
+                : ['rgba(16, 185, 129, 0.85)', 'rgba(245, 158, 11, 0.85)', 'rgba(56, 189, 248, 0.85)', 'rgba(244, 63, 94, 0.85)'];
+            const borderColors = isAll
+                ? 'rgba(225, 29, 72, 1)'
+                : ['rgba(5, 150, 105, 1)', 'rgba(217, 119, 6, 1)', 'rgba(14, 165, 233, 1)', 'rgba(225, 29, 72, 1)'];
             rejectedChartInstance = new Chart(ctxRejected, {
                 type: 'bar',
                 data: {
@@ -1021,52 +995,13 @@ $msg = $_GET['msg'] ?? '';
                         label: isAll ? 'Rejected Applications' : 'Candidates (' + year + ')',
                         data: rejValues,
                         backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 1.5,
                         borderRadius: 6,
                         maxBarThickness: 32
                     }]
                 },
                 options: commonBarOptions
-            });
-        }
-
-        // 4. Academic Performance Chart
-        const ctxAcademic = document.getElementById('academicPerformanceChart');
-        if (ctxAcademic) {
-            if (academicChartInstance) academicChartInstance.destroy();
-            academicChartInstance = new Chart(ctxAcademic, {
-                type: isAll ? 'line' : 'bar',
-                data: {
-                    labels: acLabels,
-                    datasets: [{
-                        label: 'Mean Aggregates',
-                        data: acValues,
-                        borderColor: 'rgba(217, 119, 6, 1)',
-                        backgroundColor: isAll ? 'rgba(217, 119, 6, 0.12)' : 'rgba(217, 119, 6, 0.85)',
-                        fill: isAll,
-                        tension: 0.3,
-                        pointRadius: isAll ? 5 : 0,
-                        pointHoverRadius: isAll ? 7 : 0,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: 'rgba(217, 119, 6, 1)',
-                        pointBorderWidth: 2.5,
-                        borderRadius: 6,
-                        maxBarThickness: 32
-                    }]
-                },
-                options: {
-                    ...commonBarOptions,
-                    scales: {
-                        ...commonBarOptions.scales,
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                font: { size: 9.5 },
-                                callback: function(val) { return val + ' Aggs'; }
-                            },
-                            grid: { color: 'rgba(226, 232, 240, 0.6)' }
-                        }
-                    }
-                }
             });
         }
     }
