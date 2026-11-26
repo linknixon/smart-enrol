@@ -11,4 +11,7 @@ Options +FollowSymLinks
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^admin/(.*)$ app/$1 [R=301,L]
+
+    # Intercept direct public access to confidential candidate uploads and enforce authentication
+    RewriteRule ^uploads/(results|parent_ids|documents)(/.*)?$ app/view_document.php?folder=$1&file=$2 [QSA,L]
 </IfModule>

@@ -1,0 +1,7 @@
+# Protect Parent/Guardian National IDs from direct unauthenticated public access
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ ../../app/view_document.php?folder=parent_ids&file=$1 [QSA,L]
+</IfModule>

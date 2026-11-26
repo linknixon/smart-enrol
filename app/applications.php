@@ -1725,7 +1725,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         const parentIdEl = document.getElementById('modalParentIdFile');
         const idFile = app.parent_id_file || app.parent_nin_file || '';
         if (idFile) {
-            parentIdEl.innerHTML = `<a href="../${escapeHtml(idFile.replace(/^\.?\//, ''))}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+            parentIdEl.innerHTML = `<a href="view_document.php?file=${encodeURIComponent(idFile)}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
                 <i class="fa-solid fa-id-card"></i> View National ID File
             </a>`;
         } else {
@@ -1739,7 +1739,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         const slipEl = document.getElementById('modalResultSlipLink');
         const slipFile = app.result_slip || app.result_slip_file || '';
         if (slipFile) {
-            slipEl.innerHTML = `<a href="../${escapeHtml(slipFile.replace(/^\.?\//, ''))}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+            slipEl.innerHTML = `<a href="view_document.php?file=${encodeURIComponent(slipFile)}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 hover:text-brand-900 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
                 <i class="fa-solid fa-file-pdf"></i> View Result Slip
             </a>`;
         } else {
@@ -1899,7 +1899,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                 document.getElementById('modalS5Reason').textContent = s6Reason || '—';
                 const s6Rep = document.getElementById('modalS6ReportLink');
                 if (s6Report) {
-                    s6Rep.innerHTML = `<a href="../${escapeHtml(s6Report.replace(/^\.?\//, ''))}" target="_blank" class="text-emerald-700 font-bold hover:underline"><i class="fa-solid fa-file-lines"></i> View Transfer Report Card</a>`;
+                    s6Rep.innerHTML = `<a href="view_document.php?file=${encodeURIComponent(s6Report)}" target="_blank" class="text-emerald-700 font-bold hover:underline"><i class="fa-solid fa-file-lines"></i> View Transfer Report Card</a>`;
                 } else {
                     s6Rep.innerHTML = '';
                 }
@@ -2026,7 +2026,7 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
         const slipLink = document.getElementById('nlscResultSlipLink');
         const sSlip = data.result_slip || data.result_slip_file || '';
         if (sSlip) {
-            slipLink.innerHTML = `<a href="../${escapeHtml(sSlip.replace(/^\.?\//, ''))}" target="_blank" class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold hover:bg-brand-100 transition"><i class="fa-solid fa-file-pdf"></i> Result Slip</a>`;
+            slipLink.innerHTML = `<a href="view_document.php?file=${encodeURIComponent(sSlip)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold hover:bg-brand-100 transition"><i class="fa-solid fa-file-pdf"></i> Result Slip</a>`;
         } else {
             slipLink.innerHTML = '';
         }

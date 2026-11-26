@@ -8,9 +8,20 @@ $logo_source        = getSchoolLogoSrc($pdo, '../');
 $school_website_url = getSchoolWebsiteUrl($pdo);
 $primary_color      = getPrimaryColor($pdo);
 
-// If already logged in, redirect straight to dashboard (unless explicitly requesting to switch accounts)
+// Safe return_to parameter handling for document review redirection
+$returnTo = '';
+$rawReturn = $_POST['return_to'] ?? ($_GET['return_to'] ?? '');
+if (!empty($rawReturn)) {
+    // Only allow internal relative paths or paths starting with view_document.php, applications.php, or /app/
+    if (preg_match('#^(/[a-zA-Z0-9_\.\-\?&=/]+|view_document\.php\?[a-zA-Z0-9_\.\-\?&=/%]+|applications\.php.*)$#', $rawReturn)) {
+        $returnTo = $rawReturn;
+    }
+}
+
+// If already logged in, redirect straight to return_to or dashboard (unless explicitly requesting to switch accounts)
 if (!empty($_SESSION['admin_logged_in']) && !isset($_GET['switch']) && !isset($_GET['logged_out'])) {
-    header("Location: dashboard.php");
+    $targetUrl = !empty($returnTo) ? $returnTo : 'dashboard.php';
+    header("Location: " . $targetUrl);
     exit;
 }
 
@@ -164,7 +175,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 session_write_close();
-                header("Location: dashboard.php");
+                $targetUrl = !empty($returnTo) ? $returnTo : 'dashboard.php';
+                header("Location: " . $targetUrl);
                 exit;
             }
         } else {
@@ -239,6 +251,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" autocomplete="off" class="space-y-4">
+            <?php if (!empty($returnTo)): ?>
+                <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo) ?>">
+            <?php endif; ?>
             <div>
                 <label class="block text-xs font-bold text-slate-600 uppercase mb-1.5">Username</label>
                 <div class="relative">

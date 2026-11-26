@@ -1,0 +1,8 @@
+# Protect sensitive candidate document uploads
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Route all requests to results, parent_ids, and documents through authentication gate
+    RewriteRule ^(results|parent_ids|documents)(/.*)?$ ../app/view_document.php?folder=$1&file=$2 [QSA,L]
+</IfModule>
