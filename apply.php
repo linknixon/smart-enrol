@@ -277,14 +277,99 @@ html, body {
 
             <!-- Fees Table Content (Collapsed by default) -->
             <div id="feesStructureContent" class="hidden mt-4 pt-4 border-t border-slate-100">
-                <div class="md:hidden flex items-center justify-end gap-1.5 text-[10.5px] text-slate-500 mb-1.5 font-medium">
-                    <i class="fa-solid fa-arrows-left-right text-brand-700"></i> Swipe table sideways to view all fees
+                <!-- Mobile Controls Header -->
+                <div class="md:hidden flex flex-col gap-3 mb-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            <i class="fa-solid fa-layer-group text-brand-700 mr-1"></i> Class Fees Breakdown
+                        </span>
+                        <button type="button" onclick="toggleMobileFeesView('applyFeesMobileCardView', 'applyFeesTableViewContainer', 'applyFeesViewToggleLabel', 'applyFeesViewToggleIcon')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition">
+                            <i class="fa-solid fa-table-list text-xs text-brand-700" id="applyFeesViewToggleIcon"></i>
+                            <span id="applyFeesViewToggleLabel">Table View</span>
+                        </button>
+                    </div>
+
+                    <!-- Class filter pill chips -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" style="-webkit-overflow-scrolling: touch;">
+                        <button type="button" onclick="filterFeesCards('all', this, 'fees-card-apply')" class="fees-filter-btn-apply px-3 py-1.5 rounded-xl bg-brand-700 text-white text-xs font-bold shadow-xs whitespace-nowrap transition">All Classes</button>
+                        <?php foreach ($feesMatrix['rows'] as $r): 
+                            $cId = preg_replace('/[^A-Za-z0-9]/', '', strtolower($r['class']));
+                        ?>
+                        <button type="button" onclick="filterFeesCards('<?= $cId ?>', this, 'fees-card-apply')" class="fees-filter-btn-apply px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold border border-slate-200 whitespace-nowrap transition"><?= htmlspecialchars($r['class']) ?></button>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs" style="-webkit-overflow-scrolling: touch;">
+
+                <!-- 1. Mobile Cards View (Visible by default on mobile, hidden on tablet/desktop) -->
+                <div id="applyFeesMobileCardView" class="block md:hidden space-y-4">
+                    <?php foreach ($feesMatrix['rows'] as $row): 
+                        $cId = preg_replace('/[^A-Za-z0-9]/', '', strtolower($row['class']));
+                        $cCode = strtoupper(str_replace(['.', ' ', '-'], '', $row['class']));
+                        $isAlevel = in_array($cCode, ['S5', 'S6']);
+                    ?>
+                    <div class="fees-card-apply bg-white rounded-2xl border-2 border-slate-200/90 shadow-sm overflow-hidden transition-all duration-200" data-class="<?= $cId ?>">
+                        <!-- Card Header -->
+                        <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-xl bg-brand-700 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                                    <?= htmlspecialchars($row['class']) ?>
+                                </span>
+                                <div>
+                                    <h4 class="font-black text-slate-900 text-xs leading-tight">
+                                        Senior <?= substr($cCode, 1) ?> (<?= htmlspecialchars($row['class']) ?>)
+                                    </h4>
+                                    <span class="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <?= $isAlevel ? 'Advanced Level (A-Level)' : 'Ordinary Level (O-Level)' ?>
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[9.5px] font-extrabold bg-brand-50 text-brand-800 border border-brand-200">
+                                Approved
+                            </span>
+                        </div>
+
+                        <!-- Fee Line Items -->
+                        <div class="p-3 space-y-1.5 text-xs">
+                            <?php foreach ($feesMatrix['columns'] as $col): 
+                                $val = trim($row[$col['id']] ?? '');
+                                if (empty($val) || $val === '-') continue;
+                            ?>
+                            <div class="flex items-center justify-between py-1 border-b border-slate-100 last:border-b-0 gap-2">
+                                <div class="min-w-0">
+                                    <span class="font-bold text-slate-800 text-[11px] block leading-tight">
+                                        <?= htmlspecialchars($col['label']) ?>
+                                    </span>
+                                    <?php if (!empty($col['sub'])): ?>
+                                        <span class="text-[9.5px] text-slate-400 lowercase font-medium">
+                                            <?= htmlspecialchars($col['sub']) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="font-mono font-extrabold text-slate-900 text-xs bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200 tabular-nums shrink-0">
+                                    <?= htmlspecialchars($val) ?>
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <!-- Card Action Footer -->
+                        <div class="p-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-medium text-slate-500">Boarding &amp; Tuition Structure</span>
+                            <button type="button" onclick="selectClassFromFees('<?= $cCode ?>')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-[11px] font-bold shadow-xs transition">
+                                <span>Select <?= htmlspecialchars($row['class']) ?></span>
+                                <i class="fa-solid fa-arrow-down text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- 2. Full Table View (Visible on tablet/desktop, togglable on mobile) -->
+                <div id="applyFeesTableViewContainer" class="hidden md:block overflow-x-auto rounded-xl border border-slate-300 shadow-xs" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full text-xs text-left border-collapse min-w-[720px]">
                         <thead>
                             <tr class="bg-slate-100/80 border-b border-slate-300 text-slate-800 text-[11px] font-extrabold uppercase">
-                                <th class="p-3 border-r border-slate-300 text-center w-20">CLASS</th>
+                                <th class="p-3 border-r border-slate-300 text-center w-20 sticky left-0 bg-slate-100 z-10 shadow-xs">CLASS</th>
                                 <?php foreach ($feesMatrix['columns'] as $col): ?>
                                 <th class="p-3 border-r border-slate-300 text-center last:border-r-0">
                                     <div class="font-extrabold text-slate-900 leading-tight"><?= htmlspecialchars($col['label']) ?></div>
@@ -298,7 +383,7 @@ html, body {
                         <tbody class="divide-y divide-slate-200 bg-white font-mono text-[11px]">
                             <?php foreach ($feesMatrix['rows'] as $row): ?>
                             <tr class="hover:bg-brand-50/40 transition">
-                                <td class="p-3 border-r border-slate-300 font-bold text-center text-slate-900 bg-slate-50/60 font-sans">
+                                <td class="p-3 border-r border-slate-300 font-bold text-center text-slate-900 bg-slate-50/95 font-sans sticky left-0 z-10 shadow-xs">
                                     <?= htmlspecialchars($row['class']) ?>
                                 </td>
                                 <?php foreach ($feesMatrix['columns'] as $col): 
@@ -2166,6 +2251,59 @@ html, body {
     function closeLegalModal(modalId) {
         const m = document.getElementById(modalId);
         if (m) m.classList.add('hidden');
+    }
+
+    // Fees structure mobile helpers
+    function filterFeesCards(cls, btn, cardClass) {
+        const cards = document.querySelectorAll('.' + cardClass);
+        cards.forEach(card => {
+            if (cls === 'all' || card.getAttribute('data-class') === cls) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+        const btns = btn.parentElement.querySelectorAll('button');
+        btns.forEach(b => {
+            b.classList.remove('bg-brand-700', 'text-white', 'shadow-xs');
+            b.classList.add('bg-slate-100', 'text-slate-700', 'border', 'border-slate-200');
+        });
+        btn.classList.add('bg-brand-700', 'text-white', 'shadow-xs');
+        btn.classList.remove('bg-slate-100', 'text-slate-700', 'border', 'border-slate-200');
+    }
+
+    function toggleMobileFeesView(cardContainerId, tableContainerId, labelId, iconId) {
+        const cardView = document.getElementById(cardContainerId);
+        const tableView = document.getElementById(tableContainerId);
+        const label = document.getElementById(labelId);
+        const icon = document.getElementById(iconId);
+        if (!cardView || !tableView) return;
+
+        if (tableView.classList.contains('hidden')) {
+            tableView.classList.remove('hidden');
+            cardView.classList.add('hidden');
+            if (label) label.textContent = 'Cards View';
+            if (icon) icon.className = 'fa-solid fa-id-card text-xs text-brand-700';
+        } else {
+            tableView.classList.add('hidden');
+            cardView.classList.remove('hidden');
+            if (label) label.textContent = 'Table View';
+            if (icon) icon.className = 'fa-solid fa-table-list text-xs text-brand-700';
+        }
+    }
+
+    function selectClassFromFees(cCode) {
+        const sel = document.getElementById('classOfEntry');
+        if (sel) {
+            sel.value = cCode;
+            if (typeof updateClassVisibility === 'function') {
+                updateClassVisibility();
+            }
+        }
+        const el = document.getElementById('classSelectionCard') || document.getElementById('admissionForm') || sel;
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
     </script>
 
