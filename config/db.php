@@ -1595,11 +1595,15 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
 
         $orig = getStudentPhotoFilePath($photoPath, $rootDir);
         if (!$orig || !file_exists($orig)) {
+            if (!function_exists('imagecreatetruecolor')) {
+                return null;
+            }
             // Generate clean circular silhouette avatar placeholder
             $placeholderFile = $cacheDir . '/placeholder_circle.png';
             if (!file_exists($placeholderFile)) {
                 $pSize = 300;
-                $pDst = imagecreatetruecolor($pSize, $pSize);
+                $pDst = @imagecreatetruecolor($pSize, $pSize);
+                if (!$pDst) return null;
                 imagealphablending($pDst, true);
                 imagesavealpha($pDst, true);
                 $trans = imagecolorallocatealpha($pDst, 0, 0, 0, 127);
@@ -1617,8 +1621,19 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
                 imagefilledarc($pDst, (int)$pRadius, (int)($pRadius * 1.55), 140, 120, 180, 360, $pHead, IMG_ARC_PIE);
 
                 @imagepng($pDst, $placeholderFile, 6);
+                imagedestroy($pDst);
             }
             return file_exists($placeholderFile) ? $placeholderFile : null;
+        }
+
+        // Validate that original is a genuine image
+        $info = @getimagesize($orig);
+        if (!$info || empty($info['mime'])) {
+            return null;
+        }
+
+        if (!function_exists('imagecreatetruecolor')) {
+            return in_array($info['mime'], ['image/jpeg', 'image/png', 'image/gif']) ? $orig : null;
         }
 
         $cacheFile = $cacheDir . '/circle_' . md5($orig . filemtime($orig)) . '.png';
@@ -1627,8 +1642,6 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
         }
 
         // Use GD to crop to circle with transparency
-        $info = @getimagesize($orig);
-        if (!$info) return $orig;
         $mime = $info['mime'] ?? '';
         $src = null;
         if ($mime === 'image/jpeg' || $mime === 'image/jpg') {
@@ -1640,7 +1653,9 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
         } elseif ($mime === 'image/gif') {
             $src = @imagecreatefromgif($orig);
         }
-        if (!$src) return $orig;
+        if (!$src) {
+            return in_array($mime, ['image/jpeg', 'image/png', 'image/gif']) ? $orig : null;
+        }
 
         $sw = imagesx($src);
         $sh = imagesy($src);
@@ -1649,13 +1664,22 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
         $srcY = (int)(($sh - $size) / 2);
 
         $targetSize = 350;
-        $dst = imagecreatetruecolor($targetSize, $targetSize);
+        $dst = @imagecreatetruecolor($targetSize, $targetSize);
+        if (!$dst) {
+            imagedestroy($src);
+            return in_array($mime, ['image/jpeg', 'image/png', 'image/gif']) ? $orig : null;
+        }
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
         $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
         imagefill($dst, 0, 0, $transparent);
 
-        $square = imagecreatetruecolor($targetSize, $targetSize);
+        $square = @imagecreatetruecolor($targetSize, $targetSize);
+        if (!$square) {
+            imagedestroy($src);
+            imagedestroy($dst);
+            return in_array($mime, ['image/jpeg', 'image/png', 'image/gif']) ? $orig : null;
+        }
         imagecopyresampled($square, $src, 0, 0, $srcX, $srcY, $targetSize, $targetSize, $size, $size);
 
         $radius = $targetSize / 2;
@@ -1683,8 +1707,15 @@ if (!function_exists('getCircularStudentPhotoFilePath')) {
         }
 
         @imagepng($dst, $cacheFile, 6);
+        imagedestroy($src);
+        imagedestroy($square);
+        imagedestroy($dst);
 
-        return file_exists($cacheFile) ? $cacheFile : $orig;
+        if (file_exists($cacheFile)) {
+            return $cacheFile;
+        }
+
+        return in_array($mime, ['image/jpeg', 'image/png', 'image/gif']) ? $orig : null;
     }
 }
 

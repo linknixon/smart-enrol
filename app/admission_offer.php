@@ -3,6 +3,16 @@
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
+// Start output buffering immediately to catch any stray output before PDF generation
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
+// Enable TCPDF exceptions so errors are catchable rather than abruptly dying with die()
+if (!defined('K_TCPDF_THROW_EXCEPTION_ERROR')) {
+    define('K_TCPDF_THROW_EXCEPTION_ERROR', true);
+}
+
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../form-one/tcpdf/tcpdf.php';
 
@@ -12,6 +22,7 @@ $isDirectExecution = (basename($_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['PHP_SEL
 
 if ($isDirectExecution) {
     if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+        while (ob_get_level() > 0) ob_end_clean();
         die('Invalid request: Missing application identifier.');
     }
 
@@ -21,6 +32,7 @@ if ($isDirectExecution) {
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$student) {
+        while (ob_get_level() > 0) ob_end_clean();
         die('Student application record not found.');
     }
 
@@ -31,7 +43,7 @@ if ($isDirectExecution) {
 
     // The official admission letter should ONLY be generated and available after a student has officially been admitted
     if ((!$isAdmitted || !$isOfficiallyAdmitted) && !$isAdmin) {
-        if (ob_get_length()) ob_end_clean();
+        while (ob_get_level() > 0) ob_end_clean();
         $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
         $school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
         $school_logo       = getSchoolLogoSrc($pdo, '../');
@@ -117,7 +129,75 @@ if ($isDirectExecution) {
         exit;
     }
 
-    generateAdmissionOfferPdf($pdo, $student, 'I');
+    try {
+        generateAdmissionOfferPdf($pdo, $student, 'I');
+    } catch (Throwable $e) {
+        error_log("Admission offer PDF generation error for student ID {$id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+        $school_logo       = getSchoolLogoSrc($pdo, '../');
+        $studentFullName   = strtoupper(trim(($student['surname'] ?? '') . ' ' . ($student['firstname'] ?? '') . ' ' . ($student['othernames'] ?? '')));
+        $refNumber         = getAdmissionNumber($student, $pdo);
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admission Letter - <?= htmlspecialchars($studentFullName) ?> | <?= htmlspecialchars($school_short_name) ?></title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../css/fontawesome/css/all.min.css">
+        <?= renderThemeConfig($pdo) ?>
+        </head>
+        <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 text-center space-y-4">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 border-2 border-gold-500/30 shadow-md mx-auto flex items-center justify-center">
+                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='../images/logo_default.png';">
+                </div>
+                
+                <div class="space-y-1">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border bg-amber-100 text-amber-900 border-amber-300">
+                        <i class="fa-solid fa-clock text-amber-600"></i> Admission Letter Processing
+                    </span>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight pt-2">Official Document Notice</h2>
+                    <p class="text-xs text-slate-500">Candidate: <strong><?= htmlspecialchars($studentFullName) ?></strong> (Ref: <span class="font-mono"><?= htmlspecialchars($refNumber) ?></span>)</p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left text-xs text-amber-950 space-y-2">
+                    <div class="flex items-center gap-2 font-black text-amber-900">
+                        <i class="fa-solid fa-circle-exclamation text-amber-600 text-sm"></i>
+                        <span class="uppercase tracking-wider text-[11px]">Document Being Generated</span>
+                    </div>
+                    <p class="text-[11.5px] leading-relaxed">
+                        Your provisional admission letter is being compiled by the admissions registry. Please refresh this page shortly or track your application status online.
+                    </p>
+                </div>
+
+                <?php if ($isAdmin): ?>
+                <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-left text-[11px] font-mono text-rose-800 overflow-x-auto">
+                    <strong>Admin Diagnostic:</strong><br><?= htmlspecialchars($e->getMessage()) ?>
+                </div>
+                <?php endif; ?>
+
+                <div class="pt-2 flex flex-col gap-2">
+                    <a href="../track.php" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-xs">
+                        <i class="fa-solid fa-location-crosshairs text-xs"></i> Track Admission Status Online
+                    </a>
+                    <a href="../index.php" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-house text-xs"></i> Back to Homepage
+                    </a>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
 }
 
 /* ================= CORE ADMISSION OFFER PDF GENERATOR ================= */
@@ -164,11 +244,23 @@ $schoolRequirements = getSetting($pdo, 'school_requirements', '');
 
 // Resolve Head Teacher E-Signature (Direct local file path for TCPDF stability)
 $signaturePath = getSchoolSignatureFilePath($pdo, __DIR__ . '/..');
-$hasSignature = (!empty($signaturePath) && file_exists($signaturePath));
+$sigInfo = (!empty($signaturePath) && file_exists($signaturePath)) ? @getimagesize($signaturePath) : false;
+$hasSignature = ($sigInfo !== false && !empty($sigInfo[0]) && !empty($sigInfo[1]));
 
 // Resolve Circular Student Passport Photo (Direct local file path for TCPDF stability)
 $studentPhotoPath = getCircularStudentPhotoFilePath($student['passport_photo'] ?? '', __DIR__ . '/..');
-$hasStudentPhoto = (!empty($studentPhotoPath) && file_exists($studentPhotoPath));
+$studentPhotoSrc = '';
+$hasStudentPhoto = false;
+if (!empty($studentPhotoPath) && file_exists($studentPhotoPath)) {
+    $photoInfo = @getimagesize($studentPhotoPath);
+    if ($photoInfo !== false && !empty($photoInfo['mime']) && in_array($photoInfo['mime'], ['image/jpeg', 'image/png', 'image/gif'])) {
+        $rawPhoto = @file_get_contents($studentPhotoPath);
+        if ($rawPhoto !== false && strlen($rawPhoto) > 50) {
+            $studentPhotoSrc = 'data:' . $photoInfo['mime'] . ';base64,' . base64_encode($rawPhoto);
+            $hasStudentPhoto = true;
+        }
+    }
+}
 
 if (!function_exists('formatCombinationElective')) {
     function formatCombinationElective($combCode, $pdo) {
@@ -221,7 +313,13 @@ if (!function_exists('formatCombinationElective')) {
 }
 
 /* ================= STUDENT NUMBER & COMBINATION ================= */
-$class = $student['class_of_entry'];
+$classRaw = trim((string)($student['class_of_entry'] ?? 'S1'));
+$classNum = preg_replace('/[^\d]/', '', $classRaw);
+$class = !empty($classNum) ? ('S' . $classNum) : (strtoupper($classRaw) ?: 'S1');
+$cleanClass = strtoupper(str_replace(['.', ' ', '-'], '', $class));
+$classNameLong = "Senior " . (!empty($classNum) ? $classNum : substr($class, 1)) . " (" . $class . ")";
+$clsKey = strtolower($class); // 's1', 's2', 's3', 's4', 's5', 's6'
+
 $student_number = getAdmissionNumber($student, $pdo);
 $studentCombinationDisplay = '';
 $studentCombinationShort = '';
@@ -235,11 +333,7 @@ if (($class === 'S5' || $class === 'S6') && !empty($student['combination'])) {
 }
 
 /* ================= CLASS-SPECIFIC FEE STRUCTURE ================= */
-$classNameLong = "Senior " . substr($class, 1) . " (" . $class . ")";
-$clsKey = strtolower($class); // 's1', 's2', 's3', 's4', 's5', 's6'
-
 $feesMatrix = getFeesStructureMatrix($pdo);
-$cleanClass = strtoupper(str_replace(['.', ' ', '-'], '', $class));
 $matchedRow = null;
 if (!empty($feesMatrix['rows']) && is_array($feesMatrix['rows'])) {
     foreach ($feesMatrix['rows'] as $r) {
@@ -284,11 +378,14 @@ $pdf->AddPage();
 $hasLogo = false;
 $logoH = 19;
 if (!empty($logo_source) && file_exists($logo_source)) {
-    try {
-        $pdf->Image($logo_source, 88, 8, 34, $logoH, '', '', '', false, 300, '', false, false, 0, 'CM');
-        $hasLogo = true;
-    } catch (Exception $e) {
-        $hasLogo = false;
+    $logoInfo = @getimagesize($logo_source);
+    if ($logoInfo !== false && !empty($logoInfo[0]) && !empty($logoInfo[1])) {
+        try {
+            $pdf->Image($logo_source, 88, 8, 34, $logoH, '', '', '', false, 300, '', false, false, 0, 'CM');
+            $hasLogo = true;
+        } catch (Throwable $e) {
+            $hasLogo = false;
+        }
     }
 }
 
@@ -338,13 +435,13 @@ $pdf->SetXY(15, $contentY);
 // Academic credential label
 $academicCredential = '';
 if ($class === 'S1') {
-    $s1DivClean = formatDivision($student['division'] ?: 'N/A');
-    $academicCredential = 'Index No: ' . htmlspecialchars($student['index_number']) . ' (Agg: ' . htmlspecialchars($student['aggregates'] ?: 'N/A') . ', ' . htmlspecialchars($s1DivClean) . ')';
+    $s1DivClean = formatDivision($student['division'] ?? 'N/A');
+    $academicCredential = 'Index No: ' . htmlspecialchars((string)($student['index_number'] ?? 'N/A')) . ' (Agg: ' . htmlspecialchars((string)($student['aggregates'] ?? 'N/A')) . ', ' . htmlspecialchars($s1DivClean) . ')';
 } elseif ($class === 'S5' || $class === 'S6') {
     $s5ResClean = getS5OverallResult($student);
-    $academicCredential = 'Index No: ' . htmlspecialchars($student['index_number']) . (!empty($s5ResClean) && $s5ResClean !== '—' ? ' (' . htmlspecialchars($s5ResClean) . ')' : '');
+    $academicCredential = 'Index No: ' . htmlspecialchars((string)($student['index_number'] ?? 'N/A')) . (!empty($s5ResClean) && $s5ResClean !== '—' ? ' (' . htmlspecialchars($s5ResClean) . ')' : '');
 } else {
-    $academicCredential = 'Former School: ' . htmlspecialchars($student['former_school'] ?: 'N/A');
+    $academicCredential = 'Former School: ' . htmlspecialchars((string)($student['former_school'] ?? 'N/A'));
 }
 
 // Applicant salutation: Dear {Firstname, Second Name} (Applicant full name instead of Parent/Guardian)
@@ -420,7 +517,7 @@ $letterHtml = '<div style="font-family: \'trebuchetms\', sans-serif; font-size: 
         '<td width="29%"><strong>Student Code:</strong> ' . $student_number . '</td>' .
         '<td width="16%" rowspan="3" align="center" style="vertical-align: middle;">' .
             ($hasStudentPhoto 
-                ? '<img src="' . htmlspecialchars($studentPhotoPath) . '" width="54" height="54" />' 
+                ? '<img src="' . $studentPhotoSrc . '" width="54" height="54" />' 
                 : '<span style="font-size: 5.5pt; font-weight: bold; line-height: 1.2;">STUDENT<br>PASSPORT<br>PHOTO</span>') .
         '</td>' .
     '</tr>' .
@@ -498,7 +595,11 @@ $qrStyle = [
     'bgcolor' => false
 ];
 $qrLink = getBaseUrl($pdo) . '/app/admission_offer.php?id=' . (int)$student['id'];
-$pdf->write2DBarcode($qrLink, 'QRCODE,H', 15, $sigY + 0.5, 18, 18, $qrStyle, 'N');
+try {
+    $pdf->write2DBarcode($qrLink, 'QRCODE,H', 15, $sigY + 0.5, 18, 18, $qrStyle, 'N');
+} catch (Throwable $e) {
+    error_log("Admission offer barcode generation note: " . $e->getMessage());
+}
 
 // 2. Official Document Verification Text (Neatly aligned beside QR code)
 $pdf->SetXY(35.5, $sigY + 2);
@@ -522,7 +623,7 @@ $pdf->Cell(85, 4, 'Yours faithfully,', 0, 1, 'C');
 if ($hasSignature) {
     try {
         $pdf->Image($signaturePath, 137.5, $sigY + 4, 30, 11, '', '', '', false, 300, '', false, false, 0, 'CM');
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $pdf->Line(130, $sigY + 14, 170, $sigY + 14, ['width' => 0.3, 'color' => [0, 0, 0]]);
     }
 } else {
@@ -562,9 +663,12 @@ $pdf->Cell(180, 3.5, 'Official Admissions Packet   |   Verification Code: ' . $s
 if (!function_exists('renderEnclosureLetterhead')) {
     function renderEnclosureLetterhead($pdf, $school_name, $school_motto, $school_address, $school_phone, $school_email, $school_website, $hasLogo, $logo_source, $logoH, $studentFullName, $student_number, $classNameLong, $enclosureTitle, $academic_year) {
         if ($hasLogo && !empty($logo_source) && file_exists($logo_source)) {
-            try {
-                $pdf->Image($logo_source, 88, 8, 34, $logoH, '', '', '', false, 300, '', false, false, 0, 'CM');
-            } catch (Exception $e) {}
+            $logoInfo = @getimagesize($logo_source);
+            if ($logoInfo !== false && !empty($logoInfo[0]) && !empty($logoInfo[1])) {
+                try {
+                    $pdf->Image($logo_source, 88, 8, 34, $logoH, '', '', '', false, 300, '', false, false, 0, 'CM');
+                } catch (Throwable $e) {}
+            }
         }
         
         $headerY = $hasLogo ? (8 + $logoH + 1.5) : 10;
@@ -797,13 +901,14 @@ if ($isAdmitted || $isAdmin) {
 }
 
 /* ================= OUTPUT ================= */
-        $outFilename = ($isAdmitted ? 'Admission_Offer_' : 'Application_Receipt_') . $student_number . '.pdf';
+        $cleanStudentNum = preg_replace('/[^A-Za-z0-9_\.-]/', '_', (string)$student_number);
+        $outFilename = ($isAdmitted ? 'Admission_Offer_' : 'Application_Receipt_') . $cleanStudentNum . '.pdf';
 
         if ($outputMode === 'S') {
             return $pdf->Output($outFilename, 'S');
         }
 
-        if (ob_get_length()) {
+        while (ob_get_level() > 0) {
             ob_end_clean();
         }
         $pdf->Output($outFilename, 'I');
