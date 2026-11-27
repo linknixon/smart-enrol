@@ -274,11 +274,12 @@ foreach ($records as $r) {
 
     $academicInfo = htmlspecialchars($r['former_school'] ?? 'N/A');
     if ($r['class_of_entry'] === 'S1') {
-        $academicInfo .= '<br><span style="color:#64748b;">PLE Div: ' . htmlspecialchars($r['division'] ?? 'N/A') . '</span>';
+        $academicInfo .= '<br><span style="color:#64748b;">PLE ' . htmlspecialchars(formatDivision($r['division'] ?? 'N/A')) . '</span>';
     } elseif ($r['class_of_entry'] === 'S5' || $r['class_of_entry'] === 'S6') {
-        $academicInfo .= '<br><span style="color:' . $accentHex . '; font-weight:bold;">' . htmlspecialchars($r['combination'] ?? 'N/A') . ' (' . htmlspecialchars($r['division'] ?? '') . ')</span>';
+        $s5Res = getS5OverallResult($r);
+        $academicInfo .= '<br><span style="color:' . $accentHex . '; font-weight:bold;">' . htmlspecialchars($r['combination'] ?? 'N/A') . (!empty($s5Res) && $s5Res !== '—' ? ' (' . htmlspecialchars($s5Res) . ')' : '') . '</span>';
     } else {
-        $academicInfo .= '<br><span style="color:#64748b;">Last: ' . htmlspecialchars($r['division'] ?? 'N/A') . '</span>';
+        $academicInfo .= '<br><span style="color:#64748b;">Last: ' . htmlspecialchars(formatDivision($r['division'] ?? 'N/A')) . '</span>';
     }
 
     $parentInfo = '<strong>' . htmlspecialchars($r['parent_name'] ?? 'N/A') . '</strong><br><span style="color:#64748b;">' . htmlspecialchars($r['parent_phone'] ?? '') . '</span>';

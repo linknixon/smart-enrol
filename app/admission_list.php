@@ -150,7 +150,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
     $idx = 1;
     foreach ($allStudents as $s) {
-        $acad = ($s['class_of_entry'] === 'S1') ? ('PLE Div ' . ($s['division'] ?? '')) : (($s['class_of_entry'] === 'S5' || $s['class_of_entry'] === 'S6') ? (($s['combination'] ?? '') . ' (' . ($s['division'] ?? '') . ')') : ('Div ' . ($s['division'] ?? '')));
+        $acad = ($s['class_of_entry'] === 'S1') ? ('PLE ' . formatDivision($s['division'] ?? '')) : (($s['class_of_entry'] === 'S5' || $s['class_of_entry'] === 'S6') ? (($s['combination'] ?? '') . ' (' . getS5OverallResult($s) . ')') : formatDivision($s['division'] ?? ''));
         fputcsv($output, [
             $idx++,
             getAdmissionNumber($s),
@@ -483,7 +483,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                 $serialNo = $offset + $idx;
                                 $sClass = $s['class_of_entry'];
                                 $admNum = getAdmissionNumber($s);
-                                $acad = ($sClass === 'S1') ? ('PLE Div ' . ($s['division'] ?? 'N/A')) : (($sClass === 'S5' || $sClass === 'S6') ? (($s['combination'] ?? 'N/A') . ' (' . ($s['division'] ?? '') . ')') : ('Div ' . ($s['division'] ?? 'N/A')));
+                                $acad = ($sClass === 'S1') ? ('PLE ' . formatDivision($s['division'] ?? 'N/A')) : (($sClass === 'S5' || $sClass === 'S6') ? (($s['combination'] ?? 'N/A') . ' (' . getS5OverallResult($s) . ')') : formatDivision($s['division'] ?? 'N/A'));
                             ?>
                             <tr class="hover:bg-slate-50 transition duration-150">
                                 <td class="px-3 py-3 text-center font-bold text-slate-400 font-mono print:text-black"><?= $serialNo ?></td>

@@ -224,16 +224,16 @@ if ($class === 'S1') {
     $science      = $_POST['science'] ?? '';
     $aggregates   = isset($_POST['aggregates_s1']) ? (int)$_POST['aggregates_s1'] : 0;
     
-    // Capture PLE Class Division
+    // Capture PLE Class Division (Saved as Div 1, Div 2, etc.)
     $divisionRaw  = trim($_POST['division_s1'] ?? '');
     if (!empty($divisionRaw)) {
         if (preg_match('/(?:div(?:ision)?\s*)?([1-4u])/i', $divisionRaw, $dm)) {
-            $division = 'Division ' . strtoupper($dm[1]);
+            $division = 'Div ' . strtoupper($dm[1]);
         } else {
             $division = $divisionRaw;
         }
     } else {
-        $division = ($aggregates <= 12) ? 'Division 1' : (($aggregates <= 23) ? 'Division 2' : (($aggregates <= 29) ? 'Division 3' : (($aggregates <= 34) ? 'Division 4' : 'Division U')));
+        $division = ($aggregates <= 12) ? 'Div 1' : (($aggregates <= 23) ? 'Div 2' : (($aggregates <= 29) ? 'Div 3' : (($aggregates <= 34) ? 'Div 4' : 'Div U')));
     }
 
     // Server-side Passmark Cutoff Enforcement for S1
@@ -336,6 +336,38 @@ if ($class === 'S1') {
     $best8Equiv = array_sum(array_slice($equivList, 0, 8));
     $aggregates = $best8Equiv > 0 ? $best8Equiv : (isset($_POST['aggregates_s5']) ? (int)$_POST['aggregates_s5'] : 0);
 
+    // Auto-detect & compute overall UNEB NLSC result for S5 (Result 1 to Result 5)
+    $computedS5Result = '';
+    if (!empty($equivList)) {
+        $countEquiv = max(1, min(8, count($equivList)));
+        $avgEquiv = $best8Equiv / $countEquiv;
+        if ($avgEquiv <= 2.0) {
+            $computedS5Result = 'Result 1';
+        } elseif ($avgEquiv <= 3.0) {
+            $computedS5Result = 'Result 2';
+        } elseif ($avgEquiv <= 4.0) {
+            $computedS5Result = 'Result 3';
+        } elseif ($avgEquiv <= 4.75) {
+            $computedS5Result = 'Result 4';
+        } else {
+            $computedS5Result = 'Result 5';
+        }
+    }
+
+    if ($class === 'S5') {
+        if (!empty($_POST['division_s5']) && preg_match('/^Result\s*[1-5]/i', $_POST['division_s5'])) {
+            if (preg_match('/(?:Result\s*)?([1-5])/i', $_POST['division_s5'], $rm)) {
+                $division = 'Result ' . $rm[1];
+            } else {
+                $division = trim($_POST['division_s5']);
+            }
+        } elseif (!empty($computedS5Result)) {
+            $division = $computedS5Result;
+        } else {
+            $division = 'Result 1';
+        }
+    }
+
     // S6 Transfer Specifics
     if ($class === 'S6') {
         $s6FormerSchool = trim($_POST['s6_former_school'] ?? '');
@@ -354,6 +386,8 @@ if ($class === 'S1') {
     $payload = [
         'curriculum'        => 'NLSC',
         'result_level'      => $division,
+        'overall_result'    => $division,
+        'computed_result'   => $computedS5Result,
         'project_work'      => $uceProjectWork,
         'competency_score'  => $competencyScore,
         'counts'            => $counts,

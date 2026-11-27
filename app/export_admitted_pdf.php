@@ -212,7 +212,7 @@ $tableHtml = '
             <th width="10%" style="border: 1px solid ' . $primaryHex . ';">GENDER</th>
             <th width="10%" style="border: 1px solid ' . $primaryHex . ';">CLASS</th>
             <th width="15%" style="border: 1px solid ' . $primaryHex . ';">INDEX NUMBER</th>
-            <th width="11%" style="border: 1px solid ' . $primaryHex . ';">AGGS</th>
+            <th width="11%" style="border: 1px solid ' . $primaryHex . ';">RESULT / AGGS</th>
         </tr>
     </thead>
     <tbody>';
@@ -221,6 +221,7 @@ $idx = 1;
 foreach ($records as $r) {
     $fullName = trim($r['surname'] . ' ' . $r['firstname'] . ' ' . ($r['othernames'] ?? ''));
     $bg = ($idx % 2 === 0) ? '#f8fafc' : '#ffffff';
+    $perfScore = in_array($r['class_of_entry'], ['S5', 'S6']) ? getS5OverallResult($r) : ($r['aggregates'] ?? 'N/A');
 
     $tableHtml .= '
         <tr style="background-color: ' . $bg . ';">
@@ -230,7 +231,7 @@ foreach ($records as $r) {
             <td width="10%" align="center" style="border: 1px solid #e2e8f0; text-transform: capitalize;">' . htmlspecialchars($r['sex']) . '</td>
             <td width="10%" align="center" style="border: 1px solid #e2e8f0; font-weight: bold; color: ' . $primaryHex . ';">' . htmlspecialchars($r['class_of_entry']) . '</td>
             <td width="15%" align="center" style="border: 1px solid #e2e8f0; font-family: monospace;">' . htmlspecialchars($r['index_number'] ?? 'N/A') . '</td>
-            <td width="11%" align="center" style="border: 1px solid #e2e8f0; font-weight: bold; color: ' . $accentHex . ';">' . htmlspecialchars($r['aggregates'] ?? 'N/A') . '</td>
+            <td width="11%" align="center" style="border: 1px solid #e2e8f0; font-weight: bold; color: ' . $accentHex . ';">' . htmlspecialchars($perfScore) . '</td>
         </tr>';
     $idx++;
 }

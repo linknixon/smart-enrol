@@ -479,6 +479,16 @@ if (!$isSchemaReady) {
         }
     } catch (Exception $e) {}
 
+    // Auto-normalize S1 division to "Div 1", "Div 2", etc. in existing records
+    try {
+        $pdo->exec("UPDATE applications SET division = REPLACE(division, 'Division ', 'Div ') WHERE class_of_entry = 'S1' AND division LIKE 'Division %'");
+        $pdo->exec("UPDATE applications SET division = REPLACE(division, 'Div Division ', 'Div ') WHERE class_of_entry = 'S1' AND division LIKE 'Div Division %'");
+        $pdo->exec("UPDATE applications SET division = CONCAT('Div ', division) WHERE class_of_entry = 'S1' AND division IN ('1','2','3','4','U')");
+        $pdo->exec("UPDATE s1_applications SET division = REPLACE(division, 'Division ', 'Div ') WHERE division LIKE 'Division %'");
+        $pdo->exec("UPDATE s1_applications SET division = REPLACE(division, 'Div Division ', 'Div ') WHERE division LIKE 'Div Division %'");
+        $pdo->exec("UPDATE s1_applications SET division = CONCAT('Div ', division) WHERE division IN ('1','2','3','4','U')");
+    } catch (Exception $e) {}
+
     // Auto-backfill admitted_by and admitted_at for historical records
     try {
         $pdo->exec("
@@ -1316,6 +1326,93 @@ if (!function_exists('formatMoney')) {
         if ($amount === null || $amount === '') return '0';
         $clean = preg_replace('/[^\d\.]/', '', (string)$amount);
         return number_format((float)$clean);
+    }
+}
+
+// Standardized Academic Division Formatter (e.g. for S1: Div 1, Div 2, Div 3, Div 4, Div U)
+if (!function_exists('formatDivision')) {
+    function formatDivision($div, $class = 'S1') {
+        if ($div === null || $div === '') return '';
+        $div = trim((string)$div);
+        if ($class === 'S1') {
+            if (preg_match('/(?:div(?:ision)?\s*)?([1-4u])/i', $div, $m)) {
+                return 'Div ' . strtoupper($m[1]);
+            }
+            return (stripos($div, 'Div') === 0) ? $div : ('Div ' . $div);
+        }
+        return $div;
+    }
+}
+
+// UNEB NLSC Overall Result Extractor and Auto-Computer (for S5 / S6: Result 1 to Result 5)
+if (!function_exists('getS5OverallResult')) {
+    function getS5OverallResult($app) {
+        $div = trim((string)($app['division'] ?? ''));
+        // If division is already Result 1..5, return it
+        if (preg_match('/^Result\s*[1-5]/i', $div)) {
+            if (preg_match('/(?:Result\s*)?([1-5])/i', $div, $rm)) {
+                return 'Result ' . $rm[1];
+            }
+            return $div;
+        }
+
+        // Check uce_subjects_json for explicit result_level / overall_result
+        $jsonStr = $app['uce_subjects_json'] ?? '';
+        if (!empty($jsonStr)) {
+            $parsed = is_array($jsonStr) ? $jsonStr : json_decode($jsonStr, true);
+            if (is_array($parsed)) {
+                if (!empty($parsed['overall_result']) && preg_match('/^Result\s*[1-5]/i', $parsed['overall_result'])) {
+                    return trim($parsed['overall_result']);
+                }
+                if (!empty($parsed['result_level']) && preg_match('/^Result\s*[1-5]/i', $parsed['result_level'])) {
+                    return trim($parsed['result_level']);
+                }
+                // Try computing from subjects
+                if (!empty($parsed['subjects']) && is_array($parsed['subjects'])) {
+                    $equivMap = ['A' => 1, 'B' => 2, 'C' => 3, 'D' => 4, 'E' => 5];
+                    $equivScores = [];
+                    foreach ($parsed['subjects'] as $s) {
+                        $g = strtoupper(trim(is_array($s) ? ($s['grade'] ?? '') : (string)$s));
+                        if (isset($equivMap[$g])) {
+                            $equivScores[] = $equivMap[$g];
+                        }
+                    }
+                    if (!empty($equivScores)) {
+                        sort($equivScores);
+                        $count = min(8, count($equivScores));
+                        $sum = array_sum(array_slice($equivScores, 0, $count));
+                        $avg = $sum / max(1, $count);
+                        if ($avg <= 2.0) return 'Result 1';
+                        elseif ($avg <= 3.0) return 'Result 2';
+                        elseif ($avg <= 4.0) return 'Result 3';
+                        elseif ($avg <= 4.75) return 'Result 4';
+                        else return 'Result 5';
+                    }
+                }
+            }
+        }
+
+        // Check if uce_result_level is in app
+        if (!empty($app['uce_result_level']) && preg_match('/^Result\s*[1-5]/i', $app['uce_result_level'])) {
+            return trim($app['uce_result_level']);
+        }
+
+        // If numeric aggregates exist (e.g. legacy cutoff points)
+        $aggs = isset($app['aggregates']) && is_numeric($app['aggregates']) ? (int)$app['aggregates'] : null;
+        if ($aggs !== null && $aggs > 0) {
+            if ($aggs <= 16) return 'Result 1';
+            elseif ($aggs <= 24) return 'Result 2';
+            elseif ($aggs <= 32) return 'Result 3';
+            elseif ($aggs <= 38) return 'Result 4';
+            else return 'Result 5';
+        }
+
+        // If division is Div 1..4 (e.g. S6 transfer)
+        if (preg_match('/(?:div(?:ision)?\s*)?([1-4u])/i', $div, $m)) {
+            return 'Div ' . strtoupper($m[1]);
+        }
+
+        return !empty($div) ? $div : '—';
     }
 }
 

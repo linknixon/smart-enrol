@@ -338,9 +338,11 @@ $pdf->SetXY(15, $contentY);
 // Academic credential label
 $academicCredential = '';
 if ($class === 'S1') {
-    $academicCredential = 'Index No: ' . htmlspecialchars($student['index_number']) . ' (Agg: ' . htmlspecialchars($student['aggregates'] ?: 'N/A') . ', Div: ' . htmlspecialchars($student['division'] ?: 'N/A') . ')';
+    $s1DivClean = formatDivision($student['division'] ?: 'N/A');
+    $academicCredential = 'Index No: ' . htmlspecialchars($student['index_number']) . ' (Agg: ' . htmlspecialchars($student['aggregates'] ?: 'N/A') . ', ' . htmlspecialchars($s1DivClean) . ')';
 } elseif ($class === 'S5' || $class === 'S6') {
-    $academicCredential = 'Index No: ' . htmlspecialchars($student['index_number']) . ' (' . htmlspecialchars($student['division'] ?: ('Agg ' . $student['aggregates'])) . ')';
+    $s5ResClean = getS5OverallResult($student);
+    $academicCredential = 'Index No: ' . htmlspecialchars($student['index_number']) . (!empty($s5ResClean) && $s5ResClean !== '—' ? ' (' . htmlspecialchars($s5ResClean) . ')' : '');
 } else {
     $academicCredential = 'Former School: ' . htmlspecialchars($student['former_school'] ?: 'N/A');
 }

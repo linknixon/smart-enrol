@@ -597,36 +597,18 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                                 <td class="p-3 text-center text-xs whitespace-nowrap">
                                     <?php if ($app['class_of_entry'] === 'S1'): ?>
                                         <?php 
-                                            $s1Div = !empty($app['division']) ? $app['division'] : (!empty($app['ple_division']) ? $app['ple_division'] : '');
+                                            $rawDiv = !empty($app['division']) ? $app['division'] : (!empty($app['ple_division']) ? $app['ple_division'] : '');
+                                            $s1Div = formatDivision($rawDiv, 'S1');
                                             $s1Aggs = !empty($app['aggregates']) ? $app['aggregates'] : (!empty($app['ple_aggregates']) ? $app['ple_aggregates'] : '');
                                         ?>
-                                        <span class="font-bold text-slate-800"><?= !empty($s1Div) ? 'Div ' . htmlspecialchars($s1Div) : '—' ?></span>
+                                        <span class="font-bold text-slate-800"><?= !empty($s1Div) ? htmlspecialchars($s1Div) : '—' ?></span>
                                         <span class="text-[10px] text-slate-400 block font-semibold"><?= !empty($s1Aggs) ? htmlspecialchars($s1Aggs) . ' Aggs' : '' ?></span>
                                     <?php elseif (in_array($app['class_of_entry'], ['S5', 'S6'])): ?>
                                         <?php 
-                                            $s5Level = !empty($app['division']) ? $app['division'] : (!empty($app['uce_result_level']) ? $app['uce_result_level'] : (!empty($app['uce_division']) ? 'Div ' . $app['uce_division'] : ''));
-                                            $s5Project = !empty($app['uce_project_work']) ? $app['uce_project_work'] : (!empty($app['project_score']) ? $app['project_score'] : ($app['project_work'] ?? ''));
-                                            $s5Score = $app['nlsc_competency_score'] ?? '';
-                                            if (empty($s5Score) && !empty($app['uce_subjects_json'])) {
-                                                $dJson = json_decode($app['uce_subjects_json'], true);
-                                                if (!empty($dJson['competency_score'])) {
-                                                    $s5Score = $dJson['competency_score'];
-                                                }
-                                                if (empty($s5Level) && !empty($dJson['result_level'])) {
-                                                    $s5Level = $dJson['result_level'];
-                                                }
-                                                if (empty($s5Project) && !empty($dJson['project_work'])) {
-                                                    $s5Project = $dJson['project_work'];
-                                                }
-                                            }
+                                            $s5OverallResult = getS5OverallResult($app);
                                         ?>
-                                        <?php if(!empty($s5Level)): ?>
-                                            <span class="font-bold text-brand-700"><?= htmlspecialchars($s5Level) ?></span>
-                                            <?php if(!empty($s5Score)): ?>
-                                                <span class="text-[10px] text-slate-500 block font-mono font-bold"><?= htmlspecialchars($s5Score) ?> pts</span>
-                                            <?php elseif(!empty($s5Project)): ?>
-                                                <span class="text-[10px] text-slate-500 block font-mono font-bold">Proj: Gr <?= htmlspecialchars($s5Project) ?></span>
-                                            <?php endif; ?>
+                                        <?php if(!empty($s5OverallResult) && $s5OverallResult !== '—'): ?>
+                                            <span class="font-bold text-brand-700"><?= htmlspecialchars($s5OverallResult) ?></span>
                                         <?php else: ?>
                                             <span class="font-bold text-slate-400">—</span>
                                         <?php endif; ?>
@@ -1768,7 +1750,12 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
             document.getElementById('modalPleSci').textContent = sci;
             document.getElementById('modalPleSst').textContent = sst;
             document.getElementById('modalPleAggs').textContent = aggs;
-            document.getElementById('modalPleDiv').textContent = div ? ('Division ' + div) : '—';
+            let s1CleanDiv = '—';
+            if (div) {
+                const dm = String(div).match(/(?:div(?:ision)?\s*)?([1-4u])/i);
+                s1CleanDiv = dm ? ('Div ' + dm[1].toUpperCase()) : (String(div).startsWith('Div ') ? div : ('Div ' + div));
+            }
+            document.getElementById('modalPleDiv').textContent = s1CleanDiv;
         } else if (app.class_of_entry === 'S5' || app.class_of_entry === 'S6') {
             alevelBox.classList.remove('hidden');
             document.getElementById('modalCombination').textContent = app.combination || 'Not Assigned';
@@ -1782,9 +1769,37 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
                 } catch(e) {}
             }
 
-            // Division / Result Level
-            let resLevel = app.division || app.uce_result_level || (app.uce_division ? 'Div ' + app.uce_division : '');
-            if (parsed && parsed.result_level) resLevel = parsed.result_level;
+            // Division / Overall Result Level
+            let resLevel = '';
+            if (parsed && (parsed.overall_result || parsed.result_level)) {
+                resLevel = parsed.overall_result || parsed.result_level;
+            } else if (app.division && /^Result\s*[1-5]/i.test(app.division)) {
+                resLevel = app.division;
+            } else if (app.uce_result_level) {
+                resLevel = app.uce_result_level;
+            } else if (app.division) {
+                resLevel = app.division;
+            }
+            if ((!resLevel || resLevel === '—') && parsed && parsed.subjects) {
+                const equivMap = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5 };
+                let scs = [];
+                for (let k in parsed.subjects) {
+                    let g = (parsed.subjects[k].grade || '').toUpperCase();
+                    if (equivMap[g]) scs.push(equivMap[g]);
+                }
+                if (scs.length > 0) {
+                    scs.sort((a,b) => a - b);
+                    let cnt = Math.min(8, scs.length);
+                    let sum = 0;
+                    for (let i = 0; i < cnt; i++) sum += scs[i];
+                    let avg = sum / cnt;
+                    if (avg <= 2.0) resLevel = 'Result 1';
+                    else if (avg <= 3.0) resLevel = 'Result 2';
+                    else if (avg <= 4.0) resLevel = 'Result 3';
+                    else if (avg <= 4.75) resLevel = 'Result 4';
+                    else resLevel = 'Result 5';
+                }
+            }
             document.getElementById('modalUceDivision').textContent = resLevel || '—';
 
             // Project Work
@@ -2011,8 +2026,16 @@ $rejectedCount = $pdo->query("SELECT COUNT(*) FROM applications WHERE applicatio
             } catch(e) {}
         }
 
-        let resLevel = data.division || data.uce_result_level || (data.uce_division ? 'Div ' + data.uce_division : '');
-        if (parsed && parsed.result_level) resLevel = parsed.result_level;
+        let resLevel = '';
+        if (parsed && (parsed.overall_result || parsed.result_level)) {
+            resLevel = parsed.overall_result || parsed.result_level;
+        } else if (data.division && /^Result\s*[1-5]/i.test(data.division)) {
+            resLevel = data.division;
+        } else if (data.uce_result_level) {
+            resLevel = data.uce_result_level;
+        } else if (data.division) {
+            resLevel = data.division;
+        }
         document.getElementById('nlscResultLevel').textContent = resLevel || '—';
 
         let projWork = data.uce_project_work || data.project_score || data.project_work || '';

@@ -716,11 +716,11 @@ html, body {
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">PLE Class Division <span class="text-rose-500 font-bold">*</span></label>
                                 <select name="division_s1" id="divisionS1" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold bg-white focus:outline-none focus:border-brand-700 transition">
-                                    <option value="Division 1">Division 1</option>
-                                    <option value="Division 2">Division 2</option>
-                                    <option value="Division 3">Division 3</option>
-                                    <option value="Division 4">Division 4</option>
-                                    <option value="Division U">Division U</option>
+                                    <option value="Div 1">Div 1</option>
+                                    <option value="Div 2">Div 2</option>
+                                    <option value="Div 3">Div 3</option>
+                                    <option value="Div 4">Div 4</option>
+                                    <option value="Div U">Div U</option>
                                 </select>
                             </div>
                             <div>
@@ -794,7 +794,10 @@ html, body {
                         <!-- Certification Tier & Project Work (Attachment 1) -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Overall Certification Result <span class="text-rose-500 font-bold">*</span></label>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase" for="divisionS5">Overall Certification Result <span class="text-rose-500 font-bold">*</span></label>
+                                    <span class="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200"><i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i> Auto-Computed</span>
+                                </div>
                                 <select name="division_s5" id="divisionS5" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-brand-700 transition bg-white">
                                     <option value="">Select UNEB Overall Result</option>
                                     <option value="Result 1">Result 1 (Distinction / Highest Certification)</option>
@@ -803,7 +806,7 @@ html, body {
                                     <option value="Result 4">Result 4 (Basic Level Certification)</option>
                                     <option value="Result 5">Result 5 (Elementary Certification)</option>
                                 </select>
-                                <p class="text-[10px] text-slate-400 mt-1">Matches "RESULT : 1" on your official UNEB result slip</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Auto-computed from subject grades. Matches "RESULT : 1" on official UNEB result slip</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Continuous Assessment Project Work <span class="text-rose-500 font-bold">*</span></label>
@@ -852,6 +855,24 @@ html, body {
                                         </select>
                                     </div>
                                 <?php endforeach; ?>
+                            </div>
+
+                            <!-- Real-time competency indicator & Auto-Computed Overall Result Card -->
+                            <div class="mt-3 p-3 bg-white rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm border border-brand-200">
+                                        <i class="fa-solid fa-calculator"></i>
+                                    </span>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Auto-Computed UNEB Result:</span>
+                                        <span id="autoComputedResultBadge" class="font-black text-brand-700 text-sm">Select Subject Grades</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-600">
+                                    <span>Grades: <strong id="countA" class="text-emerald-700 font-bold">0</strong> A's, <strong id="countB" class="text-blue-700 font-bold">0</strong> B's, <strong id="countC" class="text-amber-700 font-bold">0</strong> C's, <strong id="countOther" class="text-slate-500 font-bold">0</strong> D/E</span>
+                                    <span class="hidden sm:inline text-slate-300">|</span>
+                                    <span>Points: <strong id="competencyScoreDisplay" class="font-mono font-bold text-slate-800">0</strong></span>
+                                </div>
                             </div>
 
                             <!-- Hidden Aggregates equivalent input used by cutoff enforcement -->
@@ -1568,6 +1589,8 @@ html, body {
         const countOtherEl = document.getElementById('countOther');
         const scoreDisp = document.getElementById('competencyScoreDisplay');
         const aggS5 = document.getElementById('aggregatesS5');
+        const divS5 = document.getElementById('divisionS5');
+        const autoBadge = document.getElementById('autoComputedResultBadge');
 
         if (countAEl) countAEl.textContent = counts.A;
         if (countBEl) countBEl.textContent = counts.B;
@@ -1575,13 +1598,30 @@ html, body {
         if (countOtherEl) countOtherEl.textContent = (counts.D + counts.E);
         if (scoreDisp) scoreDisp.textContent = totalScore;
 
-        // Best 8 aggregate equivalent (lower is better, e.g. 8 A's = 8 aggregates)
-        equivScores.sort((a, b) => a - b);
-        let best8Sum = 0;
-        for (let i = 0; i < Math.min(8, equivScores.length); i++) {
-            best8Sum += equivScores[i];
+        let computedResult = '';
+        if (equivScores.length > 0) {
+            equivScores.sort((a, b) => a - b);
+            let count = Math.min(8, equivScores.length);
+            let best8Sum = 0;
+            for (let i = 0; i < count; i++) {
+                best8Sum += equivScores[i];
+            }
+            if (aggS5) aggS5.value = best8Sum;
+
+            let avg = best8Sum / count;
+            if (avg <= 2.0) computedResult = 'Result 1';
+            else if (avg <= 3.0) computedResult = 'Result 2';
+            else if (avg <= 4.0) computedResult = 'Result 3';
+            else if (avg <= 4.75) computedResult = 'Result 4';
+            else computedResult = 'Result 5';
         }
-        if (aggS5) aggS5.value = best8Sum;
+
+        if (divS5 && computedResult) {
+            divS5.value = computedResult;
+        }
+        if (autoBadge) {
+            autoBadge.textContent = computedResult ? (computedResult + ' (Auto-Computed)') : 'Select Subject Grades';
+        }
     }
 
     document.querySelectorAll('.nlsc-grade-select').forEach(sel => {
@@ -1589,7 +1629,7 @@ html, body {
     });
     calcNLSCCompetency();
 
-    // Auto calculate PLE aggregates
+    // Auto calculate PLE aggregates & division (Formatted as Div 1, Div 2, etc.)
     const gradeValues = { "D1":1,"D2":2,"C3":3,"C4":4,"C5":5,"C6":6,"P7":7,"P8":8,"F9":9 };
     const pleSelects = document.querySelectorAll(".ple-grade-select");
     const aggregatesS1 = document.getElementById("aggregatesS1");
@@ -1602,11 +1642,11 @@ html, body {
         if (aggregatesS1) aggregatesS1.value = total;
         const divS1 = document.getElementById("divisionS1");
         if (divS1) {
-            if (total >= 4 && total <= 12) divS1.value = "Division 1";
-            else if (total <= 23) divS1.value = "Division 2";
-            else if (total <= 29) divS1.value = "Division 3";
-            else if (total <= 34) divS1.value = "Division 4";
-            else divS1.value = "Division U";
+            if (total >= 4 && total <= 12) divS1.value = "Div 1";
+            else if (total <= 23) divS1.value = "Div 2";
+            else if (total <= 29) divS1.value = "Div 3";
+            else if (total <= 34) divS1.value = "Div 4";
+            else divS1.value = "Div U";
         }
     }
     pleSelects.forEach(sel => sel.addEventListener("change", calcPLEAggregates));
