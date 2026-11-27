@@ -1079,13 +1079,9 @@ if (!function_exists('renderThemeConfig')) {
             letter-spacing: -0.025em !important;
             word-spacing: -0.05em !important;
             white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
         }
         .brand-school-motto {
             white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
             display: block !important;
         }
         .print-banner {

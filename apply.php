@@ -195,20 +195,20 @@ html, body {
 
         <!-- Top Header & School Identity -->
         <div class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-            <a href="index.php" class="flex items-center gap-2.5 sm:gap-3 group min-w-0 shrink" title="Back to Main Portal">
-                <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
+            <a href="index.php" class="flex items-center gap-2.5 sm:gap-3 group shrink-0" title="Back to Main Portal">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-13 lg:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
                     <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full w-auto h-auto object-contain">
                 </div>
-                <div class="min-w-0 overflow-hidden">
-                    <h1 class="brand-school-name text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition whitespace-nowrap truncate" style="word-spacing: -0.05em;">
+                <div>
+                    <h1 class="brand-school-name text-xs sm:text-sm md:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition whitespace-nowrap" style="word-spacing: -0.05em;">
                         <?= htmlspecialchars(!empty($school_short_name) ? $school_short_name : $school_name) ?>
                     </h1>
                     <?php if (!empty($school_motto)): ?>
-                        <p class="brand-school-motto text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight truncate whitespace-nowrap mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
+                        <p class="brand-school-motto text-[9.5px] sm:text-[10.5px] lg:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight whitespace-nowrap mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                             “<?= htmlspecialchars($school_motto) ?>”
                         </p>
                     <?php else: ?>
-                        <p class="brand-school-motto text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight whitespace-nowrap">
+                        <p class="brand-school-motto text-[9px] sm:text-[10px] lg:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight whitespace-nowrap">
                             Online Admissions Portal
                         </p>
                     <?php endif; ?>

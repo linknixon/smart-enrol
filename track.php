@@ -105,20 +105,20 @@ if ($searched) {
         <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm transition">
             <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-3 sm:gap-6">
                 <!-- Brand Info -->
-                <a href="index.php" class="flex items-center gap-2.5 sm:gap-3 group min-w-0 shrink">
-                    <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
+                <a href="index.php" class="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-13 lg:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
                         <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full w-auto h-auto object-contain">
                     </div>
-                    <div class="min-w-0 overflow-hidden">
-                        <span class="brand-school-name block text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition whitespace-nowrap truncate" style="word-spacing: -0.05em;">
+                    <div>
+                        <span class="brand-school-name block text-xs sm:text-sm md:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition whitespace-nowrap" style="word-spacing: -0.05em;">
                             <?= htmlspecialchars(!empty($school_short_name) ? $school_short_name : $school_name) ?>
                         </span>
                         <?php if (!empty($school_motto)): ?>
-                            <span class="brand-school-motto block text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight truncate whitespace-nowrap mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
+                            <span class="brand-school-motto block text-[9.5px] sm:text-[10.5px] lg:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight whitespace-nowrap mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                                 “<?= htmlspecialchars($school_motto) ?>”
                             </span>
                         <?php else: ?>
-                            <span class="brand-school-motto block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight whitespace-nowrap">
+                            <span class="brand-school-motto block text-[9px] sm:text-[10px] lg:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight whitespace-nowrap">
                                 Application Tracking Portal
                             </span>
                         <?php endif; ?>
