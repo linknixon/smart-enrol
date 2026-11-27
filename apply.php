@@ -194,40 +194,39 @@ html, body {
     <div class="max-w-3xl w-full mx-auto space-y-6">
 
         <!-- Top Header & School Identity -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-            <div class="flex items-center gap-3 sm:gap-4 min-w-0 w-full sm:w-auto">
-                <a href="index.php" class="w-11 h-11 sm:w-16 sm:h-16 bg-white rounded-xl p-1 sm:p-1.5 border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0 hover:scale-105 transition" title="Back to Main Portal">
-                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full object-contain">
-                </a>
-                <div class="min-w-0 flex-1 text-left">
-                    <h1 class="text-sm sm:text-lg md:text-xl font-black text-slate-900 tracking-tight uppercase leading-snug">
-                        <?= htmlspecialchars($school_name) ?>
+        <div class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <a href="index.php" class="flex items-center gap-2.5 sm:gap-3 group min-w-0 shrink" title="Back to Main Portal">
+                <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
+                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full w-auto h-auto object-contain">
+                </div>
+                <div class="min-w-0">
+                    <h1 class="brand-school-name text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition" style="word-spacing: -0.05em;">
+                        <?= htmlspecialchars(!empty($school_short_name) ? $school_short_name : $school_name) ?>
                     </h1>
                     <?php if (!empty($school_motto)): ?>
-                        <p class="text-[11px] sm:text-xs font-bold text-gold-600 italic tracking-wide mt-0.5 truncate max-w-[260px] xs:max-w-xs sm:max-w-none" title="<?= htmlspecialchars($school_motto) ?>">
+                        <p class="text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight line-clamp-1 mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                             “<?= htmlspecialchars($school_motto) ?>”
                         </p>
+                    <?php else: ?>
+                        <p class="text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight">
+                            Online Admissions Portal
+                        </p>
                     <?php endif; ?>
-                    <div class="flex items-center gap-2 flex-wrap mt-1">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[9px] sm:text-[10px]">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Admissions Open
-                        </span>
-                        <span class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            AY <?= htmlspecialchars($academic_year) ?>
-                        </span>
-                    </div>
                 </div>
-            </div>
+            </a>
 
-            <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 justify-end">
-                <a href="<?= htmlspecialchars(getSchoolWebsiteUrl($pdo)) ?>" target="_blank" class="flex-1 sm:flex-initial text-center justify-center px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition flex items-center gap-1.5">
+            <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 justify-end flex-wrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-[10px] sm:text-[11px]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Admissions Open &bull; AY <?= htmlspecialchars($academic_year) ?>
+                </span>
+                <a href="<?= htmlspecialchars(getSchoolWebsiteUrl($pdo)) ?>" target="_blank" class="px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition flex items-center gap-1.5">
                     <i class="fa-solid fa-globe text-gold-600 text-[11px]"></i>
-                    <span>School Website</span>
+                    <span class="hidden xs:inline">Website</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-slate-400"></i>
                 </a>
-                <a href="index.php" class="flex-1 sm:flex-initial text-center justify-center px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm transition flex items-center gap-1.5">
+                <a href="index.php" class="px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm transition flex items-center gap-1.5">
                     <i class="fa-solid fa-arrow-left text-[11px]"></i>
-                    <span>Main Portal</span>
+                    <span>Portal</span>
                 </a>
             </div>
         </div>

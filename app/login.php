@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="inline-flex p-2 rounded-full bg-white shadow-md border-2 border-gold-500 mb-3">
                 <img src="<?= htmlspecialchars($logo_source) ?>" alt="School Logo" class="w-16 h-16 object-contain">
             </div>
-            <h2 class="text-xl sm:text-2xl font-extrabold text-brand-700 tracking-tight uppercase leading-tight"><?= htmlspecialchars($school_short_name) ?></h2>
+            <h2 class="brand-school-name text-xl sm:text-2xl font-extrabold text-brand-700 tracking-tight uppercase leading-tight" style="word-spacing: -0.05em;"><?= htmlspecialchars(!empty($school_short_name) ? $school_short_name : $school_name) ?></h2>
             <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Consolidated Admissions Portal Login</p>
         </div>
 

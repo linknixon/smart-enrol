@@ -1065,6 +1065,10 @@ if (!function_exists('renderThemeConfig')) {
             max-height: 40px !important;
             object-fit: contain !important;
         }
+        .brand-school-name {
+            letter-spacing: -0.025em !important;
+            word-spacing: -0.05em !important;
+        }
         .print-banner {
             display: none !important;
         }
