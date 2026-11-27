@@ -2,118 +2,144 @@
 // Suppress display errors in PDF output stream to prevent header corruption
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-ob_start();
 
-require __DIR__ . '/../config/db.php';
-require_once(__DIR__ . '/../form-one/tcpdf/tcpdf.php');
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../form-one/tcpdf/tcpdf.php';
 
-/* ================= VALIDATION ================= */
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    die('Invalid request: Missing application identifier.');
-}
+/* ================= WEB DIRECT EXECUTION HANDLER ================= */
+$isDirectExecution = (basename($_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['PHP_SELF'] ?? '')) === 'admission_offer.php')
+    || (isset($_GET['id']) && !defined('ADMISSION_OFFER_INCLUDED'));
 
-$id = (int)$_GET['id'];
+if ($isDirectExecution) {
+    if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+        die('Invalid request: Missing application identifier.');
+    }
 
-/* ================= FETCH STUDENT ================= */
-$stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
-$stmt->execute([$id]);
-$student = $stmt->fetch(PDO::FETCH_ASSOC);
+    $id = (int)$_GET['id'];
+    $stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
+    $stmt->execute([$id]);
+    $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$student) {
-    die('Student application record not found.');
-}
+    if (!$student) {
+        die('Student application record not found.');
+    }
 
-$isAdmin = !empty($_SESSION['admin_user']) || !empty($_SESSION['role']);
-$appStatus = strtolower($student['application_status'] ?? 'pending');
-$isAdmitted = ($appStatus === 'admitted');
+    $isAdmin = !empty($_SESSION['admin_user']) || !empty($_SESSION['role']) || !empty($_SESSION['admin_logged_in']);
+    $appStatus = strtolower($student['application_status'] ?? 'pending');
+    $isAdmitted = ($appStatus === 'admitted');
+    $isOfficiallyAdmitted = ($isAdmitted && !empty($student['admitted_at']) && !empty($student['student_number']));
 
-// The official admission letter should ONLY be generated and available after a student has officially been admitted
-if (!$isAdmitted && !$isAdmin) {
-    if (ob_get_length()) ob_end_clean();
-    $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
-    $school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
-    $school_logo       = getSchoolLogoSrc($pdo);
-    $studentFullName   = strtoupper(trim(($student['surname'] ?? '') . ' ' . ($student['firstname'] ?? '') . ' ' . ($student['othernames'] ?? '')));
-    $studentClass      = $student['class_of_entry'] ?? 'S1';
-    $refNumber         = getAdmissionNumber($student, $pdo);
-    $statusText        = ($appStatus === 'rejected') ? 'Application Unsuccessful' : 'Application Under Review';
-    $statusBadgeClass  = ($appStatus === 'rejected') ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-900 border-amber-300';
-    $statusIconClass   = ($appStatus === 'rejected') ? 'fa-circle-xmark text-rose-600' : 'fa-clock text-amber-600';
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application Status - <?= htmlspecialchars($studentFullName) ?> | <?= htmlspecialchars($school_short_name) ?></title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
-    <?= renderThemeConfig($pdo) ?>
-    </head>
-    <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 text-center space-y-5">
-            <div class="w-20 h-20 bg-white rounded-2xl p-2 border-2 border-gold-500/30 shadow-md mx-auto flex items-center justify-center">
-                <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain">
-            </div>
-            
-            <div class="space-y-1">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border <?= $statusBadgeClass ?>">
-                    <i class="fa-solid <?= $statusIconClass ?>"></i> <?= $statusText ?>
-                </span>
-                <h2 class="text-xl font-black text-slate-900 tracking-tight pt-2">Admission Letter Not Available</h2>
-                <p class="text-xs text-slate-500">Official admission offer letters are only issued upon official admission approval.</p>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
-                <div class="flex justify-between border-b border-slate-200/80 pb-2">
-                    <span class="text-slate-500 font-semibold">Candidate:</span>
-                    <span class="font-bold text-slate-900"><?= htmlspecialchars($studentFullName) ?></span>
+    // The official admission letter should ONLY be generated and available after a student has officially been admitted
+    if ((!$isAdmitted || !$isOfficiallyAdmitted) && !$isAdmin) {
+        if (ob_get_length()) ob_end_clean();
+        $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
+        $school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
+        $school_logo       = getSchoolLogoSrc($pdo);
+        $studentFullName   = strtoupper(trim(($student['surname'] ?? '') . ' ' . ($student['firstname'] ?? '') . ' ' . ($student['othernames'] ?? '')));
+        $studentClass      = $student['class_of_entry'] ?? 'S1';
+        $refNumber         = getAdmissionNumber($student, $pdo);
+        $statusText        = ($appStatus === 'rejected') ? 'Application Unsuccessful' : 'Application Under Review';
+        $statusBadgeClass  = ($appStatus === 'rejected') ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-900 border-amber-300';
+        $statusIconClass   = ($appStatus === 'rejected') ? 'fa-circle-xmark text-rose-600' : 'fa-clock text-amber-600';
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Status - <?= htmlspecialchars($studentFullName) ?> | <?= htmlspecialchars($school_short_name) ?></title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
+        <?= renderThemeConfig($pdo) ?>
+        </head>
+        <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 text-center space-y-5">
+                <div class="w-20 h-20 bg-white rounded-2xl p-2 border-2 border-gold-500/30 shadow-md mx-auto flex items-center justify-center">
+                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain">
                 </div>
-                <div class="flex justify-between border-b border-slate-200/80 pb-2">
-                    <span class="text-slate-500 font-semibold">Reference ID:</span>
-                    <span class="font-mono font-bold text-brand-700"><?= htmlspecialchars($refNumber) ?></span>
-                </div>
-                <div class="flex justify-between border-b border-slate-200/80 pb-2">
-                    <span class="text-slate-500 font-semibold">Class Applied:</span>
-                    <span class="font-bold text-slate-800"><?= htmlspecialchars($studentClass) ?></span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500 font-semibold">Current Status:</span>
-                    <span class="font-bold capitalize <?= ($appStatus === 'rejected') ? 'text-rose-600' : 'text-amber-600' ?>">
-                        <?= htmlspecialchars($student['application_status'] ?? 'Under Review') ?>
+                
+                <div class="space-y-1">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border <?= $statusBadgeClass ?>">
+                        <i class="fa-solid <?= $statusIconClass ?>"></i> <?= $statusText ?>
                     </span>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight pt-2">Admission Letter Not Available</h2>
+                    <p class="text-xs text-slate-500">Official admission offer letters are only issued upon official admission approval.</p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500 font-semibold">Candidate:</span>
+                        <span class="font-bold text-slate-900"><?= htmlspecialchars($studentFullName) ?></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500 font-semibold">Reference ID:</span>
+                        <span class="font-mono font-bold text-brand-700"><?= htmlspecialchars($refNumber) ?></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500 font-semibold">Class Applied:</span>
+                        <span class="font-bold text-slate-800"><?= htmlspecialchars($studentClass) ?></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 font-semibold">Current Status:</span>
+                        <span class="font-bold capitalize <?= ($appStatus === 'rejected') ? 'text-rose-600' : 'text-amber-600' ?>">
+                            <?= htmlspecialchars($student['application_status'] ?? 'Under Review') ?>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs text-emerald-950 space-y-2">
+                    <div class="flex items-center gap-2 font-black text-emerald-900">
+                        <i class="fa-solid fa-circle-info text-emerald-600 text-sm"></i>
+                        <span class="uppercase tracking-wider text-[11px]">Admission &amp; Payment Policy</span>
+                    </div>
+                    <p class="text-[11.5px] leading-relaxed text-emerald-900">
+                        Your application and academic documents are currently undergoing evaluation by the Admissions Committee. <strong>The official Provisional Admission Letter and payment details will be made available here and sent to your registered email address once you are officially admitted.</strong>
+                    </p>
+                    <p class="text-[11px] text-emerald-800 italic">
+                        No school fees or payments are accepted until your application has been officially approved.
+                    </p>
+                </div>
+
+                <div class="pt-2 flex flex-col gap-2">
+                    <a href="../track.php" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
+                        <i class="fa-solid fa-location-crosshairs text-xs"></i> Track Admission Status Online
+                    </a>
+                    <a href="../index.php" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-house text-xs"></i> Back to Homepage
+                    </a>
                 </div>
             </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
 
-            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs text-emerald-950 space-y-2">
-                <div class="flex items-center gap-2 font-black text-emerald-900">
-                    <i class="fa-solid fa-circle-info text-emerald-600 text-sm"></i>
-                    <span class="uppercase tracking-wider text-[11px]">Admission &amp; Payment Policy</span>
-                </div>
-                <p class="text-[11.5px] leading-relaxed text-emerald-900">
-                    Your application and academic documents are currently undergoing evaluation by the Admissions Committee. <strong>The official Provisional Admission Letter and payment details will be made available here and sent to your registered email address once you are officially admitted.</strong>
-                </p>
-                <p class="text-[11px] text-emerald-800 italic">
-                    No school fees or payments are accepted until your application has been officially approved.
-                </p>
-            </div>
-
-            <div class="pt-2 flex flex-col gap-2">
-                <a href="../track.php" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
-                    <i class="fa-solid fa-location-crosshairs text-xs"></i> Track Admission Status Online
-                </a>
-                <a href="../index.php" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
-                    <i class="fa-solid fa-house text-xs"></i> Back to Homepage
-                </a>
-            </div>
-        </div>
-    </body>
-    </html>
-    <?php
-    exit;
+    generateAdmissionOfferPdf($pdo, $student, 'I');
 }
+
+/* ================= CORE ADMISSION OFFER PDF GENERATOR ================= */
+if (!function_exists('generateAdmissionOfferPdf')) {
+    function generateAdmissionOfferPdf($pdo, $studentOrId, $outputMode = 'I') {
+        if (is_numeric($studentOrId)) {
+            $stmt = $pdo->prepare("SELECT * FROM applications WHERE id = ?");
+            $stmt->execute([(int)$studentOrId]);
+            $student = $stmt->fetch(PDO::FETCH_ASSOC);
+        } elseif (is_array($studentOrId)) {
+            $student = $studentOrId;
+        } else {
+            return false;
+        }
+
+        if (!$student) {
+            return false;
+        }
+
+        $isAdmin = !empty($_SESSION['admin_user']) || !empty($_SESSION['role']) || !empty($_SESSION['admin_logged_in']);
+        $appStatus = strtolower($student['application_status'] ?? 'pending');
+        $isAdmitted = ($appStatus === 'admitted');
 
 /* ================= SYSTEM CONFIGURATION ================= */
 $school_name        = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
@@ -769,9 +795,16 @@ if ($isAdmitted || $isAdmin) {
 }
 
 /* ================= OUTPUT ================= */
-if (ob_get_length()) {
-    ob_end_clean();
+        $outFilename = ($isAdmitted ? 'Admission_Offer_' : 'Application_Receipt_') . $student_number . '.pdf';
+
+        if ($outputMode === 'S') {
+            return $pdf->Output($outFilename, 'S');
+        }
+
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+        $pdf->Output($outFilename, 'I');
+        exit;
+    }
 }
-$outFilename = ($isAdmitted ? 'Admission_Offer_' : 'Application_Receipt_') . $student_number . '.pdf';
-$pdf->Output($outFilename, 'I');
-exit;

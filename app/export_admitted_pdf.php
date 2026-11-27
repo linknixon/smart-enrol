@@ -277,8 +277,7 @@ if ($hasSignature) {
 
 $signHtml .= '
             <strong>' . htmlspecialchars($head_teacher_name) . '</strong><br>
-            <span style="color: #64748b;">' . htmlspecialchars($head_teacher_title) . '  •  ' . htmlspecialchars($school_short_name) . '</span><br>
-            <span style="font-size: 7.5pt; color: #64748b;">Date: ____________________</span>
+            <span style="color: #64748b;">' . htmlspecialchars($head_teacher_title) . '  •  ' . htmlspecialchars($school_short_name) . '</span>
         </td>
         <td width="50%" align="right" style="color: #334155; vertical-align: top;">
             <strong>Compiled & Certified By:</strong><br><br>

@@ -341,8 +341,7 @@ if ($hasSignature) {
 $tableHtml .= '
             <div>
                 <strong style="color: ' . $primaryHex . '; font-size: 8pt;">' . htmlspecialchars(strtoupper($head_teacher_name)) . '</strong><br>
-                <span>' . htmlspecialchars($head_teacher_title) . '  •  ' . htmlspecialchars($school_short_name) . '</span><br>
-                <span style="font-size: 7.5pt; color: #64748b;">Date: ____________________</span>
+                <span>' . htmlspecialchars($head_teacher_title) . '  •  ' . htmlspecialchars($school_short_name) . '</span>
             </div>
         </td>
         <td width="50%" align="right" style="vertical-align: top;">

@@ -263,6 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input 
                         type="text" 
                         name="username" 
+                        tabindex="1"
                         class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-700/10 font-medium transition" 
                         placeholder="Enter your username" 
                         required
@@ -271,12 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div>
-                <div class="flex items-center justify-between mb-1.5">
-                    <label class="block text-xs font-bold text-slate-600 uppercase">Password</label>
-                    <a href="forgot_password.php" class="text-xs font-semibold text-brand-700 hover:text-brand-900 transition hover:underline">
-                        Forgot Password?
-                    </a>
-                </div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1.5">Password</label>
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                         <i class="fa-solid fa-lock"></i>
@@ -285,30 +281,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         type="password" 
                         name="password" 
                         id="loginPassword"
+                        tabindex="2"
                         class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-700 focus:bg-white focus:ring-4 focus:ring-brand-700/10 font-medium transition" 
                         placeholder="Enter your password" 
                         required
                     >
-                    <button type="button" onclick="togglePasswordVisibility('loginPassword', this)" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer" aria-label="Toggle password visibility">
+                    <button type="button" tabindex="-1" onclick="togglePasswordVisibility('loginPassword', this)" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer" aria-label="Toggle password visibility">
                         <i class="fa-solid fa-eye text-sm"></i>
                     </button>
+                </div>
+                <div class="flex justify-end pt-1.5">
+                    <a href="forgot_password.php" tabindex="3" class="text-xs font-semibold text-brand-700 hover:text-brand-900 transition hover:underline">
+                        Forgot Password?
+                    </a>
                 </div>
             </div>
 
             <?= renderTurnstileWidget($pdo) ?>
 
-            <button type="submit" class="w-full py-3 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-brand-700/25 transition duration-150 flex items-center justify-center gap-2 mt-2">
+            <button type="submit" tabindex="4" class="w-full py-3 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-brand-700/25 transition duration-150 flex items-center justify-center gap-2 mt-2">
                 <span>Sign In to Admin Panel</span>
                 <i class="fa-solid fa-arrow-right-to-bracket"></i>
             </button>
         </form>
 
         <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
-            <a href="../index.php" class="text-brand-700 hover:text-brand-800 font-semibold inline-flex items-center gap-1.5 transition">
+            <a href="../index.php" tabindex="5" class="text-brand-700 hover:text-brand-800 font-semibold inline-flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Public Portal</span>
             </a>
-            <a href="<?= htmlspecialchars($school_website_url) ?>" target="_blank" class="text-slate-500 hover:text-brand-700 font-semibold inline-flex items-center gap-1 transition">
+            <a href="<?= htmlspecialchars($school_website_url) ?>" tabindex="6" target="_blank" class="text-slate-500 hover:text-brand-700 font-semibold inline-flex items-center gap-1 transition">
                 <i class="fa-solid fa-globe text-gold-500"></i>
                 <span>School Website</span>
                 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>

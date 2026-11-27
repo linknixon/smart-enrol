@@ -586,7 +586,6 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                         <div class="h-8"></div>
                         <span class="block border-t border-black w-32 pt-1 font-semibold text-center">Head Teacher</span>
                     <?php endif; ?>
-                    <span class="block text-[10px] text-slate-500 mt-1">Date: ____________________</span>
                 </div>
                 <div class="text-right">
                     <span class="block font-bold text-slate-700">Official Verification:</span>

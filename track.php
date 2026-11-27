@@ -103,22 +103,22 @@ if ($searched) {
 
         <!-- Navigation Header -->
         <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm transition">
-            <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2 sm:gap-4">
+            <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-3 sm:gap-6">
                 <!-- Brand Info -->
-                <a href="index.php" class="flex items-center gap-2.5 sm:gap-3.5 group min-w-0 pr-1 sm:pr-2">
-                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-xs">
-                        <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full object-contain">
+                <a href="index.php" class="flex items-center gap-3 sm:gap-3.5 group min-w-0 shrink">
+                    <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
+                        <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full w-auto h-auto object-contain">
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <span class="block text-[13px] sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase group-hover:text-brand-700 transition truncate">
+                    <div class="min-w-0">
+                        <span class="block text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition">
                             <?= htmlspecialchars($school_short_name) ?>
                         </span>
                         <?php if (!empty($school_motto)): ?>
-                            <span class="block text-[10px] sm:text-[11.5px] font-bold text-gold-600 italic tracking-wide leading-tight truncate mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
+                            <span class="block text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight line-clamp-1 mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                                 “<?= htmlspecialchars($school_motto) ?>”
                             </span>
                         <?php else: ?>
-                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight truncate">
+                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight">
                                 Application Tracking Portal
                             </span>
                         <?php endif; ?>
@@ -126,13 +126,13 @@ if ($searched) {
                 </a>
 
                 <!-- Action Buttons -->
-                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <a href="index.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
+                <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    <a href="index.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
                         <i class="fa-solid fa-arrow-left text-[11px] sm:text-xs text-brand-700"></i>
                         <span class="hidden sm:inline">Main Portal</span>
                         <span class="sm:hidden">Home</span>
                     </a>
-                    <a href="apply.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
+                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
                         <i class="fa-solid fa-paper-plane text-[10px] sm:text-xs"></i>
                         <span>Apply</span>
                         <span class="hidden sm:inline">Now</span>
@@ -210,6 +210,7 @@ if ($searched) {
                 // 3. Admissions Board Evaluation (Done if admitted or rejected, In-progress if pending)
                 // 4. Decision (Admitted: Success, Rejected: Warning, Pending: Waiting)
                 $isAdmittedOrReported = ($status === 'admitted' || $status === 'reported');
+                $isOfficiallyAdmitted = ($status === 'admitted' && !empty($application['admitted_at']) && !empty($application['student_number']));
                 $step1 = 'done';
                 $step2 = ($isAdmittedOrReported || $status === 'rejected') ? 'done' : 'active';
                 $step3 = ($isAdmittedOrReported || $status === 'rejected') ? 'done' : 'active';
@@ -262,15 +263,15 @@ if ($searched) {
                             </p>
                         </div>
 
-                        <!-- Only Class & Gender Display -->
+                        <!-- Only Class & Index Display -->
                         <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto pt-4 border-t border-slate-100">
                             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                                 <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Class</span>
                                 <span class="block text-base sm:text-lg font-black text-slate-900 mt-1"><?= htmlspecialchars($classCode) ?></span>
                             </div>
                             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gender</span>
-                                <span class="block text-base sm:text-lg font-black text-slate-900 mt-1"><?= ucfirst(htmlspecialchars($application['sex'])) ?></span>
+                                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Index Number</span>
+                                <span class="block text-base sm:text-lg font-black text-slate-900 mt-1 font-mono"><?= htmlspecialchars($application['index_number'] ?: 'N/A') ?></span>
                             </div>
                         </div>
 
@@ -295,17 +296,15 @@ if ($searched) {
                             <?php endif; ?>
                             <div>
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-100 text-brand-900 border border-brand-200 mb-1">
-                                    Student Number: <?= htmlspecialchars(getAdmissionNumber($application)) ?> · Application #<?= str_pad($application['id'], 5, '0', STR_PAD_LEFT) ?> · Cohort <?= htmlspecialchars($appYear) ?>
+                                    Admissions Registry · Cohort <?= htmlspecialchars($appYear) ?>
                                 </span>
                                 <h2 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
                                     <?= htmlspecialchars($fullName) ?>
                                 </h2>
                                 <p class="text-xs text-slate-500 font-medium mt-0.5">
                                     Class: <strong class="text-slate-800"><?= htmlspecialchars($classCode) ?></strong> · 
-                                    Index: <strong class="text-slate-800 font-mono"><?= htmlspecialchars($application['index_number'] ?: 'N/A') ?></strong>
-                                    <?php if (!empty($application['lin'])): ?>
-                                        · LIN: <strong class="text-slate-800 font-mono"><?= htmlspecialchars($application['lin']) ?></strong>
-                                    <?php endif; ?>
+                                    Index: <strong class="text-slate-800 font-mono"><?= htmlspecialchars($application['index_number'] ?: 'N/A') ?></strong> · 
+                                    Reporting Date: <strong class="text-brand-800"><?= htmlspecialchars($reportingDate) ?></strong>
                                 </p>
                             </div>
                         </div>
@@ -425,13 +424,20 @@ if ($searched) {
                                             The Admissions Committee of <?= htmlspecialchars($school_name) ?> has offered you admission into <strong><?= htmlspecialchars($classCode) ?></strong> for Academic Year <strong><?= htmlspecialchars($appYear) ?></strong>.
                                         </p>
                                     </div>
-                                    <a href="app/admission_offer.php?id=<?= $application['id'] ?>" target="_blank" class="w-full sm:w-auto justify-center px-5 py-3 rounded-xl text-xs sm:text-sm font-black text-white bg-emerald-700 hover:bg-emerald-800 shadow-md shadow-emerald-700/20 transition flex items-center gap-2 shrink-0 text-center">
-                                        <i class="fa-solid fa-file-pdf"></i>
-                                        <span>Download Official Offer Letter (PDF)</span>
-                                    </a>
+                                    <?php if ($isOfficiallyAdmitted): ?>
+                                        <a href="app/admission_offer.php?id=<?= $application['id'] ?>" target="_blank" class="w-full sm:w-auto justify-center px-5 py-3 rounded-xl text-xs sm:text-sm font-black text-white bg-emerald-700 hover:bg-emerald-800 shadow-md shadow-emerald-700/20 transition flex items-center gap-2 shrink-0 text-center">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                            <span>Download Official Offer Letter (PDF)</span>
+                                        </a>
+                                    <?php else: ?>
+                                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/90 text-emerald-900 border border-emerald-200 text-xs font-semibold shrink-0">
+                                            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                            <span>Admitted · Contact registry for legacy letter copy</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                                     <div class="bg-white/80 p-3.5 rounded-xl border border-emerald-200/60">
                                         <span class="block text-[11px] font-bold text-slate-500 uppercase">Reporting Date</span>
                                         <span class="block text-sm font-extrabold text-slate-800 mt-0.5"><?= htmlspecialchars($reportingDate) ?></span>
@@ -439,10 +445,6 @@ if ($searched) {
                                     <div class="bg-white/80 p-3.5 rounded-xl border border-emerald-200/60">
                                         <span class="block text-[11px] font-bold text-slate-500 uppercase">Class & Stream</span>
                                         <span class="block text-sm font-extrabold text-slate-800 mt-0.5"><?= htmlspecialchars($classCode) ?> <?= ($application['combination'] ? ' · ' . htmlspecialchars($application['combination']) : '') ?></span>
-                                    </div>
-                                    <div class="bg-white/80 p-3.5 rounded-xl border border-emerald-200/60">
-                                        <span class="block text-[11px] font-bold text-slate-500 uppercase">Term 1 Fees Payable</span>
-                                        <span class="block text-sm font-extrabold text-slate-800 mt-0.5 font-mono">UGX <?= number_format($totalTermFees) ?></span>
                                     </div>
                                 </div>
 
@@ -484,36 +486,11 @@ if ($searched) {
                                         <span>Automated Notifications:</span>
                                     </div>
                                     <p class="text-[11px] text-slate-500">
-                                        You will receive an official notification via email at <strong class="text-slate-800"><?= htmlspecialchars($application['parent_email']) ?></strong> immediately when a decision is published.
+                                        You will receive an official notification via your registered contact email address immediately when a decision is published.
                                     </p>
                                 </div>
                             </div>
                         <?php endif; ?>
-
-                        <!-- Full Bio-Data & Submission Snapshot Summary -->
-                        <div class="pt-4 border-t border-slate-100">
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                                Submission Information Summary
-                            </h4>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                                <div>
-                                    <span class="block text-[11px] text-slate-400">Gender</span>
-                                    <span class="font-bold text-slate-800"><?= htmlspecialchars($application['sex']) ?></span>
-                                </div>
-                                <div>
-                                    <span class="block text-[11px] text-slate-400">Date of Birth / Age</span>
-                                    <span class="font-bold text-slate-800"><?= htmlspecialchars($application['dob']) ?> (<?= (int)$application['age'] ?> yrs)</span>
-                                </div>
-                                <div>
-                                    <span class="block text-[11px] text-slate-400">Parent / Guardian</span>
-                                    <span class="font-bold text-slate-800"><?= htmlspecialchars($application['parent_name']) ?></span>
-                                </div>
-                                <div>
-                                    <span class="block text-[11px] text-slate-400">Parent Telephone</span>
-                                    <span class="font-bold text-slate-800 font-mono"><?= htmlspecialchars($application['parent_phone']) ?></span>
-                                </div>
-                            </div>
-                        </div>
 
                     </div>
                 </div>

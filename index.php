@@ -123,30 +123,30 @@ if (empty($slider_images)) {
 
         <!-- Main Navigation Header -->
         <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm transition">
-            <div class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2 sm:gap-4">
+            <div class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-3 sm:gap-6">
                 <!-- Brand Info -->
-                <a href="index.php" class="flex items-center gap-2.5 sm:gap-3.5 group min-w-0 pr-1 sm:pr-2">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-xs">
-                        <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full object-contain">
+                <a href="index.php" class="flex items-center gap-3 sm:gap-3.5 group min-w-0 shrink">
+                    <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
+                        <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full w-auto h-auto object-contain">
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <span class="block text-[13px] sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase group-hover:text-brand-700 transition truncate">
+                    <div class="min-w-0">
+                        <span class="block text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition">
                             <?= htmlspecialchars($school_short_name) ?>
                         </span>
                         <?php if (!empty($school_motto)): ?>
-                            <span class="block text-[10px] sm:text-[11.5px] font-bold text-gold-600 italic tracking-wide leading-tight truncate mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
+                            <span class="block text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight line-clamp-1 mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                                 “<?= htmlspecialchars($school_motto) ?>”
                             </span>
                         <?php else: ?>
-                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight truncate">
+                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight">
                                 Online Admissions Portal
                             </span>
                         <?php endif; ?>
                     </div>
                 </a>
 
-                <!-- Navigation Links (Concise single-word items without wrapping) -->
-                <nav class="hidden md:flex items-center gap-5 text-sm font-semibold text-slate-600">
+                <!-- Navigation Links (Full on XL screens, responsive) -->
+                <nav class="hidden xl:flex items-center gap-5 text-sm font-semibold text-slate-600 shrink-0">
                     <a href="#pathways" class="hover:text-brand-700 transition whitespace-nowrap">Pathways</a>
                     <a href="#fees-structure" class="hover:text-brand-700 transition whitespace-nowrap flex items-center gap-1"><i class="fa-solid fa-coins text-gold-500 text-xs"></i> Fees</a>
                     <a href="#requirements" class="hover:text-brand-700 transition whitespace-nowrap">Requirements</a>
@@ -159,22 +159,22 @@ if (empty($slider_images)) {
                 </nav>
 
                 <!-- Action Buttons & Mobile Toggle -->
-                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
                     <a href="app/login.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
                         <i class="fa-solid fa-user-lock text-xs text-brand-700"></i> Staff
                     </a>
-                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
+                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
                         <i class="fa-solid fa-paper-plane text-[11px] sm:text-xs"></i> <span>Apply</span><span class="hidden sm:inline"> Now</span>
                     </a>
-                    <!-- Mobile Navigation Toggle -->
-                    <button type="button" onclick="document.getElementById('mobileNav').classList.toggle('hidden')" class="md:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl text-slate-700 hover:text-brand-700 hover:bg-slate-100 border border-slate-200 transition focus:outline-none" aria-label="Toggle navigation">
+                    <!-- Mobile / Tablet Navigation Toggle -->
+                    <button type="button" onclick="document.getElementById('mobileNav').classList.toggle('hidden')" class="xl:hidden w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-slate-700 hover:text-brand-700 hover:bg-slate-100 border border-slate-200 transition focus:outline-none" aria-label="Toggle navigation">
                         <i class="fa-solid fa-bars text-sm sm:text-base"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Mobile Navigation Menu -->
-            <div id="mobileNav" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1.5 shadow-xl">
+            <div id="mobileNav" class="hidden xl:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1.5 shadow-xl">
                 <a href="#pathways" onclick="document.getElementById('mobileNav').classList.add('hidden')" class="flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-700 transition">
                     <i class="fa-solid fa-layer-group text-gold-500 w-5 text-center"></i>
                     <span>Entry Pathways</span>

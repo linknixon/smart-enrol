@@ -319,8 +319,12 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
                 </a>
             </div>
 
-            <p style='font-size: 12.5px; color: #64748b;'>Or copy this link to your web browser:<br>
-            <a href='{$pdfLink}' style='color: {$accent_color}; word-break: break-all; font-weight: 600;'>{$pdfLink}</a></p>
+            <!-- PDF Attachment Indicator Box -->
+            <div class='inner-box' style='background-color: #ecfdf5; border: 1px solid #a7f3d0; border-left: 4px solid {$primary_color}; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: left;'>
+                <p style='margin: 0; font-size: 13px; color: #065f46; line-height: 1.5;'>
+                    <strong><span style='font-size: 15px;'>📎</span> Official PDF Attached:</strong> An official copy of your Provisional Admission Offer Letter is attached directly to this email for your convenience. You may print the attachment directly or use the download button above.
+                </p>
+            </div>
 
             {$enclosuresHtml}
 
@@ -341,14 +345,36 @@ body, div, p, span, h1, h2, h3, h4, th, td, a {
 </html>
 ";
 
-/* ================= SEND EMAIL ================= */
+/* ================= SEND EMAIL WITH ATTACHED ADMISSION LETTER ================= */
 try {
     $parentEmail = trim((string)($applicant['parent_email'] ?? ''));
     if (!empty($parentEmail) && filter_var($parentEmail, FILTER_VALIDATE_EMAIL) && function_exists('sendEmail')) {
+        $attachments = [];
+        try {
+            if (!defined('ADMISSION_OFFER_INCLUDED')) {
+                define('ADMISSION_OFFER_INCLUDED', true);
+            }
+            require_once __DIR__ . '/admission_offer.php';
+            if (function_exists('generateAdmissionOfferPdf')) {
+                $pdfData = generateAdmissionOfferPdf($pdo, $applicant, 'S');
+                if (!empty($pdfData)) {
+                    $cleanFileCode = preg_replace('/[^A-Za-z0-9_\.-]/', '_', (string)$student_number);
+                    $attachments[] = [
+                        'data' => $pdfData,
+                        'name' => 'Admission_Offer_' . $cleanFileCode . '.pdf',
+                        'mime' => 'application/pdf'
+                    ];
+                }
+            }
+        } catch (Throwable $ePdf) {
+            error_log("Failed to build PDF attachment for admission email: " . $ePdf->getMessage());
+        }
+
         sendEmail(
             $parentEmail,
             "$className Admission Offer - {$academic_year} - {$school_name}",
-            $message
+            $message,
+            $attachments
         );
     }
 } catch (Throwable $e) {

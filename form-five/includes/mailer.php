@@ -5,7 +5,7 @@ use PHPMailer\PHPMailer\Exception;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 if (!function_exists('sendEmail')) {
-    function sendEmail($to, $subject, $body) {
+    function sendEmail($to, $subject, $body, $attachments = []) {
         global $pdo;
 
         if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -102,6 +102,25 @@ if (!function_exists('sendEmail')) {
             $mail->isHTML(true);
             $mail->Subject  = $cleanSubject;
             $mail->Body     = $cleanBody;
+
+            // Attach files or in-memory documents if provided
+            if (!empty($attachments) && is_array($attachments)) {
+                foreach ($attachments as $att) {
+                    if (is_string($att) && file_exists($att)) {
+                        $mail->addAttachment($att);
+                    } elseif (is_array($att)) {
+                        if (!empty($att['data'])) {
+                            $attName = $att['name'] ?? 'Admission_Offer.pdf';
+                            $attEncoding = $att['encoding'] ?? 'base64';
+                            $attMime = $att['mime'] ?? 'application/pdf';
+                            $mail->addStringAttachment($att['data'], $attName, $attEncoding, $attMime);
+                        } elseif (!empty($att['path']) && file_exists($att['path'])) {
+                            $attName = $att['name'] ?? basename($att['path']);
+                            $mail->addAttachment($att['path'], $attName);
+                        }
+                    }
+                }
+            }
 
             $mail->send();
             return true;
