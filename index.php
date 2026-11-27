@@ -129,16 +129,16 @@ if (empty($slider_images)) {
                     <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-sm">
                         <img src="<?= htmlspecialchars($school_logo) ?>" alt="<?= htmlspecialchars($school_short_name) ?> Logo" class="max-w-full max-h-full w-auto h-auto object-contain">
                     </div>
-                    <div class="min-w-0">
-                        <span class="brand-school-name block text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition" style="word-spacing: -0.05em;">
+                    <div class="min-w-0 overflow-hidden">
+                        <span class="brand-school-name block text-[13px] sm:text-base lg:text-[17px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-brand-700 transition whitespace-nowrap truncate" style="word-spacing: -0.05em;">
                             <?= htmlspecialchars(!empty($school_short_name) ? $school_short_name : $school_name) ?>
                         </span>
                         <?php if (!empty($school_motto)): ?>
-                            <span class="block text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight line-clamp-1 mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
+                            <span class="brand-school-motto block text-[10px] sm:text-[11px] font-bold text-gold-600 italic tracking-wide leading-tight truncate whitespace-nowrap mt-0.5" title="<?= htmlspecialchars($school_motto) ?>">
                                 “<?= htmlspecialchars($school_motto) ?>”
                             </span>
                         <?php else: ?>
-                            <span class="block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight">
+                            <span class="brand-school-motto block text-[9.5px] sm:text-[11px] font-semibold text-gold-600 uppercase tracking-wider leading-tight whitespace-nowrap">
                                 Online Admissions Portal
                             </span>
                         <?php endif; ?>
