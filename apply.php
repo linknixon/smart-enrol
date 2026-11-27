@@ -232,19 +232,19 @@ html, body {
         </div>
 
         <!-- Class Selection Bar -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm">
+        <div class="bg-white rounded-xl border border-slate-200 p-2 sm:p-2.5 shadow-xs">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
-                <span class="text-xs font-bold text-slate-500 uppercase px-2 tracking-wider flex items-center gap-1.5">
-                    <i class="fa-solid fa-layer-group text-brand-700"></i> Admission Category:
+                <span class="text-[11px] font-bold text-slate-500 uppercase px-1 tracking-wider flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-layer-group text-brand-700 text-xs"></i> Admission Category:
                 </span>
                 <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto max-w-full">
-                    <button type="button" id="tabS1" class="class-tab-btn px-1.5 sm:px-4 py-2 rounded-xl text-[10.5px] sm:text-xs font-bold transition text-center leading-tight" onclick="selectClassCategory('S1')">
+                    <button type="button" id="tabS1" class="class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center leading-tight bg-brand-700 text-white shadow-xs" onclick="selectClassCategory('S1')">
                         Senior One (S1) <?= !$statusS1['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
-                    <button type="button" id="tabS5" class="class-tab-btn px-1.5 sm:px-4 py-2 rounded-xl text-[10.5px] sm:text-xs font-bold transition text-center leading-tight" onclick="selectClassCategory('S5')">
+                    <button type="button" id="tabS5" class="class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center leading-tight bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60" onclick="selectClassCategory('S5')">
                         Senior Five (S5) <?= !$statusS5['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
-                    <button type="button" id="tabTransfers" class="class-tab-btn px-1.5 sm:px-4 py-2 rounded-xl text-[10.5px] sm:text-xs font-bold transition text-center leading-tight" onclick="selectClassCategory('OTHER')">
+                    <button type="button" id="tabTransfers" class="class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center leading-tight bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60" onclick="selectClassCategory('OTHER')">
                         Transfers (S2-S6) <?= !$statusTrans['is_open'] ? '<span class="block sm:inline text-[9px] text-rose-500 font-extrabold">(Closed)</span>' : '' ?>
                     </button>
                 </div>
@@ -256,7 +256,7 @@ html, body {
         $feesMatrix = getFeesStructureMatrix($pdo); 
         $feesYear   = !empty($academic_year) ? $academic_year : getAcademicYear($pdo);
         ?>
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-5">
             <div class="flex items-center justify-between gap-3 cursor-pointer" onclick="toggleFeesStructure()">
                 <div>
                     <h4 class="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wide">
@@ -264,13 +264,13 @@ html, body {
                     </h4>
                     <p class="text-[11px] text-slate-500 mt-0.5">Review the approved fees structure breakdown before submitting your application below.</p>
                 </div>
-                <button type="button" id="feesToggleBtn" class="fees-attention-pulse px-4 py-2 rounded-xl text-xs font-black text-white bg-red-600 hover:bg-red-700 shadow-md ring-2 ring-red-400/60 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0">
+                <button type="button" id="feesToggleBtn" class="fees-attention-pulse px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-xs ring-1 ring-red-400/50 flex items-center gap-1.5 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0">
                     <span class="relative flex h-2 w-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-300"></span>
                     </span>
                     <span id="feesToggleLabel">View Fees</span>
-                    <i class="fa-solid fa-chevron-down transition-transform duration-200 text-[11px]" id="feesToggleIcon"></i>
+                    <i class="fa-solid fa-chevron-down transition-transform duration-200 text-[10px]" id="feesToggleIcon"></i>
                 </button>
             </div>
 
@@ -632,8 +632,8 @@ html, body {
                     <?php endif; ?>
 
                     <div class="pt-6 border-t border-slate-100 flex justify-end">
-                        <button type="button" class="next-btn w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(2)">
-                            Next: Academic History <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        <button type="button" class="next-btn w-full sm:w-auto px-5 py-2 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-xs flex items-center justify-center gap-1.5 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(2)">
+                            <span>Next: Academic History</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </button>
                     </div>
                 </div>
@@ -1020,12 +1020,12 @@ html, body {
                         </div>
                     </div>
 
-                    <div class="pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-                        <button type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(1)">
-                            <i class="fa-solid fa-arrow-left text-[10px]"></i> Back
+                    <div class="pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
+                        <button type="button" class="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center gap-1.5 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(1)">
+                            <i class="fa-solid fa-arrow-left text-[10px]"></i> <span>Back</span>
                         </button>
-                        <button type="button" class="next-btn w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(3)">
-                            Next: Parent / Guardian <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        <button type="button" class="next-btn w-full sm:w-auto px-5 py-2 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-xs flex items-center justify-center gap-1.5 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(3)">
+                            <span>Next: Parent / Guardian</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </button>
                     </div>
                 </div>
@@ -1237,12 +1237,12 @@ html, body {
                     </div>
                     <?php endif; ?>
 
-                    <div class="pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-                        <button type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(2)">
-                            <i class="fa-solid fa-arrow-left text-[10px]"></i> Back
+                    <div class="pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
+                        <button type="button" class="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center gap-1.5 whitespace-nowrap flex-nowrap shrink-0" onclick="goToStep(2)">
+                            <i class="fa-solid fa-arrow-left text-[10px]"></i> <span>Back</span>
                         </button>
-                        <button type="submit" id="submitBtn" class="w-full sm:w-auto px-8 py-3 rounded-xl text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-md flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0">
-                            <i class="fa-solid fa-paper-plane text-xs"></i> Submit Application
+                        <button type="submit" id="submitBtn" class="w-full sm:w-auto px-6 py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-xs flex items-center justify-center gap-2 whitespace-nowrap flex-nowrap shrink-0">
+                            <i class="fa-solid fa-paper-plane text-xs"></i> <span>Submit Application</span>
                         </button>
                     </div>
                 </div>
@@ -1347,16 +1347,16 @@ html, body {
 
         // Reset tabs style
         [tabS1, tabS5, tabTransfers].forEach(t => {
-            t.className = "class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center bg-slate-100 text-slate-600 hover:bg-slate-200";
+            t.className = "class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60";
         });
 
         // Highlight active tab
         if (val === 'S1') {
-            tabS1.className = "class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center bg-brand-700 text-white shadow-sm";
+            tabS1.className = "class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center bg-brand-700 text-white shadow-xs";
         } else if (val === 'S5') {
-            tabS5.className = "class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center bg-brand-700 text-white shadow-sm";
+            tabS5.className = "class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center bg-brand-700 text-white shadow-xs";
         } else {
-            tabTransfers.className = "class-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition text-center bg-brand-700 text-white shadow-sm";
+            tabTransfers.className = "class-tab-btn px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition text-center bg-brand-700 text-white shadow-xs";
         }
 
         const wizardProgress = document.getElementById('wizardProgress');

@@ -160,15 +160,15 @@ if (empty($slider_images)) {
 
                 <!-- Action Buttons & Mobile Toggle -->
                 <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                    <a href="app/login.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
+                    <a href="app/login.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
                         <i class="fa-solid fa-user-lock text-xs text-brand-700"></i> Staff
                     </a>
-                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
+                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-xs transition hover:-translate-y-0.5 whitespace-nowrap">
                         <i class="fa-solid fa-paper-plane text-[11px] sm:text-xs"></i> <span>Apply</span><span class="hidden sm:inline"> Now</span>
                     </a>
                     <!-- Mobile / Tablet Navigation Toggle -->
-                    <button type="button" onclick="document.getElementById('mobileNav').classList.toggle('hidden')" class="xl:hidden w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-slate-700 hover:text-brand-700 hover:bg-slate-100 border border-slate-200 transition focus:outline-none" aria-label="Toggle navigation">
-                        <i class="fa-solid fa-bars text-sm sm:text-base"></i>
+                    <button type="button" onclick="document.getElementById('mobileNav').classList.toggle('hidden')" class="xl:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg text-slate-700 hover:text-brand-700 hover:bg-slate-100 border border-slate-200 transition focus:outline-none" aria-label="Toggle navigation">
+                        <i class="fa-solid fa-bars text-xs sm:text-sm"></i>
                     </button>
                 </div>
             </div>

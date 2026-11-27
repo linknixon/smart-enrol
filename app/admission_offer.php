@@ -34,7 +34,7 @@ if ($isDirectExecution) {
         if (ob_get_length()) ob_end_clean();
         $school_short_name = getSetting($pdo, 'school_short_name', 'St. Paul\'s Mutolere SS');
         $school_name       = getSetting($pdo, 'school_name', 'St. Paul\'s Mutolere Secondary School');
-        $school_logo       = getSchoolLogoSrc($pdo);
+        $school_logo       = getSchoolLogoSrc($pdo, '../');
         $studentFullName   = strtoupper(trim(($student['surname'] ?? '') . ' ' . ($student['firstname'] ?? '') . ' ' . ($student['othernames'] ?? '')));
         $studentClass      = $student['class_of_entry'] ?? 'S1';
         $refNumber         = getAdmissionNumber($student, $pdo);
@@ -51,13 +51,13 @@ if ($isDirectExecution) {
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
+        <link rel="stylesheet" href="../css/fontawesome/css/all.min.css">
         <?= renderThemeConfig($pdo) ?>
         </head>
         <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
             <div class="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 text-center space-y-5">
-                <div class="w-20 h-20 bg-white rounded-2xl p-2 border-2 border-gold-500/30 shadow-md mx-auto flex items-center justify-center">
-                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 border-2 border-gold-500/30 shadow-md mx-auto flex items-center justify-center">
+                    <img src="<?= htmlspecialchars($school_logo) ?>" alt="School Logo" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='../images/logo_default.png';">
                 </div>
                 
                 <div class="space-y-1">
@@ -103,10 +103,10 @@ if ($isDirectExecution) {
                 </div>
 
                 <div class="pt-2 flex flex-col gap-2">
-                    <a href="../track.php" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-sm">
+                    <a href="../track.php" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 transition shadow-xs">
                         <i class="fa-solid fa-location-crosshairs text-xs"></i> Track Admission Status Online
                     </a>
-                    <a href="../index.php" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                    <a href="../index.php" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
                         <i class="fa-solid fa-house text-xs"></i> Back to Homepage
                     </a>
                 </div>

@@ -127,12 +127,12 @@ if ($searched) {
 
                 <!-- Action Buttons -->
                 <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                    <a href="index.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
+                    <a href="index.php" class="inline-flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition whitespace-nowrap">
                         <i class="fa-solid fa-arrow-left text-[11px] sm:text-xs text-brand-700"></i>
                         <span class="hidden sm:inline">Main Portal</span>
                         <span class="sm:hidden">Home</span>
                     </a>
-                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition hover:-translate-y-0.5 whitespace-nowrap">
+                    <a href="apply.php" class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 shadow-xs transition hover:-translate-y-0.5 whitespace-nowrap">
                         <i class="fa-solid fa-paper-plane text-[10px] sm:text-xs"></i>
                         <span>Apply</span>
                         <span class="hidden sm:inline">Now</span>
@@ -162,7 +162,7 @@ if ($searched) {
                                 placeholder="Enter Phone, Email, Index Number, or LIN..."
                                 class="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400 rounded-xl focus:outline-none">
                         </div>
-                        <button type="submit" class="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-brand-700/20 transition duration-150 flex items-center justify-center gap-2 shrink-0">
+                        <button type="submit" class="px-5 py-2 bg-brand-700 hover:bg-brand-800 text-white rounded-lg text-xs sm:text-sm font-bold shadow-xs transition duration-150 flex items-center justify-center gap-2 shrink-0">
                             <span>Track Application</span>
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </button>

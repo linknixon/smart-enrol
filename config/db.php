@@ -1325,23 +1325,45 @@ if (!function_exists('hex2rgb')) {
 
 // School Logo source for HTML/web display
 if (!function_exists('getSchoolLogoSrc')) {
-    function getSchoolLogoSrc($pdo = null, $relativePrefix = '') {
+    function getSchoolLogoSrc($pdo = null, $relativePrefix = null) {
         $baseDir = realpath(__DIR__ . '/..');
+
+        // Automatically determine relative prefix if not explicitly passed
+        if ($relativePrefix === null) {
+            $scriptDir = isset($_SERVER['SCRIPT_FILENAME']) ? dirname($_SERVER['SCRIPT_FILENAME']) : getcwd();
+            $relativePrefix = '';
+            if ($scriptDir && $baseDir && strpos($scriptDir, $baseDir) === 0) {
+                $sub = trim(substr($scriptDir, strlen($baseDir)), "/\\");
+                if ($sub !== '') {
+                    $parts = explode(DIRECTORY_SEPARATOR, $sub);
+                    $relativePrefix = str_repeat('../', count($parts));
+                }
+            }
+        }
+
         $logo = $pdo ? getSetting($pdo, 'school_logo', '') : '';
 
         // 1. If explicitly set to a local relative path that exists
         if (!empty($logo) && strpos($logo, 'http') !== 0) {
-            $fullPath = $baseDir . '/' . ltrim($logo, '/');
-            if (file_exists($fullPath)) {
-                return $relativePrefix . ltrim($logo, '/') . '?v=' . filemtime($fullPath);
+            $cleanLogo = preg_replace('/\?.*$/', '', $logo);
+            $fullPath = $baseDir . '/' . ltrim($cleanLogo, '/');
+            if (file_exists($fullPath) && is_file($fullPath)) {
+                return $relativePrefix . ltrim($cleanLogo, '/') . '?v=' . filemtime($fullPath);
             }
         }
 
-        // 2. Check for local custom logo in images/
-        $customLocal = 'images/logo_custom.png';
-        $fullCustom = $baseDir . '/' . $customLocal;
-        if (file_exists($fullCustom)) {
-            return $relativePrefix . $customLocal . '?v=' . filemtime($fullCustom);
+        // 2. Discover newest custom logo in images/
+        $customMatches = glob($baseDir . '/images/logo_custom*.*');
+        if (!empty($customMatches)) {
+            usort($customMatches, function($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+            foreach ($customMatches as $cand) {
+                if (file_exists($cand) && is_file($cand)) {
+                    $fn = basename($cand);
+                    return $relativePrefix . 'images/' . $fn . '?v=' . filemtime($cand);
+                }
+            }
         }
 
         // 3. If explicitly set to an absolute URL
@@ -1355,7 +1377,7 @@ if (!function_exists('getSchoolLogoSrc')) {
             return $relativePrefix . $defaultLocal . '?v=' . filemtime($baseDir . '/' . $defaultLocal);
         }
 
-        return $relativePrefix . 'images/logo_custom.png';
+        return $relativePrefix . 'images/logo_default.png';
     }
 }
 
@@ -1587,14 +1609,28 @@ if (!function_exists('getSchoolLogoFilePath')) {
         $logo = $pdo ? getSetting($pdo, 'school_logo', '') : '';
 
         // 1. If explicit local file path exists, ALWAYS prioritize it over remote URLs
-        if (!empty($logo) && strpos($logo, 'http') !== 0) {
-            $fullPath = rtrim($rootDir, '/') . '/' . ltrim($logo, '/');
+        if (!empty($logo)) {
+            $cleanRel = ltrim(preg_replace('/^https?:\/\/[^\/]+/i', '', $logo), '/');
+            $cleanRel = preg_replace('/\?.*$/', '', $cleanRel);
+            $fullPath = rtrim($rootDir, '/') . '/' . $cleanRel;
             if (file_exists($fullPath) && is_file($fullPath)) {
                 return $fullPath;
             }
         }
 
-        // 2. Prioritize local uploaded/custom logo files
+        // 2. Prioritize newest local custom logo files
+        $customMatches = glob(rtrim($rootDir, '/') . '/images/logo_custom*.*');
+        if (!empty($customMatches)) {
+            usort($customMatches, function($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+            foreach ($customMatches as $cand) {
+                if (file_exists($cand) && is_file($cand)) {
+                    return $cand;
+                }
+            }
+        }
+
         $localCandidates = [
             rtrim($rootDir, '/') . '/images/logo_custom.png',
             rtrim($rootDir, '/') . '/images/logo_default.png',
@@ -1606,9 +1642,25 @@ if (!function_exists('getSchoolLogoFilePath')) {
             }
         }
 
-        // 3. If explicit HTTP/HTTPS URL, return it
+        // 3. If explicit HTTP/HTTPS URL, attempt local caching for TCPDF stability
         if (!empty($logo) && (strpos($logo, 'http://') === 0 || strpos($logo, 'https://') === 0)) {
+            $tempLogo = sys_get_temp_dir() . '/school_logo_cache_' . md5($logo) . '.png';
+            if (file_exists($tempLogo) && (time() - filemtime($tempLogo) < 86400)) {
+                return $tempLogo;
+            }
+            $imgData = @file_get_contents($logo);
+            if ($imgData !== false && strlen($imgData) > 50) {
+                @file_put_contents($tempLogo, $imgData);
+                if (file_exists($tempLogo)) {
+                    return $tempLogo;
+                }
+            }
             return $logo;
+        }
+
+        $defaultLogo = rtrim($rootDir, '/') . '/images/logo_default.png';
+        if (file_exists($defaultLogo)) {
+            return $defaultLogo;
         }
 
         return 'https://www.ncedges.com/wp-content/uploads/2026/02/mutosp-logo.png';
